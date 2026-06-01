@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📚 Sınav Asistanım
 
-## Getting Started
+SPL, MASAK ve diğer sınavlara hazırlıkta yapay zeka destekli akıllı çalışma asistanı.
 
-First, run the development server:
+## 🚀 Özellikler
+
+- **AI PDF İşleme** — PDF yükle, yapay zeka otomatik olarak ders notları, sorular ve flashcard'lar oluşturur
+- **Çok Programlı** — SPL Düzey 3 (12 ders), MASAK Uyum Görevlisi (2 modül), SPL Bağımsız Denetim (5 ders)
+- **Deneme Sınavı** — Gerçek sınav koşullarında zamanlı deneme (modül seçici, geçme notu hesaplama)
+- **Flashcard** — Spaced repetition (SM-2) algoritması ile akıllı tekrar
+- **Gamification** — XP, seviye sistemi, 16 başarım rozeti
+- **Hazırlık Endeksi** — Ağırlıklı skor ile sınava ne kadar hazır olduğunu gör
+- **Kapsam Haritası** — Bölüm bazlı ilerleme takibi
+- **AI Sohbet** — Ders notlarına dayalı çalışma arkadaşı
+- **PWA** — Mobilde uygulama olarak yüklenebilir
+
+## 🛠 Teknoloji
+
+| Katman | Teknoloji |
+|---|---|
+| Frontend | Next.js 15, React 19, Framer Motion |
+| Styling | Tailwind CSS 4 |
+| Auth | NextAuth.js (JWT + bcrypt) |
+| Database | Prisma + SQLite (geliştirme) |
+| AI | Google Gemini (multimodal PDF analiz) |
+| Fonts | Inter + Outfit (Google Fonts) |
+
+## 📦 Kurulum
 
 ```bash
+# 1. Repo'yu klonla
+git clone <repo-url>
+cd spl-study-assistant
+
+# 2. Bağımlılıkları yükle
+npm install
+
+# 3. Ortam değişkenlerini ayarla
+cp .env.example .env
+# .env dosyasını düzenle (NEXTAUTH_SECRET, GOOGLE_GENERATIVE_AI_API_KEY vb.)
+
+# 4. Veritabanını oluştur
+npx prisma db push
+
+# 5. Geliştirme sunucusunu başlat
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔑 Ortam Değişkenleri
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Değişken | Açıklama | Zorunlu |
+|---|---|---|
+| `NEXTAUTH_SECRET` | JWT şifreleme anahtarı (`openssl rand -base64 32`) | ✅ |
+| `NEXTAUTH_URL` | Uygulama URL'i | ✅ |
+| `DATABASE_URL` | Veritabanı bağlantısı | ✅ |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini API anahtarı | ✅ |
+| `GEMINI_API_KEYS` | Çoklu Gemini key (virgülle ayrılmış) | ❌ |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Proje Yapısı
 
-## Learn More
+```
+src/
+├── app/
+│   ├── api/           # API route'ları (chat, upload, process, status, health)
+│   ├── dashboard/     # Ana panel
+│   ├── program/       # Program ve ders sayfaları
+│   ├── login/         # Giriş sayfası
+│   └── onboarding/    # İlk kurulum
+├── components/        # UI bileşenleri
+│   ├── course/        # Ders sayfası tab bileşenleri
+│   └── ui/            # Paylaşılan UI bileşenleri
+├── lib/
+│   ├── actions.ts     # Server actions (gamification, CRUD)
+│   ├── ai-service.ts  # AI servisi (Gemini entegrasyonu)
+│   ├── course-data.ts # Statik ders konfigürasyonları
+│   ├── pdf-engine.ts  # PDF işleme motoru
+│   └── schedule-engine.ts # Çalışma planı motoru
+└── prisma/
+    └── schema.prisma  # Veritabanı şeması
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🔒 Güvenlik
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Tüm API endpoint'leri auth korumalı (NextAuth session)
+- Şifreler bcrypt ile hash'leniyor
+- Upload boyut limiti: 100MB
+- Hata mesajlarından stack trace gizleniyor
+- Input validation (mesaj uzunluk, dosya tipi kontrolü)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📝 Lisans
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

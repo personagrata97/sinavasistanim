@@ -1,0 +1,302 @@
+// SPL Çalışma Asistanı - Yeni Veritabanı Şeması (Multi-Tenant)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // ⚠️ PRODUCTION UYARISI (ÖNEMLİ)
+  // SQLite serverless ortamlarda (Vercel vb.) database lock hatalarına ve 
+  // her deployment'ta veri kaybına yol açar. Production'a çıkmadan önce:
+  // 1. provider = "postgresql" olarak değiştirin
+  // 2. config dosyasına DATABASE_URL ekleyip Supabase/Neon vb. kullanın.
+}
+
+// ================= USER & AUTH =================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  image         String?
+  role          String    @default("student") // student, admin
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  totalXP       Int       @default(0)
+  level         Int       @default(1)
+  lastActiveAt  DateTime  @default(now())
+  onboardingCompleted Boolean @default(false)
+  goal          String?   // Onboarding'de seçilen sınav hedefi
+  targetExamDate DateTime? // Öğrenciye özel kişisel sınav tarihi
+  targetHours   Int?      // Günlük çalışma hedefi (saat)
+  streakFreezes Int       @default(0) // Kazanılan Seri Dondurucu hakkı
+  courageBonusActive Boolean @default(false) // Cesaret Primi (Zayıf alana çalışma ödülü) aktif mi
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  flashcardProgress UserFlashcardProgress[]
+  questionAnswers   UserQuestionAnswer[]
+  mockResults       UserMockExamResult[]
+  achievements      UserAchievement[]
+  studyPlans        StudyPlan[]
+  leaderboard       WeeklyLeaderboard[]
+}
+
+// ================= CORE CONTENT =================
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String   // "SPL Düzey 3", "YDS", "MASAK"
+  slug        String   @unique
+  description String?
+  aiMode      String   @default("general") // general, language, law, finance
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses     Course[]
+}
+
+model Course {
+  id             String      @id @default(cuid())
+  programId      String?
+  program        Program?    @relation(fields: [programId], references: [id], onDelete: SetNull)
+  name           String      // "Sermaye Piyasası Araçları 1"
+  slug           String      @unique // "sermaye-piyasasi-araclari-1"
+  order          Int         // 1-12 sıralama
+  description    String?
+  examDate       DateTime?   // Sınav tarihi (ileride User tablosuna taşınabilir)
+  userLevel      String      @default("beginner") // Global fallback
+  totalPages     Int         @default(0)
+  processedPages Int         @default(0)
+  pdfPath        String?     // Yüklenen PDF dosya yolu
+  geminiFileUri  String?     // Google Gemini File API referansı (ilk key)
+  geminiFileUris String?     // Tüm key'lerin fileUri'leri (JSON: {"0":"uri1","1":"uri2",...})
+  status         String      @default("not_started") // not_started, uploading, processing, ready
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  sections    Section[]
+  flashcards  Flashcard[]
+  questions   Question[]
+  levelTests  LevelTest[]
+  studyPlans  StudyPlan[]
+  mockResults UserMockExamResult[]
+  blueprint   ExamBlueprint?
+}
+
+model Section {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String   // "Bölüm 3: Hisse Senedi Türleri"
+  order       Int
+  pageStart   Int
+  pageEnd     Int
+  rawContent  String   // Orijinal PDF metni
+  summary     String?  // AI üretimi özet
+  notes       String?  // AI üretimi kapsamlı ders notu
+  importance  String?  // High, Medium, Low
+  topics      String?  // JSON array
+  verificationScore  Int?     // AI doğrulama skoru (0-100), sadece admin'e gösterilir
+  verificationIssues String?  // JSON: eksik konular, sorunlar, öneriler
+  module      String?  // Hangi sınav modülüne ait (örn: "Modül 1", "Modül 2")
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  questions   Question[]
+  flashcards  Flashcard[]
+
+  @@index([courseId])
+}
+
+model Flashcard {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionId   String?  // Hangi bölümden üretildi
+  section     Section? @relation(fields: [sectionId], references: [id])
+  front       String
+  back        String
+  difficulty  String   @default("medium") // easy, medium, hard
+  createdAt   DateTime @default(now())
+
+  userProgress UserFlashcardProgress[]
+
+  @@index([courseId])
+  @@index([sectionId])
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionId   String?
+  section     Section? @relation(fields: [sectionId], references: [id])
+  text        String
+  options     String   // JSON array of options
+  correct     String   // Correct answer
+  explanation String?
+  difficulty  String   @default("medium") // easy, medium, hard
+  module      String?  // Hangi sınav modülüne ait (Section'dan miras)
+  reported    Boolean  @default(false) // Kullanıcı tarafından hatalı olarak bildirildi
+  reportReason String? // Yanlış Şık, Müfredat Dışı, Kelime Hatası
+  reportComment String? // Kullanıcının hata açıklaması
+  aiAuditStatus String @default("pending") // pending, auto_fixed, rejected
+  createdAt   DateTime @default(now())
+
+  userAnswers UserQuestionAnswer[]
+
+  @@index([courseId])
+  @@index([sectionId])
+  @@index([module])
+}
+
+model LevelTest {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  score       Int      // 0-100
+  level       String   // beginner, intermediate, advanced
+  answers     String   // JSON - detaylı cevaplar
+  createdAt   DateTime @default(now())
+}
+
+model ExamBlueprint {
+  id          String   @id @default(cuid())
+  courseId    String   @unique
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  totalQuestions Int   // Toplam soru sayısı (örn: 50)
+  passingScore Int     // Geçme notu (örn: 60)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modules     ExamBlueprintModule[]
+}
+
+model ExamBlueprintModule {
+  id              String   @id @default(cuid())
+  blueprintId     String
+  blueprint       ExamBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+  moduleName      String   // Alt modül adı (Section'daki module alanı ile eşleşecek)
+  questionCount   Int      // Bu modülden kaç soru gelmesi gerektiği (örn: 15)
+  
+  @@unique([blueprintId, moduleName])
+}
+
+// ================= USER PROGRESS =================
+
+model StudyPlan {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId      String?  // E-28: Kullanıcı bazlı çalışma planı
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        String
+  task        String
+  type        String
+  duration    String
+  sectionIds  String
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([courseId])
+  @@index([userId])
+}
+
+model UserFlashcardProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcardId String
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  
+  mastered    Boolean   @default(false)
+  nextReview  DateTime  @default(now())
+  interval    Int       @default(1)
+  easeFactor  Float     @default(2.5)
+  reviewCount Int       @default(0)
+  
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, flashcardId])
+}
+
+model UserQuestionAnswer {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  isCorrect   Boolean
+  userAnswer  String
+  attemptCount Int    @default(1) // E-29: Kaçıncı deneme
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@unique([userId, questionId])
+}
+
+model UserMockExamResult {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  score       Int       // 0-100
+  correct     Int
+  wrong       Int
+  empty       Int
+  timeUsed    Int       // seconds
+  passed      Boolean
+  weakAreas   String    // JSON array of weak topics
+  
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([userId, courseId])
+}
+
+// ================= GAMIFICATION =================
+
+model UserAchievement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  key         String   // "first_question", "streak_7", "perfect_exam", "flashcard_master_100"
+  title       String   // "İlk Adım"
+  description String   // "İlk sorunuzu çözdünüz!"
+  icon        String   // Emoji: "🎯", "🔥", "🏆"
+  xpReward    Int      @default(0)
+  
+  earnedAt    DateTime @default(now())
+
+  @@unique([userId, key])
+}
+
+// ================= LEADERBOARD =================
+
+model WeeklyLeaderboard {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade) // E-30: Foreign key
+  weekKey     String   // "2026-W19" formatında
+  
+  questionsAnswered Int @default(0)
+  correctAnswers    Int @default(0)
+  flashcardsReviewed Int @default(0)
+  mockExamsTaken    Int @default(0)
+  studyMinutes      Int @default(0)
+  xpEarned          Int @default(0)
+
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, weekKey])
+  @@index([weekKey])
+}

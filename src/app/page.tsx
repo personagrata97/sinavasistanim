@@ -1,65 +1,150 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { BookOpen, ArrowRight, Shield, Brain, Scale, BarChart3, CreditCard, FileText, Flame, MessageSquare, Zap } from "lucide-react"
+import Link from "next/link"
+
+export default function LandingPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  const features = [
+    { icon: FileText, label: "Özet Ders Notları", desc: "PDF'lerinden üretilen sadeleştirilmiş anlatım" },
+    { icon: Brain, label: "Çalışma Kartları", desc: "Aralıklı tekrar yöntemiyle kalıcı öğrenme" },
+    { icon: BarChart3, label: "Soru Bankası", desc: "Sınav formatına birebir uygun binlerce soru" },
+    { icon: Scale, label: "Deneme Sınavları", desc: "Gerçek sınav süresi ve zorluğunda pratik" },
+    { icon: Zap, label: "Hızlı Tekrar", desc: "Sınavdan önce bakılacak kritik bilgiler" },
+    { icon: Flame, label: "Gelişim Takibi", desc: "Hangi konularda eksiğin olduğunu anında gör" },
+  ]
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-[#020617] text-white overflow-hidden relative">
+      {/* Background glows */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-20%] left-[15%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[200px]" />
+        <div className="absolute bottom-[-15%] right-[10%] w-[35%] h-[35%] rounded-full bg-slate-800/30 blur-[180px]" />
+      </div>
+
+      {/* Grid pattern */}
+      <div className="absolute inset-0 z-0 opacity-[0.015]" style={{
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+        backgroundSize: "80px 80px",
+      }} />
+
+      <div className="relative z-10">
+        {/* Navbar */}
+        <nav className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <BookOpen className="w-4.5 h-4.5 text-white" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-white/90">
+              Sınav Asistanım
+            </span>
+          </div>
+          <Link
+            href="/dashboard"
+            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 transition-colors text-sm font-semibold"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Çalışmaya Başla
+          </Link>
+        </nav>
+
+        {/* Hero */}
+        <div className="container mx-auto px-6 pt-16 pb-24 flex flex-col items-center text-center">
+          {mounted && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
+                <span className="text-white/95">
+                  Her Sınava
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                  Hazır Ol.
+                </span>
+              </h1>
+
+              <p className="text-base md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed mb-14">
+                Yapay zeka destekli ders notları, akıllı soru bankası ve kişiselleştirilmiş 
+                çalışma planı ile hedefine en kısa yoldan ulaş.
+              </p>
+            </motion.div>
+          )}
+
+          {/* Program Cards */}
+          {mounted && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="w-full max-w-3xl grid md:grid-cols-3 gap-4 mb-16"
+            >
+              {[
+                { slug: "spl-duzey-3", icon: Shield, name: "Sermaye Piyasası Faaliyetleri Düzey 3 Lisansı", desc: "SPL Lisanslama Sınavı", colorText: "text-indigo-400", colorBorder: "hover:border-indigo-500/30", colorCta: "text-indigo-400", ready: true },
+                { slug: "masak", icon: Scale, name: "MASAK Uyum Görevlisi Yetkilendirme Sınavı", desc: "Uyum Görevlisi Sınavı", colorText: "text-amber-400", colorBorder: "hover:border-amber-500/30", colorCta: "text-amber-400", ready: true },
+                { slug: "spl-bagimsiz-denetim", icon: Brain, name: "Bilgi Sistemleri Bağımsız Denetim Lisansı", desc: "SPL Bağımsız Denetim Sınavı", colorText: "text-emerald-400", colorBorder: "hover:border-emerald-500/30", colorCta: "text-emerald-400", ready: true },
+              ].map((prog, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 + i * 0.08 }}
+                >
+                  {prog.ready ? (
+                    <Link href={`/program/${prog.slug}`}>
+                      <div className={`group relative p-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] ${prog.colorBorder} transition-all cursor-pointer text-left`}>
+                        <prog.icon className={`w-6 h-6 ${prog.colorText} mb-4`} />
+                        <h3 className="text-lg font-bold mb-1">{prog.name}</h3>
+                        <p className="text-xs text-slate-500 mb-4">{prog.desc}</p>
+                        <div className={`flex items-center gap-1 text-xs ${prog.colorCta} font-semibold group-hover:gap-2 transition-all`}>
+                          Başla <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="relative p-6 rounded-2xl border border-white/[0.04] bg-white/[0.01] text-left opacity-50">
+                      <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-slate-800 text-[9px] font-bold text-slate-500 uppercase">Yakında</div>
+                      <prog.icon className="w-6 h-6 text-slate-600 mb-4" />
+                      <h3 className="text-lg font-bold mb-1 text-slate-400">{prog.name}</h3>
+                      <p className="text-xs text-slate-600">{prog.desc}</p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Features Grid */}
+          {mounted && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl w-full"
+            >
+              {features.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 + i * 0.06 }}
+                  className="flex flex-col items-center gap-2 p-5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.1] transition-colors"
+                >
+                  <item.icon className="w-5 h-5 text-slate-500" />
+                  <span className="text-sm font-medium text-white/80">{item.label}</span>
+                  <span className="text-[11px] text-slate-600">{item.desc}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+  )
 }

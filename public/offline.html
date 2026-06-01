@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Çevrimdışı — Sınav Asistanım</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #020617; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .container { text-align: center; max-width: 400px; }
+    .icon { width: 80px; height: 80px; border-radius: 20px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .icon svg { width: 40px; height: 40px; color: #818cf8; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+    p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .retry { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 12px; background: #4f46e5; color: white; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; }
+    .retry:hover { background: #4338ca; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414"></path></svg>
+    </div>
+    <h1>Çevrimdışısınız</h1>
+    <p>İnternet bağlantınız kesilmiş görünüyor. Bağlantınız geri geldiğinde tekrar deneyebilirsiniz.</p>
+    <button class="retry" onclick="window.location.reload()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      Tekrar Dene
+    </button>
+  </div>
+</body>
+</html>

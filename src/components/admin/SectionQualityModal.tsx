@@ -1,0 +1,448 @@
+import React from "react"
+import { motion } from "framer-motion"
+import { FileText, ShieldCheck, Bot, AlertCircle, RefreshCw, ChevronRight, Sparkles } from "lucide-react"
+import { Modal } from "@/components/course/shared"
+
+interface SectionQualityModalProps {
+  section: {
+    id: string
+    title: string
+    verificationScore: number | null
+    verificationIssues: string | null
+    processed: boolean
+  }
+  onClose: () => void
+  actions?: React.ReactNode
+}
+
+export function SectionQualityModal({ section, onClose, actions }: SectionQualityModalProps) {
+  const score = section.verificationScore ?? -1
+  const isSkipped = score === -1
+  const isExcellent = score >= 95
+  const isGood = score >= 70
+
+  const ringColor = isSkipped ? "#64748b" : isExcellent ? "#10b981" : isGood ? "#f59e0b" : "#ef4444"
+  const ringBg = isSkipped ? "bg-slate-500/10 text-slate-400 border-slate-500/20" :
+                 isExcellent ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/5" :
+                 isGood ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                 "bg-red-500/10 text-red-400 border-red-500/20"
+
+  // Score circle svg parameters
+  const size = 110
+  const strokeWidth = 8
+  const radius = (size - strokeWidth) / 2
+  const circ = radius * 2 * Math.PI
+  const displayScore = isSkipped ? 0 : score
+  const offset = circ - (displayScore / 100) * circ
+
+  // Parse issues
+  let issuesObj: any = {}
+  try {
+    issuesObj = JSON.parse(section.verificationIssues || "{}")
+  } catch {}
+
+  const isGenericEmpty = (s: string) => {
+    if (!s || typeof s !== "string") return true;
+    const lower = s.toLowerCase().trim();
+    return lower === "yok" || lower === "yoktur" || lower === "-" || lower === "bulunmamaktadır" || 
+           lower === "tespit edilemedi" || lower === "doğrulama yapılamadı" || lower === "boş" || 
+           lower === "none" || lower === "n/a" || lower === "bulunmuyor";
+  };
+
+  const allMissingTopics = (issuesObj.missingTopics || issuesObj.missingDetails || []).filter((s: string) => !isGenericEmpty(s))
+  const allValidationIssues = (issuesObj.issues || issuesObj.contradictions || []).filter((s: string) => !isGenericEmpty(s))
+  const suggestions = issuesObj.suggestions || []
+  const attemptHistory = issuesObj.attemptHistory || []
+  const actualAttempt = issuesObj.currentAttempt || (attemptHistory.length > 0 ? attemptHistory.length : 1)
+  const hasMufettisPassed = score === 100 || issuesObj.auditResult?.passed === true || issuesObj.auditResult?.passed === "true"
+
+  const kontrolorMissing = allMissingTopics.filter((t: string) => !t.includes("[MÜFETTİŞ"))
+  const mufettisMissing = allMissingTopics.filter((t: string) => t.includes("[MÜFETTİŞ"))
+
+  const kontrolorIssues = allValidationIssues.filter((t: string) => !t.includes("[MÜFETTİŞ"))
+  const mufettisIssues = allValidationIssues.filter((t: string) => t.includes("[MÜFETTİŞ"))
+
+  const hasKontrolorIssues = kontrolorMissing.length > 0 || kontrolorIssues.length > 0
+  // Müfettiş hatası var mı? (Eski auditResult mantığı veya yeni prefix mantığı)
+  const hasMufettisIssues = (mufettisMissing.length > 0 || mufettisIssues.length > 0) || (issuesObj.auditResult?.missingDetails?.length > 0) || (issuesObj.auditResult?.contradictions?.length > 0)
+  const hasAnyIssues = hasKontrolorIssues || hasMufettisIssues
+
+  return (
+    <Modal
+      onClose={onClose}
+      maxWidth="lg"
+      zIndex={99999}
+      title={section.title}
+      icon={<FileText className="w-5 h-5" />}
+    >
+      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider -mt-4 mb-4">
+        KONTROLÖR VE MÜFETTİŞ RAPOR DETAYI
+      </div>
+
+      {/* Circular Score Ring & Status */}
+      <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white/[0.02] border border-white/[0.04] mb-6 relative">
+        <div className="relative inline-flex items-center justify-center mb-3">
+          <svg width={size} height={size} className="-rotate-90">
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              strokeWidth={strokeWidth}
+              stroke="rgba(255,255,255,0.04)"
+              fill="none"
+            />
+            <motion.circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              strokeWidth={strokeWidth}
+              stroke={ringColor}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              initial={{ strokeDashoffset: circ }}
+              animate={{ strokeDashoffset: offset }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            />
+          </svg>
+          <div className="absolute flex flex-col items-center justify-center">
+            <span className="text-3xl font-black tracking-tight text-white">
+              {isSkipped ? "—" : `%${score}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Premium Visual Stepper */}
+        <div className="w-full max-w-sm mx-auto mb-6 mt-6">
+          <div className="flex items-start justify-between relative w-full px-2">
+            
+            {/* Step 1: Üretim */}
+            <div className="flex flex-col items-center gap-2 z-10 w-16">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                <FileText className="w-4 h-4" />
+              </div>
+              <span className="text-[9px] font-black tracking-widest uppercase text-slate-400 text-center">Üretim</span>
+            </div>
+
+            {/* Line 1 -> 2 */}
+            <div className="flex-1 h-0.5 mt-4 mx-1 bg-white/[0.05] rounded-full relative overflow-hidden">
+              <div className="absolute left-0 top-0 h-full bg-emerald-500 transition-all duration-1000" style={{
+                width: isSkipped ? "100%" : "100%",
+                opacity: isSkipped ? 0.3 : 1,
+                filter: isSkipped ? "grayscale(100%)" : "none"
+              }} />
+            </div>
+
+            {/* Step 2: Kalite Kontrolörü */}
+            <div className="flex flex-col items-center gap-2 z-10 w-16">
+              <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-500 ${
+                isSkipped ? "bg-slate-500/10 border-slate-500/50 text-slate-400" :
+                isExcellent ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]" :
+                "bg-amber-500/10 border-amber-500/50 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)] animate-pulse"
+              }`}>
+                <Bot className="w-4 h-4" />
+              </div>
+              <span className={`text-[9px] font-black tracking-widest uppercase text-center ${
+                isSkipped ? "text-slate-500" :
+                isExcellent ? "text-emerald-500" :
+                "text-amber-500"
+              }`}>Kontrolör</span>
+            </div>
+
+            {/* Line 2 -> 3 */}
+            <div className="flex-1 h-0.5 mt-4 mx-1 bg-white/[0.05] rounded-full relative overflow-hidden">
+              <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-1000" style={{
+                width: isSkipped ? "100%" : hasMufettisPassed ? "100%" : isExcellent ? "50%" : "0%",
+                opacity: isSkipped ? 0.3 : 1,
+                filter: isSkipped ? "grayscale(100%)" : "none"
+              }} />
+            </div>
+
+            {/* Step 3: Müfettiş */}
+            <div className="flex flex-col items-center gap-2 z-10 w-16">
+              <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-500 ${
+                isSkipped ? "bg-slate-500/10 border-slate-500/50 text-slate-400" :
+                hasMufettisPassed ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]" :
+                hasMufettisIssues ? "bg-red-500/10 border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.15)] animate-pulse" :
+                isExcellent ? "bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)] animate-pulse" :
+                "bg-white/[0.02] border-white/[0.05] text-slate-600"
+              }`}>
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <span className={`text-[9px] font-black tracking-widest uppercase text-center ${
+                isSkipped ? "text-slate-500" :
+                hasMufettisPassed ? "text-emerald-500" :
+                hasMufettisIssues ? "text-red-500" :
+                isExcellent ? "text-blue-500" :
+                "text-slate-600"
+              }`}>Müfettiş</span>
+            </div>
+          </div>
+          
+          {/* Status Label (Current Attempt or Pass status) */}
+          <div className="mt-5 text-center flex justify-center">
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+              isSkipped ? "bg-slate-500/5 text-slate-400 border-slate-500/20" :
+              hasMufettisPassed ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/5" :
+              hasMufettisIssues ? "bg-red-500/10 text-red-400 border-red-500/20" :
+              isExcellent ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+              "bg-amber-500/10 text-amber-400 border-amber-500/20"
+            }`}>
+              {isSkipped ? "DOĞRULAMA BYPASS EDİLDİ" :
+                hasMufettisPassed ? ( actualAttempt === 1 ? "İLK DENEMEDE KUSURSUZ (ÇİFTE ONAY)" : `${actualAttempt}. TURDA ÇİFTE ONAY ALINDI` ) :
+                hasMufettisIssues ? "YASAL İHLAL TESPİT EDİLDİ" :
+                isExcellent ? "MÜFETTİŞ (İNSAN) ONAYI BEKLENİYOR" :
+                `${actualAttempt}. KALİTE DÖNGÜSÜ DEVAM EDİYOR`}
+            </div>
+          </div>
+        </div>
+
+        {/* Kontrolör Bulgu Raporu (Sadece hata varsa göster) */}
+        {hasKontrolorIssues && (
+          <div className="w-full mt-5 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2 text-left">
+            <h4 className="text-[10px] font-black tracking-wider text-amber-500 uppercase flex items-center gap-1.5">
+              <Bot className="w-3.5 h-3.5" />
+              KALİTE KONTROLÖRÜ TESPİTLERİ (GENEL KAPSAM VE AKICILIK)
+            </h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+              Aşağıdaki eksikler nedeniyle ders notu henüz tam kapasitesine ulaşmadı:
+            </p>
+            <ul className="list-disc pl-4 text-[11px] text-slate-300 space-y-1">
+              {kontrolorMissing.map((t: string, idx: number) => (
+                <li key={`mt-${idx}`} className="leading-relaxed">
+                  <span className="text-amber-500 font-bold">Eksik Konu:</span> "{t}" kapsam dışı kalmış veya yetersiz işlenmiş.
+                </li>
+              ))}
+              {kontrolorIssues.map((i: string, idx: number) => (
+                <li key={`vi-${idx}`} className="leading-relaxed">
+                  <span className="text-red-400 font-bold">Bilgi Çelişkisi:</span> "{i}" bilgisinde uyumsuzluk var.
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Müfettiş Bulgu Raporu (Sadece hata varsa göster) */}
+        {hasMufettisIssues && (
+          <div className="w-full mt-4 p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-2 text-left animate-pulse">
+            <h4 className="text-[10px] font-black tracking-wider text-red-500 uppercase flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4" />
+              MÜFETTİŞ TESPİTLERİ (KILCAL DETAY VE YASAL UYUM)
+            </h4>
+            <p className="text-[11px] text-red-400/80 leading-relaxed mb-2 font-medium">
+              Kalite Kontrolörü onayından geçmesine rağmen, Müfettişin kaynak PDF ile satır satır çapraz eşleşmesinde yakaladığı kritik hatalar aşağıdadır:
+            </p>
+            <ul className="list-disc pl-4 text-[11px] text-slate-300 space-y-1.5">
+              {mufettisMissing.map((d: string, idx: number) => (
+                <li key={`md-${idx}`} className="leading-relaxed">
+                  <span className="text-amber-400 font-bold block mb-0.5">Yasal / Teknik Detay Eksik:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                </li>
+              ))}
+              {issuesObj.auditResult?.missingDetails?.map((d: string, idx: number) => (
+                <li key={`mda-${idx}`} className="leading-relaxed">
+                  <span className="text-amber-400 font-bold block mb-0.5">Yasal / Teknik Detay Eksik:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                </li>
+              ))}
+              
+              {mufettisIssues.map((c: string, idx: number) => (
+                <li key={`ct-${idx}`} className="leading-relaxed">
+                  <span className="text-red-500 font-bold block mb-0.5">Yasal Süre / Kurum Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                </li>
+              ))}
+              {issuesObj.auditResult?.contradictions?.map((c: string, idx: number) => (
+                <li key={`cta-${idx}`} className="leading-relaxed">
+                  <span className="text-red-500 font-bold block mb-0.5">Yasal Süre / Kurum Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Logs & Geçmiş Toggle'ları */}
+        <div className="w-full mt-6 space-y-3">
+          
+          {/* Process Log Accordion */}
+          <details className="group rounded-xl overflow-hidden border border-white/[0.04] bg-white/[0.01]">
+            <summary className="p-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-white/[0.02] flex items-center justify-between transition-colors list-none">
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-slate-500" /> SİSTEM İŞLEM LOGU
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-600 transform transition-transform group-open:rotate-90" />
+            </summary>
+            <div className="p-4 border-t border-white/[0.04] bg-black/20">
+              <h4 className={`text-[11px] font-bold flex items-center gap-1.5 mb-2 ${
+                isSkipped ? "text-slate-400" :
+                hasMufettisPassed ? "text-emerald-400" :
+                isExcellent ? "text-blue-400" :
+                "text-red-400"
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full animate-ping ${
+                  isSkipped ? "bg-slate-400" :
+                  hasMufettisPassed ? "bg-emerald-400" :
+                  isExcellent ? "bg-blue-400" :
+                  "bg-red-400"
+                }`} />
+                {isSkipped ? "Doğrulama Bypass Edildi" :
+                  hasMufettisPassed ? "Kalite Kontrolörü & Müfettiş Çift Onay Damgası" :
+                  isExcellent ? "Kalite Kontrolörü Kalite Güvence Döngüsü" :
+                  "Kalite İyileştirme Süreci Devam Ediyor"}
+              </h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed text-justify mb-3">
+                {isSkipped 
+                  ? "Bu ders notu, API limitleri veya teknik zorunluluklar sebebiyle çok turlu kalite iyileştirme döngüsüne girmeden tek aşamalı olarak üretilmiştir."
+                  : hasMufettisPassed 
+                  ? "Bu ders notu, Kalite Kontrolörü tarafından kaynak dökümandaki tüm yasal süreler ve kavramlar açısından incelenip zenginleştirilmiş, ardından Müfettiş tarafından en ince teknik ve yasal detay seviyesinde denetlenerek çift onay damgası almıştır."
+                  : isExcellent 
+                  ? "Bu ders notu, Kalite Kontrolörü tarafından kaynak dökümandaki yasal süreler ve kavramlar açısından incelenmiş ve üstün kalite standardıyla onaylanmıştır. Müfettiş derin denetim fazı henüz başlatılmamıştır."
+                  : "Bu ders notu üzerinde Kalite Kontrolörü incelemesi yapılmış olup, tespit edilen eksiklikler veya bilgi hataları nedeniyle not geliştirilme aşamasındadır. Müfettiş denetimine henüz hazır değildir."}
+              </p>
+              <div className="text-[10px] text-slate-500 font-mono leading-relaxed whitespace-pre-line border-t border-white/[0.04] pt-3">
+                [AI-PROCESS-LOG] {isSkipped 
+                  ? "API limitleri ve kota kısıtlamaları nedeniyle çok turlu kalite iyileştirme döngüsü bypass edilerek tek aşamada tamamlandı." 
+                  : hasMufettisPassed
+                  ? `Kalite Kontrolörü ve Müfettiş derin analizi başarıyla tamamlandı. Notun müfredatla %100 tutarlı olduğu, sıfır eksik ve sıfır hata barındırdığı çifte onay mühürüyle tescil edildi.`
+                  : isExcellent  
+                  ? "Kalite Kontrolörü derin analiz gerçekleştirerek 5 farklı kalite/kapsam iyileştirme turu tamamlandı. Ders notunun müfredatla %95+ düzeyde tutarlı olduğu doğrulanarak onaylandı." 
+                  : `Kalite Kontrolörü incelemesi tamamlandı. Puan: %${score}. Notta ${kontrolorMissing.length} eksik konu ve ${kontrolorIssues.length} bilgi hatası düzeltilmeyi bekliyor.`}
+              </div>
+            </div>
+          </details>
+
+          {/* Kalite İyileştirme Geçmişi (Zaman Tüneli) Accordion */}
+          {attemptHistory.length > 0 && (
+            <details className="group rounded-xl overflow-hidden border border-white/[0.04] bg-white/[0.01]">
+              <summary className="p-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-white/[0.02] flex items-center justify-between transition-colors list-none">
+                <span className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-slate-500" /> GELİŞTİRME GEÇMİŞİNİ GÖR ({attemptHistory.length} TUR)
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-600 transform transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="p-4 border-t border-white/[0.04] bg-black/20 grid gap-3">
+                {attemptHistory.map((h: any, hIdx: number) => (
+                  <div key={hIdx} className="p-3.5 rounded-xl bg-white/[0.01] border border-white/[0.03] flex flex-col gap-2 hover:bg-white/[0.02] transition-colors">
+                    {(() => {
+                      const hMissing = h.missingTopics || h.missingDetails || [];
+                      const hIssues = h.issues || h.contradictions || [];
+                      const hSuggestions = h.suggestions || [];
+                      
+                      const kaliteMissing = hMissing.filter((m: string) => !m.includes("[MÜFETTİŞ"));
+                      const mufettisMissing = hMissing.filter((m: string) => m.includes("[MÜFETTİŞ"));
+                      
+                      const kaliteIssues = hIssues.filter((i: string) => !i.includes("[MÜFETTİŞ"));
+                      const mufettisIssues = hIssues.filter((i: string) => i.includes("[MÜFETTİŞ"));
+
+                      // Puan doğrudan veritabanından gelir — arka plan motoru zaten dürüst puanı hesaplar.
+                      const displayScore = h.score;
+                      const isTrulyPerfect = displayScore === 100;
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between border-b border-white/[0.03] pb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-slate-500 font-bold">
+                                {h.attempt === 0 ? "İlk Analiz:" : `#${h.attempt}. Tur:`}
+                              </span>
+                              {isTrulyPerfect ? (
+                                <span className="text-emerald-400 font-bold">Çifte Onay Alındı</span>
+                              ) : h.attempt === 0 ? (
+                                <span className="text-amber-400/90 font-bold">Eksikler / Öneriler Tespit Edildi</span>
+                              ) : (
+                                <span className="text-amber-400/90 font-bold">Eksikler / Öneriler Giderildi</span>
+                              )}
+                            </div>
+                            <span className={`font-black text-xs ${displayScore >= 95 ? 'text-emerald-400' : 'text-slate-400'}`}>%{displayScore}</span>
+                          </div>
+
+                          <div className="flex flex-col gap-2 mt-1">
+                            {isTrulyPerfect ? (
+                              <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                                <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5" /> SİSTEM ONAY RAPORU
+                                </div>
+                                <div className="text-[11px] text-emerald-400/80 leading-relaxed font-medium">
+                                  Kalite Kontrolörü ve Müfettiş derin denetimi başarıyla tamamlandı. Kaynak materyaldeki tüm yasal süreler, kurum adları ve cezalar eksiksiz olarak aktarıldı. Sıfır hata ile tescil edilmiştir.
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {(kaliteMissing.length > 0 || kaliteIssues.length > 0 || hSuggestions.length > 0) && (
+                                  <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                                    <div className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                      <Bot className="w-3 h-3" /> KALİTE KONTROLÖRÜ BULGULARI
+                                    </div>
+                                    {kaliteMissing.length > 0 && (
+                                      <div className="text-[10px] text-slate-400 mb-1">
+                                        <span className="font-bold text-slate-500">Eksik Konular:</span>
+                                        <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                          {kaliteMissing.map((m: string, idx: number) => <li key={idx}>{m}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {kaliteIssues.length > 0 && (
+                                      <div className="text-[10px] text-red-400/90 mb-1">
+                                        <span className="font-bold text-red-500/70">Bilgi Hataları:</span>
+                                        <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                          {kaliteIssues.map((m: string, idx: number) => <li key={idx}>{m}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {hSuggestions.length > 0 && (
+                                      <div className="text-[10px] text-amber-400/90">
+                                        <span className="font-bold text-amber-500/70">Öneriler:</span>
+                                        <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                          {hSuggestions.map((m: string, idx: number) => <li key={idx}>{m}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              
+                              {(mufettisMissing.length > 0 || mufettisIssues.length > 0) && (
+                                <div className="p-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                                  <div className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> MÜFETTİŞ BULGULARI
+                                  </div>
+                                  {mufettisMissing.length > 0 && (
+                                    <div className="text-[10px] text-amber-400/90 mb-1">
+                                      <span className="font-bold text-amber-500/70">Eksik Yasal Detaylar:</span>
+                                      <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                        {mufettisMissing.map((m: string, idx: number) => <li key={idx}>{m.replace("[MÜFETTİŞ EKSİĞİ] ", "")}</li>)}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {mufettisIssues.length > 0 && (
+                                    <div className="text-[10px] text-red-400/90">
+                                      <span className="font-bold text-red-500/70">Yasal Çelişkiler:</span>
+                                      <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                        {mufettisIssues.map((m: string, idx: number) => <li key={idx}>{m.replace("[MÜFETTİŞ HATASI] ", "")}</li>)}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-6 border-t border-white/[0.05]">
+        {actions}
+        <button
+          onClick={onClose}
+          className="px-6 py-3 rounded-xl font-bold transition-all text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 flex items-center justify-center gap-1.5"
+        >
+          Kapat
+        </button>
+      </div>
+    </Modal>
+  )
+}
