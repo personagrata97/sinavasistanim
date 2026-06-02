@@ -731,11 +731,62 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
                   </div>
                 </>
               ) : course.totalPages > 0 ? (
-                <>
+                <div className="flex flex-col items-center w-full" onClick={(e) => e.stopPropagation()}>
                   <Upload className="w-5 h-5 text-emerald-400 mb-2" />
-                  <div className="text-sm font-bold">{course.totalPages} Sayfa</div>
-                  <div className="text-[11px] text-slate-500 font-medium mt-1">PDF Yüklü</div>
-                </>
+                  <div className="text-sm font-bold text-center">{course.totalPages} Sayfa</div>
+                  <div className="text-[11px] text-slate-500 font-medium mt-1 mb-3">PDF Hazır</div>
+                  <div className="flex flex-wrap gap-2 w-full justify-center">
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        toast.info("İşlem başlatılıyor...")
+                        triggerProcess()
+                      }}
+                      disabled={processLock}
+                      className={`py-1.5 px-3 rounded-md text-[10px] font-bold transition-all flex items-center gap-1 shadow-md no-print ${
+                        processLock
+                          ? "bg-slate-800/40 text-slate-500 border border-slate-850 cursor-not-allowed opacity-50"
+                          : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white shadow-emerald-950/50 cursor-pointer"
+                      }`}
+                    >
+                      <Play className="w-3 h-3 fill-current" /> {course.status === "completed" ? "Yeniden Tara" : "Devam Ettir"}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowUploadModal(true)
+                      }}
+                      className="py-1.5 px-3 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-md text-[10px] font-bold transition-all border border-white/10 hover:border-white/20 no-print flex items-center gap-1 shadow-sm"
+                    >
+                      <FileText className="w-3 h-3" /> PDF Değiştir
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setConfirmAction({
+                          title: "Sıfırdan Başlamak İstediğinize Emin Misiniz?",
+                          message: "Eski ders notları, sorular ve flashcardlar tamamen silinerek işleme sıfırdan başlatılacaktır. Bu işlem geri alınamaz!",
+                          onConfirm: async () => {
+                            try {
+                              const { reprocessCourse } = await import("@/lib/actions")
+                              const res = await reprocessCourse(slug)
+                              if (res.success) {
+                                toast.success("Eski veriler temizlendi! Sıfırdan işleme başlıyor...")
+                                triggerProcess()
+                                loadCourse()
+                              } else {
+                                toast.error("Hata: " + res.error)
+                              }
+                            } catch {}
+                          }
+                        })
+                      }}
+                      className="py-1.5 px-3 bg-red-500/5 hover:bg-red-500/15 text-red-400 hover:text-red-300 rounded-md text-[10px] font-bold transition-all border border-red-500/10 hover:border-red-500/30 no-print flex items-center gap-1 shadow-sm"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Sıfırdan İşle
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <Upload className="w-5 h-5 text-slate-500 mb-2" />
@@ -936,69 +987,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
       <AnimatePresence>
         {isAdmin && showUploadModal && (
           <Modal onClose={() => setShowUploadModal(false)}>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-indigo-400" /> PDF Yükle / Yeniden İşle</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              PDF dosyanızı yükleyin. Sistem otomatik olarak bölümlere ayırıp analiz edecek.
-            </p>
-            <label className="block w-full p-8 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/50 transition-colors cursor-pointer text-center">
-              {uploading ? (
-                <div className="flex items-center justify-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                  <span className="text-slate-400">Yükleniyor...</span>
-                </div>
-              ) : (
-                <>
-                  <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <div className="text-sm font-medium text-slate-400">PDF dosyanızı buraya sürükleyin</div>
-                  <div className="text-xs text-slate-600 mt-1">veya tıklayarak seçin</div>
-                </>
-              )}
-              <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
-            </label>
-            
-            {/* Yeniden İşle / Kaldığı Yerden Devam Et Butonları */}
-            {course.totalPages > 0 && course.pdfPath && (
-              <div className="space-y-2.5 mt-4">
-                <button
-                  onClick={() => {
-                    setShowUploadModal(false)
-                    triggerProcess()
-                  }}
-                  disabled={processLock}
-                  className={`w-full py-3 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-lg border ${
-                    processLock
-                      ? "bg-slate-800/40 text-slate-500 border-slate-850 cursor-not-allowed opacity-50"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/20 border-blue-500/20 cursor-pointer"
-                  }`}
-                >
-                  <Play className="w-4 h-4 fill-current" /> Kaldığı Yerden Devam Et
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setConfirmAction({
-                      title: "Sıfırdan Başlamak İstediğinize Emin Misiniz?",
-                      message: "Eski ders notları, sorular ve flashcardlar tamamen silinerek işleme sıfırdan başlatılacaktır. Bu işlem geri alınamaz!",
-                      onConfirm: async () => {
-                        const { reprocessCourse } = await import("@/lib/actions")
-                        const res = await reprocessCourse(slug)
-                        if (res.success) {
-                          toast.success("Eski veriler temizlendi! Sıfırdan işleme başlıyor...")
-                          setShowUploadModal(false)
-                          triggerProcess()
-                          loadCourse()
-                        } else {
-                          toast.error("Hata: " + res.error)
-                        }
-                      }
-                    })
-                  }}
-                  className="w-full py-3 rounded-xl bg-white/[0.02] hover:bg-red-500/5 text-slate-400 hover:text-red-400 border border-white/[0.08] hover:border-red-500/20 font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <RotateCcw className="w-4 h-4" /> Sıfırdan Tekrar İşle
-                </button>
-              </div>
-            )}
+            {/* Motor ve Sıfırlama butonları ana ekrana (ders kartına) taşındı. Upload modalı sadece PDF değişikliği için kullanılıyor. */}
           </Modal>
         )}
         

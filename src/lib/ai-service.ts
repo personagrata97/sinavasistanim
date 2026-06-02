@@ -761,14 +761,21 @@ Metni 3 veya 4 ana alt başlığa (Konuya) böl. Her bir alt başlık altında, 
 (Tüm bölümü içeren hap niteliğinde tablo veya madde listesi)
 
 ### 🧪 Kendini Test Et!
-(Bölüm sonu pratik test soruları)
+(Bölüm sonu pratik test soruları. Lütfen soruları ve şıkları düzenli bir şekilde yaz. **ASLA** A şıkkını soruyla aynı satıra yazma!
+Doğru Format:
+Soru 1: Soru metni burada...
+A) Seçenek 1
+B) Seçenek 2
+...gibi her şıkkı yeni satıra yaz.)
 
 ⛔ YAPMA LİSTESİ:
 - "Merhaba", "Bugün şunu işleyeceğiz" gibi meta-anlatım cümleleri KULLANMA.
+- **ASLA KENDİ KAFANDAN SINAV TAKTİĞİ VEYA YORUM UYDURMA!** "Sınavda doğrudan şu terimler sorulmaktadır", "Buraya çok dikkat edin", "Bu konu çok önemlidir" gibi HOCALIK TASLAYAN veya kaynak metinde (PDF'te) olmayan hiçbir yönlendirici/abartı cümleyi **ASLA KULLANMA.** Sadece ve sadece ham metindeki teknik bilgiyi çevir.
 - "PDF'in X. sayfasındaki" gibi kaynağa atıf YAPMA.
 - Başlıklara "(Eksiksiz)", "(varsa)" gibi parantez açıklamaları YAZMA.
 - "Bölüm İçeriği (Sayfa X-Y)" gibi jenerik başlıklar KULLANMA — gerçek konu başlığını yaz.
 - Notu YARIDA BIRAKMA.
+- **SÖZLÜK / KISALTMALAR İSTİSNASI:** Eğer mevcut bölüm bir "Kısaltmalar", "Tanımlar" veya "Sözlük" bölümüyse; **ASLA ÖZET ÇIKARMA!** Bütün kısaltmaları ve tanımları eksiksiz bir şekilde (hiçbirini atlamadan) listele. Bu tür sözlük bölümlerinin sonuna "🔑 Bölüm Özeti" veya "🧪 Kendini Test Et!" kısmı **KESİNLİKLE EKLEME**.
 - **ASLA İLİŞKİSİZ listeleri, kavramları veya kolonları aynı tabloda yan yana birleştirme.** Eğer bir tablonun kolonlarındaki satır sayıları veya eşleşmeleri birbirini tutmuyorsa ve sonlara biçimsiz çizgiler ('-') koymak zorunda kalacaksan, ya da tablonun yarısından fazlası boş (blank/empty) hücrelerden oluşacaksa tablo KULLANMA! Bunun yerine ana kavramları şık bir maddeli liste (Bullet List) yap, hemen altına ise istisnaları veya detayları içeren özel bir emoji kutusu (Callout Box - örn: '🚫', '💡', '⚠️') yerleştir. Her bilgi tam satırında ve uyuşmazlıksız dursun.
 - **ASLA sonradan eklenen konuları/eksikleri notun içinde yapay bir şekilde kalınlaştırma (bold yapma) veya işaretleme.** Entegre ettiğin tüm yeni/eksik bilgileri, mevzuatın diğer normal kısımları gibi doğal, akıcı ve organik bir dille paragrafların içine yedir. Sanki o bilgi en başından beri notun içindeymiş gibi düz ve doğal bir üslupla yaz.
 
@@ -906,6 +913,7 @@ KURALLAR:
 - 🪤 Ekstra Dikkat Edilmesi Gereken Hususlar Nedir?: Öğrenciyi yanıltmak için şıklara konulabilecek çok benzer kavramlar, yanlış süreler (örn: 10 iş günü yerine 15 takvim günü) veya ezber yanılgıları. Her kartın arkasında bu uyarı KESİNLİKLE olmalıdır.
 - Özellikle rakam, süre, oran ve istisnaları soran kartlar bol olsun — sınavda en çok bunlar sorulur
 - 🚫 KESİNLİKLE YASAK: "Kaynak metne göre", "Verilen metne göre", "Ders notlarında", "Metinde belirtilen", "Mevzuata göre" gibi meta-ifadeleri ASLA kullanma. Soruları doğrudan genel geçer akademik doğrular olarak sor.
+- **ASLA KENDİ KAFANDAN SINAV TAKTİĞİ VEYA YORUM UYDURMA!** "Sınavda doğrudan şu terimler sorulmaktadır", "Buraya çok dikkat edin", "Bu konu çok önemlidir" gibi HOCALIK TASLAYAN veya kaynak metinde (PDF'te) olmayan hiçbir yönlendirici/abartı cümleyi **ASLA KULLANMA.**
 - 🇹🇷 DİL KALİTESİ: Türkçe dil bilgisi, kelime dizilimi ve akıcılığa %100 uy. İngilizce'den doğrudan çevrilmiş gibi duran yapay veya ters yapılar KESİNLİKLE kullanma. KESİNLİKLE resmi ve ciddi bir akademik üslup kullan. Laubali ifadelerden ("kocaman yalan", vb.) kaçın.
 
 KAYNAK METİN: "${truncated.replace(/"/g, "'")}"
@@ -1051,6 +1059,7 @@ ${levelQuestionStyle[userLevel] || levelQuestionStyle.beginner}
 SORU KURALLARI:
 - 🚫 KESİNLİKLE YASAK: Belgenin yapısı, başlık numaraları veya içindekiler tablosuyla ilgili soru SORMA. Sadece gerçek finansal, teknik ve mevzuat bilgisini ölç.
 - 🚨 ÖLÜMCÜL HATA VE KESİN İPTAL SEBEBİ: Sorularda, şıklarda ve açıklamalarda "Kaynak metne göre", "Yukarıdaki bilgilere göre", "Ders notlarında", "Metinde belirtilen" GİBİ İFADELER ASLA VE ASLA KULLANILAMAZ! Soruyu sanki tek başına, bağımsız, profesyonel bir ÖSYM sınav sorusuymuş gibi doğrudan sor. Hiçbir şekilde öğrenciye "bu sorunun kaynağı bir metin/PDF" hissi YARATILMAYACAK.
+- **ASLA KENDİ KAFANDAN SINAV TAKTİĞİ VEYA YORUM UYDURMA!** "Sınavda doğrudan şu terimler sorulmaktadır", "Buraya çok dikkat edin", "Bu konu çok önemlidir" gibi HOCALIK TASLAYAN veya kaynak metinde (PDF'te) olmayan hiçbir yönlendirici/abartı cümleyi **ASLA KULLANMA.**
 - Doğru cevap şık harfi olsun (A, B, C, D veya E)
 - Resmi terimleri AYNEN kullan (pay, tahvil, izahname vb.)
 - Çeldirici şıklar gerçekçi olsun ve birbirine çok benzesin
@@ -1321,6 +1330,8 @@ Sadece JSON döndür:
   "issues": ["YANLIŞ rakam, tarih veya mevzuat hatası varsa yaz — yoksa boş array"],
   "suggestions": ["İyileştirme önerisi — yoksa boş array"]
 }
+
+TÜM TESPİTLERİNİ, CÜMLELERİNİ VE ÇIKTILARINI KESİNLİKLE TÜRKÇE DİLİNDE YAZMALISIN (İngilizce kısaltmaları analiz etsen bile raporu Türkçe ver).
 `
 
   const raw = await callAI(prompt, 1, fileUri, "verification")

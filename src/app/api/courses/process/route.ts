@@ -286,7 +286,9 @@ async function processInBackground(slug: string, course: any) {
     const alreadyDone = totalSections - savedSections.length
     console.log(`[BG] AI: ${savedSections.length} kalan (${alreadyDone}/${totalSections} bitti)`)
 
-    const MAX_RETRIES = 3
+    // KULLANICI KESİN TALİMATI: "Kaliteden taviz yok, pes etmeyecek, zaman önemli değil!"
+    // Limit 3'ten 15'e çıkarıldı.
+    const MAX_RETRIES = 15
     const aiMode = course.program?.aiMode || "general"
     let hasCriticalError = false
     let isPausedForApproval = false
@@ -703,6 +705,13 @@ async function processInBackground(slug: string, course: any) {
               if (vAttempt === 5 && !notes) throw notesErr
             }
           } // End of quality loop
+          
+          // KULLANICI KESİN EMRİ: "Sistem pes etmeyecek! Kalitesiz not kaydedilmeyecek!"
+          // Eğer 15 denemenin sonunda bile hala 85'in altında kaldıysa, KESİNLİKLE sisteme kaydetme.
+          if (currentScore < 85) {
+            console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: ${MAX_RETRIES} deneme yapıldı ama kalite %${currentScore}'da kaldı. Kötü not kaydetmemek için işlem REDDEDİLDİ ve durduruldu!`);
+            throw new Error(`KALİTE BARAJI AŞILAMADI! En iyi skor: %${currentScore}. Kusursuz not istendiği için kirli veri veritabanına kaydedilmedi.`);
+          }
           } // End of if (!notesAttemptSuccess)
 
           // ==================== DOĞRULANMIŞ NOT ÜZERİNDEN DERS ÖĞELERİNİ ÜRETME ====================
