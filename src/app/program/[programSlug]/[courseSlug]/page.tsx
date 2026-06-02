@@ -24,6 +24,7 @@ import DailyGoalsTab from "@/components/course/DailyGoalsTab"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { Modal } from "@/components/course/shared"
 import { Tabs } from "@/components/ui/shared"
+import { DatePicker } from "@/components/ui/DatePicker"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -941,12 +942,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
           <Modal onClose={() => setShowExamDateModal(false)}>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-indigo-400" /> Sınav Tarihi</h3>
             <p className="text-sm text-slate-400 mb-6">Bu ders için sınav tarihini girin. Program otomatik oluşturulacak.</p>
-            <input
-              type="date"
-              value={examDateInput}
-              onChange={e => setExamDateInput(e.target.value)}
-              className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white mb-4 focus:outline-none focus:border-blue-500"
-            />
+            <div className="mb-6">
+              <DatePicker 
+                value={examDateInput} 
+                onChange={(val) => setExamDateInput(val)} 
+                placeholder="Sınav tarihi seçin..." 
+              />
+            </div>
             <div className="flex gap-3">
               {activeExamDate && (
                 <button
