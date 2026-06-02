@@ -3,6 +3,8 @@ import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, fo
 import { tr } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { createPortal } from "react-dom"
+import { useRef, useEffect } from "react"
 
 interface DatePickerProps {
   value: string // YYYY-MM-DD
@@ -12,6 +14,8 @@ interface DatePickerProps {
 
 export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({})
   
   // Parse incoming value or default to today
   const selectedDate = value ? new Date(value) : null
@@ -30,13 +34,57 @@ export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }:
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
 
-  const onDateClick = (day: Date) => {
+  const onDateClick = (day: Date, e: React.MouseEvent) => {
+    e.stopPropagation()
     onChange(format(day, dateFormat))
     setIsOpen(false)
   }
 
+  // Handle outside click and dynamic positioning
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        const popup = document.getElementById('datepicker-portal-content')
+        if (popup && popup.contains(event.target as Node)) return;
+        setIsOpen(false)
+      }
+    }
+    
+    function updatePosition() {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect()
+            
+            const spaceBelow = window.innerHeight - rect.bottom
+            const popupHeight = 350
+            
+            const top = spaceBelow < popupHeight && rect.top > popupHeight
+                ? rect.top - popupHeight - 8 + window.scrollY
+                : rect.bottom + 8 + window.scrollY;
+                
+            setPopupStyle({
+                top: `${top}px`,
+                left: `${rect.left + window.scrollX}px`,
+                width: '320px' // w-80 equivalent
+            })
+        }
+    }
+
+    if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside)
+        window.addEventListener("scroll", updatePosition, true)
+        window.addEventListener("resize", updatePosition)
+        updatePosition()
+    }
+
+    return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+        window.removeEventListener("scroll", updatePosition, true)
+        window.removeEventListener("resize", updatePosition)
+    }
+  }, [isOpen])
+
   return (
-    <div className="relative">
+    <div className="relative w-full" ref={containerRef}>
       {/* Input / Trigger */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
@@ -50,20 +98,22 @@ export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }:
 
       {/* Popover */}
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && createPortal(
           <>
             {/* Backdrop to close when clicking outside */}
             <div 
-              className="fixed inset-0 z-40" 
+              className="fixed inset-0 z-[99998]" 
               onClick={() => setIsOpen(false)}
             />
             
             <motion.div
+              id="datepicker-portal-content"
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute left-0 mt-2 z-50 p-4 rounded-2xl bg-[#0f1523] border border-white/[0.08] shadow-2xl shadow-black/50 w-80 backdrop-blur-xl"
+              style={popupStyle}
+              className="absolute z-[99999] p-4 rounded-2xl bg-[#0f1523] border border-white/[0.08] shadow-2xl shadow-black/50 backdrop-blur-xl"
             >
               {/* Header */}
               <div className="flex justify-between items-center mb-4">
@@ -115,7 +165,8 @@ export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }:
                   return (
                     <button
                       key={day.toString()}
-                      onClick={() => onDateClick(day)}
+                      type="button"
+                      onClick={(e) => onDateClick(day, e)}
                       className={btnClass}
                     >
                       {format(day, "d")}
@@ -124,7 +175,8 @@ export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }:
                 })}
               </div>
             </motion.div>
-          </>
+          </>,
+          document.body
         )}
       </AnimatePresence>
     </div>
