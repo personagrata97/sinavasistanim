@@ -374,3 +374,71 @@ export function Tooltip({
     </span>
   )
 }
+
+// ==================== INPUT: Merkezi Form Elemanı ====================
+export function Input({
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  icon: Icon,
+  className = "",
+  disabled = false,
+}: {
+  type?: string
+  placeholder?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  icon?: LucideIcon
+  className?: string
+  disabled?: boolean
+}) {
+  return (
+    <div className="relative w-full">
+      {Icon && <Icon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />}
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 ${Icon ? "pl-9" : "pl-4"} pr-4 text-sm text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      />
+    </div>
+  )
+}
+
+// ==================== TABS: Merkezi Sekme Çubuğu ====================
+export function Tabs({
+  tabs,
+  activeTab,
+  onChange,
+  className = "",
+}: {
+  tabs: { id: string; label: string; icon?: LucideIcon }[]
+  activeTab: string
+  onChange: (id: string) => void
+  className?: string
+}) {
+  return (
+    <nav className={`flex gap-1 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent ${className}`} role="tablist">
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          onClick={() => onChange(tab.id)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+            activeTab === tab.id
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          {tab.icon && <tab.icon className="w-4 h-4" />}
+          <span className="hidden sm:inline">{tab.label}</span>
+          <span className="sm:hidden">{tab.label.length > 6 ? tab.label.substring(0, 5) + '.' : tab.label}</span>
+        </button>
+      ))}
+    </nav>
+  )
+}

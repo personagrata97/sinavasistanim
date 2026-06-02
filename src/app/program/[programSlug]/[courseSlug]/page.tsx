@@ -23,6 +23,7 @@ import CoverageTab from "@/components/course/CoverageTab"
 import DailyGoalsTab from "@/components/course/DailyGoalsTab"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { Modal } from "@/components/course/shared"
+import { Tabs } from "@/components/ui/shared"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -878,28 +879,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
           )}
         </div>
 
-        {/* Tab Navigation */}
-        <nav className="flex gap-1 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] mb-8 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" role="tablist" aria-label="Ders sekmeleri">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              data-tab={tab.id}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              aria-controls={`tabpanel-${tab.id}`}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.length > 6 ? tab.label.substring(0, 5) + '.' : tab.label}</span>
-            </button>
-          ))}
-        </nav>
+        {/* Tab Navigation (Merkezi Bileşen) */}
+        <Tabs 
+          tabs={TABS} 
+          activeTab={activeTab} 
+          onChange={setActiveTab} 
+          className="mb-8" 
+        />
 
         {/* Tab Content */}
         <AnimatePresence mode="wait">
