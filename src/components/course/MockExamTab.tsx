@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import {
   Rocket, Clock, ClipboardList, ClipboardSignature, Target, CheckCircle, XCircle,
   BarChart2, AlertTriangle, Lightbulb, RotateCcw, BookOpen, Brain, ArrowRight,
-  RefreshCw, Timer, TrendingUp
+  RefreshCw, Timer, TrendingUp, Lock
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -264,7 +264,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
         {(!processingStatus || processingStatus.status !== "completed" || allQuestions.length < QUESTION_COUNT) ? (
           <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
             <p className="text-sm text-red-400">
-              <strong className="block mb-1">🔒 Deneme Sınavı Kilitli</strong>
+              <strong className="flex items-center gap-2 mb-2 text-base"><Lock className="w-4 h-4" /> Deneme Sınavı Kilitli</strong>
               Gerçekçi bir sonuç alabilmeniz için dersin tüm bölümlerinin (%100) işlenmesi ve havuzda en az {QUESTION_COUNT} soru birikmiş olması gerekmektedir. 
               <br/><br/>
               Mevcut Durum: {processingStatus ? `%${processingStatus.progress} İşlendi` : 'Kontrol ediliyor...'} | Soru Havuzu: {allQuestions.length}/{QUESTION_COUNT}
