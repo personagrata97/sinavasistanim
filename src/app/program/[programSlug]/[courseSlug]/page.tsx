@@ -987,7 +987,25 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
       <AnimatePresence>
         {isAdmin && showUploadModal && (
           <Modal onClose={() => setShowUploadModal(false)}>
-            {/* Motor ve Sıfırlama butonları ana ekrana (ders kartına) taşındı. Upload modalı sadece PDF değişikliği için kullanılıyor. */}
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-indigo-400" /> PDF Yükle / Değiştir</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Ders için kaynak PDF dosyasını buradan yükleyebilir veya değiştirebilirsiniz.
+            </p>
+            <label className="block w-full p-8 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/50 transition-colors cursor-pointer text-center">
+              {uploading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                  <span className="text-slate-400">Yükleniyor...</span>
+                </div>
+              ) : (
+                <>
+                  <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <div className="text-sm font-medium text-slate-400">PDF dosyanızı buraya sürükleyin</div>
+                  <div className="text-xs text-slate-600 mt-1">veya tıklayarak seçin</div>
+                </>
+              )}
+              <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" disabled={uploading} />
+            </label>
           </Modal>
         )}
         
