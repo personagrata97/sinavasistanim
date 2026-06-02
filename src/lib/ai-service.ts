@@ -674,9 +674,10 @@ PDF'te gördüğün HİÇBİR görsel öğeyi atlama. Her biri sınavda sorulabi
    - Önemli bilgiler → **Emoji kutucukları** (⚠️, 💡, 📌, 🔑)
    - Listeler → **Madde işaretli liste**
 4. VURGULAR: Önemli kelimeleri **kalın**, terimleri *eğik* yap.
-5. Dolgu metinleri ATLA: genel giriş cümleleri, tarihsel arka plan, "bu bölümde şunları öğreneceğiz" tarzı metinler.
-6. Her kavramı sıfır bilgili birinin bile anlayacağı şekilde açıkla. Günlük hayattan gerçekçi ve somut örnekler ver ancak KESİNLİKLE resmi, ciddi ve akademik bir üslup kullan (örn: "kocaman bir yalan", "şunu unutma" gibi laubali tabirler YASAKTIR).
-7. Hedef: 10 sayfalık bir PDF bölümünün notu ~8 sayfa olmalı. Yoğun ama EKSİKSİZ.
+6. 🗑️ İÇİNDEKİLER VE ÖNSÖZ FİLTRESİ: Eğer metnin başında uzun bir "İçindekiler" (Table of Contents) tablosu, nokta nokta giden sayfa numarası listeleri veya genel Önsöz yazıları varsa, bu kısımları SIFIR BİLGİ kabul et ve TAMAMEN GÖRMEZDEN GEL. Asla sayfa numarası listelerinden not üretme! Sadece gerçek ders anlatımının, kavram tanımlarının ve asıl paragrafların başladığı satırdan itibaren not çıkar.
+7. Dolgu metinleri ATLA: genel giriş cümleleri, tarihsel arka plan, "bu bölümde şunları öğreneceğiz" tarzı metinler.
+8. Her kavramı sıfır bilgili birinin bile anlayacağı şekilde açıkla. Günlük hayattan gerçekçi ve somut örnekler ver ancak KESİNLİKLE resmi, ciddi ve akademik bir üslup kullan (örn: "kocaman bir yalan", "şunu unutma" gibi laubali tabirler YASAKTIR).
+9. Hedef: 10 sayfalık bir PDF bölümünün notu ~8 sayfa olmalı. Yoğun ama EKSİKSİZ.
 
 🔴 SAYFA BAZLI TARAMA TALİMATI (EN KRİTİK KURAL):
 PDF'in ${pageStart || '?'}. sayfasından ${pageEnd || '?'}. sayfasına kadar HER SAYFAYI TEK TEK TARA.
