@@ -939,7 +939,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
       {/* Exam Date Modal */}
       <AnimatePresence>
         {showExamDateModal && (
-          <Modal onClose={() => setShowExamDateModal(false)}>
+          <Modal onClose={() => setShowExamDateModal(false)} overflowVisible={true}>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-indigo-400" /> Sınav Tarihi</h3>
             <p className="text-sm text-slate-400 mb-6">Bu ders için sınav tarihini girin. Program otomatik oluşturulacak.</p>
             <div className="mb-6">

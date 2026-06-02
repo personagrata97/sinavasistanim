@@ -68,6 +68,7 @@ type ModalProps = {
   showClose?: boolean
   zIndex?: number
   className?: string
+  overflowVisible?: boolean
 }
 
 export function Modal({
@@ -78,7 +79,8 @@ export function Modal({
   icon,
   showClose = true,
   zIndex = 50,
-  className = ""
+  className = "",
+  overflowVisible = false
 }: ModalProps) {
   const maxWMap = {
     sm: "max-w-sm",
@@ -101,7 +103,7 @@ export function Modal({
         initial={{ scale: 0.95, opacity: 0, y: 15 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 15 }}
-        className={`w-full ${maxWMap[maxWidth]} p-6 rounded-3xl bg-[#060912]/80 border border-white/[0.08] shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden text-left backdrop-blur-md ${className}`}
+        className={`w-full ${maxWMap[maxWidth]} p-6 rounded-3xl bg-[#060912]/80 border border-white/[0.08] shadow-[0_0_50px_rgba(59,130,246,0.15)] relative ${overflowVisible ? '' : 'overflow-hidden'} text-left backdrop-blur-md ${className}`}
       >
         {/* Top Premium Gradient Accent Line */}
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" />
@@ -130,7 +132,7 @@ export function Modal({
           </button>
         )}
 
-        <div className="relative z-10 max-h-[70vh] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-white/10">
+        <div className={`relative z-10 ${overflowVisible ? '' : 'max-h-[70vh] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-white/10'}`}>
           {children}
         </div>
       </motion.div>
