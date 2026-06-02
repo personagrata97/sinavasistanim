@@ -927,7 +927,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
               {activeTab === "flashcards" && <FlashcardsTab slug={slug} courseName={course.name} />}
               {activeTab === "questions" && <QuestionsTab slug={slug} courseName={course.name} />}
               {activeTab === "coverage" && <CoverageTab slug={slug} />}
-              {activeTab === "mock_exam" && <MockExamTab slug={slug} programSlug={programSlug} courseName={course.name} pastExamResults={pastExamResults} onReloadCourse={loadCourse} />}
+              {activeTab === "mock_exam" && <MockExamTab slug={slug} programSlug={programSlug} courseName={course.name} pastExamResults={pastExamResults} onReloadCourse={loadCourse} processingStatus={processingStatus} />}
               {activeTab === "achievements" && <AchievementsTab />}
               {activeTab === "schedule" && <DailyGoalsTab course={course} slug={slug} />}
             </ErrorBoundary>

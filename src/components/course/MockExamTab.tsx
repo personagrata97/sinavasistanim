@@ -18,7 +18,7 @@ const ProgressChart = dynamic(() => import("@/components/ProgressChart"), { ssr:
 
 type ExamState = "setup" | "running" | "results"
 
-export default function MockExamTab({ slug, programSlug, courseName, pastExamResults, onReloadCourse }: { slug: string, programSlug: string, courseName?: string, pastExamResults?: any[], onReloadCourse?: () => void }) {
+export default function MockExamTab({ slug, programSlug, courseName, pastExamResults, onReloadCourse, processingStatus }: { slug: string, programSlug: string, courseName?: string, pastExamResults?: any[], onReloadCourse?: () => void, processingStatus?: any }) {
   const [examState, setExamState] = useState<ExamState>("setup")
   const [questions, setQuestions] = useState<any[]>([])
   const [allQuestions, setAllQuestions] = useState<any[]>([])
@@ -261,11 +261,13 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
           </ul>
         </div>
 
-        {allQuestions.length < Math.ceil(QUESTION_COUNT / 2) ? (
+        {(!processingStatus || processingStatus.status !== "completed" || allQuestions.length < QUESTION_COUNT) ? (
           <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
             <p className="text-sm text-red-400">
-              Henüz yeterli soru yok ({allQuestions.length}/{QUESTION_COUNT} soru mevcut). 
-              Deneme sınavı için en az {Math.ceil(QUESTION_COUNT / 2)} soru gereklidir. Bu dersin soruları yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol ediniz.
+              <strong className="block mb-1">🔒 Deneme Sınavı Kilitli</strong>
+              Gerçekçi bir sonuç alabilmeniz için dersin tüm bölümlerinin (%100) işlenmesi ve havuzda en az {QUESTION_COUNT} soru birikmiş olması gerekmektedir. 
+              <br/><br/>
+              Mevcut Durum: {processingStatus ? `%${processingStatus.progress} İşlendi` : 'Kontrol ediliyor...'} | Soru Havuzu: {allQuestions.length}/{QUESTION_COUNT}
             </p>
           </div>
         ) : (
