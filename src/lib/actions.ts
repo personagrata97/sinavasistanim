@@ -941,34 +941,26 @@ export async function getDailyGoals(slug: string) {
       where: { courseId: course.id }
     })
 
-    if (totalFlashcards === 0) {
-      // Henüz hiç flashcard yok - içerik bekleniyor
-      goals.push({
-        id: "daily_flashcards_waiting",
-        title: "Flashcardlar Hazırlanıyor",
-        desc: "Bu ders için henüz içerik oluşturulmadı. İçerik hazır olduğunda tekrar görevleri burada görünecek.",
-        type: "flashcards",
-        count: 0,
-        completed: false
-      })
-    } else if (dueFlashcards > 0) {
-      goals.push({
-        id: "daily_flashcards",
-        title: "Tekrar Zamanı",
-        desc: `Öğrenme eğrisini kırmak için ${dueFlashcards} adet kartı tekrar etmen gerekiyor.`,
-        type: "flashcards",
-        count: dueFlashcards,
-        completed: false
-      })
-    } else {
-      goals.push({
-        id: "daily_flashcards_done",
-        title: "Tekrarlar Tamam",
-        desc: "Bugün için tüm aralıklı tekrarlarını bitirdin. Harika!",
-        type: "flashcards",
-        count: 0,
-        completed: true
-      })
+    if (totalFlashcards > 0) {
+      if (dueFlashcards > 0) {
+        goals.push({
+          id: "daily_flashcards",
+          title: "Tekrar Zamanı",
+          desc: `Öğrenme eğrisini kırmak için ${dueFlashcards} adet kartı tekrar etmen gerekiyor.`,
+          type: "flashcards",
+          count: dueFlashcards,
+          completed: false
+        })
+      } else {
+        goals.push({
+          id: "daily_flashcards_done",
+          title: "Tekrarlar Tamam",
+          desc: "Bugün için tüm aralıklı tekrarlarını bitirdin. Harika!",
+          type: "flashcards",
+          count: 0,
+          completed: true
+        })
+      }
     }
 
     // 2. Reading Goal (Find first unread/unanswered section)
@@ -1790,7 +1782,7 @@ export async function updateUserExamDate(examDate: string | null) {
           id: session.user.id,
           name: session.user.name || "Kullanıcı",
           email: session.user.email || `${session.user.id}@temp.com`,
-          role: "admin",
+          role: "student",
         }
       })
     }
