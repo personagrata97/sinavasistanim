@@ -1531,26 +1531,13 @@ function OverviewTab({
       )}
 
       {course.sections.length === 0 && !isProcessing ? (
-        <div className="p-12 rounded-2xl border-2 border-dashed border-white/5 text-center">
-          {isAdmin ? (
-            <>
-              <Upload className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-slate-400 mb-2">Henüz İçerik Yok</h3>
-              <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Bu ders için başlamak üzere yukarıdaki "PDF Yükle" kartına tıklayarak ders notlarınızı yükleyin. 
-                Sistem otomatik olarak tüm materyalleri oluşturacak.
-              </p>
-            </>
-          ) : (
-            <>
-              <BookOpen className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-slate-400 mb-2">İçerik Hazırlanıyor</h3>
-              <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin.
-              </p>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={isAdmin ? Upload : BookOpen}
+          title={isAdmin ? "Henüz İçerik Yok" : "İçerik Hazırlanıyor"}
+          description={isAdmin ? 
+            "Bu ders için başlamak üzere yukarıdaki \"PDF Yükle\" kartına tıklayarak ders notlarınızı yükleyin. Sistem otomatik olarak tüm materyalleri oluşturacak." : 
+            "Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."}
+        />
       ) : course.sections.length > 0 ? (
         <>
           <h3 className="text-lg font-bold">Ders Konuları ({course.sections.length})</h3>
