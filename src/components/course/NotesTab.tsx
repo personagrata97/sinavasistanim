@@ -861,6 +861,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     }
   }
 
+  return (
     <section className="space-y-6" aria-label="Ders notları">
       {/* Live Processing Banner */}
       {processingStatus && course?.status === "processing" && (
