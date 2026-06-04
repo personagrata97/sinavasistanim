@@ -1298,8 +1298,23 @@ ${generatedNotes.substring(0, Math.max(30000, generatedNotes.length)).replace(/"
 
 🎯 DEĞERLENDİRME KRİTERLERİ:
 
+⚠️⚠️⚠️ DÜŞÜK İÇERİK TESPİTİ (ÖNCELİKLİ KURAL — İLK BUNU KONTROL ET!):
+Değerlendirmeye başlamadan ÖNCE kaynak metni analiz et ve aşağıdaki durumlardan biri geçerliyse İÇERİK YOĞUNLUĞUNU "DÜŞÜK" olarak işaretle:
+- Kaynak metin sadece bir İÇİNDEKİLER (Table of Contents) sayfası veya sayfa numarası listesiyse
+- Kaynak metin sadece bir ÖNSÖZ, GİRİŞ veya SUNUŞ yazısı olup somut ders kavramı, tanım, formül, süre, rakam İÇERMİYORSA
+- Kaynak metin sadece bir KAYNAKÇA / REFERANSLAR listesiyse
+- Kaynak metin yalnızca alt başlık isimleri/numaraları içerip bu başlıkların altlarında açıklayıcı paragraflar, tanımlar veya detaylar BULUNMUYORSA
+
+Eğer içerik yoğunluğu DÜŞÜK ise:
+→ Başlık adlarının ders notunda detaylı açıklanmamış olmasını KESİNLİKLE missingTopics veya issues olarak YAZMA.
+→ Kaynak metinde detayı/açıklaması olmayan bir başlığın notta da detaysız olması DOĞAL ve BEKLENEN bir durumdur.
+→ Bu tür bölümlere otomatik olarak 95-100 puan ver (ciddi bir bilgi hatası olmadıkça).
+→ suggestions alanına isteğe bağlı yapısal öneriler yazabilirsin ama bunlar puanı düşürmez.
+
+Bu kural SADECE yukarıdaki düşük içerikli bölümler için geçerlidir. Gerçek ders anlatımı, kavram tanımı, formül veya mevzuat detayı içeren bölümlerde HER ZAMANKİ GİBİ ACIMADAN DENETLE.
+
 PUAN KIRAN DURUMLAR (bunlar ciddi sorun):
-- Kaynak metinde geçen bir KONU/KAVRAM ders notunda hiç ele alınmamış (tamamen atlanmış)
+- Kaynak metinde DETAYLI OLARAK AÇIKLANMIŞ bir KONU/KAVRAM ders notunda hiç ele alınmamış (tamamen atlanmış)
 - Rakam, oran, süre, tarih, limit YANLIŞ yazılmış (örn: 5 yıl yerine 3 yıl)
 - Mevzuat adı veya madde numarası YANLIŞ
 - Tablo veya liste YARIDA kesilmiş
@@ -1311,6 +1326,7 @@ PUAN KIRMAYAN DURUMLAR (bunlar sorun DEĞİL):
 - İçeriğin farklı sırayla organize edilmesi ✅
 - Emoji, görsel zenginlik, mermaid diyagram kullanılması ✅
 - Kaynak metindeki dolgu cümlelerinin atlanması ✅
+- İçindekiler, önsöz veya kaynakça gibi düşük içerikli bölümlerde başlıkların detaylandırılmamış olması ✅
 
 PUANLAMA KURALLARI (TAVİZSİZ VE KESİN):
 - 100 PUAN: Eğer metinde hiçbir eksik konu (missingTopics) ve hiçbir bilgi hatası (issues) YOKSA tam 100 puan verilir. İyileştirme önerileri (suggestions) bulunması 100 puan vermene ENGEL DEĞİLDİR. Asıl olan bilginin doğruluğudur.
