@@ -1507,9 +1507,11 @@ function OverviewTab({
         />
       ) : course.sections.length > 0 ? (
         <>
-          <h3 className="text-lg font-bold">Ders Konuları ({course.sections.length})</h3>
+          <h3 className="text-lg font-bold">Ders Konuları ({course.sections.filter((s: any) => !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar")).length})</h3>
           <div className="space-y-3">
-            {course.sections.map((section: any, i: number) => {
+            {course.sections
+              .filter((section: any) => !section.title.toLowerCase().includes("kaynakça") && !section.title.toLowerCase().includes("kaynaklar"))
+              .map((section: any, i: number) => {
               // 🚀 GERÇEK ZAMANLI VERİ SENKRONİZASYONU (Ön bellek kilit koruması): 
               // Next.js Server Action Router Cache'i bypass etmek için veriyi doğrudan HTTP Polling API'den alıyoruz!
               const liveSec = processingStatus?.sections?.find((s: any) => s.id === section.id);

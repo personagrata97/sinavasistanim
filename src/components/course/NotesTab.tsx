@@ -368,7 +368,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     setExporting(true)
     try {
       const noteSections = sections
-        .filter((s: any) => s.notes && s.notes.length > 50)
+        .filter((s: any) => s.notes && s.notes.length > 50 && !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar"))
         .sort((a: any, b: any) => a.pageStart - b.pageStart)
 
       if (noteSections.length === 0) {
@@ -825,7 +825,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     )
   }
 
-  const noteSections = sections
+  const noteSections = sections.filter((s: any) => !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar"))
 
   const toggleExpand = (id: string) => {
     const next = new Set(expandedIds)
