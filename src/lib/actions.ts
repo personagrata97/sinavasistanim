@@ -18,6 +18,11 @@ async function requireAdmin() {
   }
   const session = await getSession()
   if (!session?.user?.id) return { error: "Oturum açmadınız", authorized: false }
+  
+  if ((session.user as any).role === "admin") {
+    return { authorized: true, userId: session.user.id }
+  }
+  
   const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } })
   if (!user || user.role !== "admin") return { error: "Bu işlem için admin yetkisi gereklidir", authorized: false }
   return { authorized: true, userId: session.user.id }

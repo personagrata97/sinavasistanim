@@ -1270,56 +1270,58 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       )}
 
       {/* Odak Modu (Zen Mode) Overlay */}
-      <AnimatePresence>
-        {isFocusMode && mounted && createPortal(
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 z-[99999] bg-[#020617] overflow-y-auto custom-scrollbar"
-          >
-            <div className="sticky top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex justify-between items-center shadow-2xl">
-              <div className="flex items-center gap-3 text-slate-300">
-                <BookOpen className="w-5 h-5 text-indigo-400" />
-                <h2 className="font-bold text-lg hidden sm:block text-slate-200">Odak Modu</h2>
-                <span className="text-sm font-medium px-3 py-1 bg-white/[0.03] rounded-md text-slate-400 border border-white/[0.05]">
-                  {course.name}
-                </span>
-              </div>
-              <button
-                onClick={() => setIsFocusMode(false)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-white/[0.05] hover:border-red-500/20 transition-all font-bold text-sm shadow-sm"
-              >
-                <Minimize className="w-4 h-4" /> Çıkış (ESC)
-              </button>
-            </div>
-            
-            <div className="max-w-[800px] mx-auto px-6 py-16 pb-32">
-              {noteSections.map((section: any, i: number) => (
-                <div key={section.id} className="mb-24">
-                  <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-8 border-b border-white/10 pb-6 leading-tight tracking-tight">
-                    {formatTitle(section.title, i, section.notes, section.module)}
-                  </h1>
-                  <div className="text-lg sm:text-xl text-slate-300 leading-loose tracking-wide font-serif markdown-notes focus-mode">
-                    {section.notes ? (
-                      <PremiumMarkdownRenderer 
-                        content={cleanMarkdown(section.notes, true)}
-                        renderTooltips={renderTooltips}
-                        courseId={course.id}
-                        sectionId={section.id}
-                      />
-                    ) : (
-                      <p className="text-slate-500 italic">Notlar hazırlanıyor...</p>
-                    )}
-                  </div>
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isFocusMode && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="fixed inset-0 z-[99999] bg-[#020617] overflow-y-auto custom-scrollbar"
+            >
+              <div className="sticky top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex justify-between items-center shadow-2xl">
+                <div className="flex items-center gap-3 text-slate-300">
+                  <BookOpen className="w-5 h-5 text-indigo-400" />
+                  <h2 className="font-bold text-lg hidden sm:block text-slate-200">Odak Modu</h2>
+                  <span className="text-sm font-medium px-3 py-1 bg-white/[0.03] rounded-md text-slate-400 border border-white/[0.05]">
+                    {course.name}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+                <button
+                  onClick={() => setIsFocusMode(false)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-white/[0.05] hover:border-red-500/20 transition-all font-bold text-sm shadow-sm"
+                >
+                  <Minimize className="w-4 h-4" /> Çıkış (ESC)
+                </button>
+              </div>
+              
+              <div className="max-w-[800px] mx-auto px-6 py-16 pb-32">
+                {noteSections.map((section: any, i: number) => (
+                  <div key={section.id} className="mb-24">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-8 border-b border-white/10 pb-6 leading-tight tracking-tight">
+                      {formatTitle(section.title, i, section.notes, section.module)}
+                    </h1>
+                    <div className="text-lg sm:text-xl text-slate-300 leading-loose tracking-wide font-serif markdown-notes focus-mode">
+                      {section.notes ? (
+                        <PremiumMarkdownRenderer 
+                          content={cleanMarkdown(section.notes, true)}
+                          renderTooltips={renderTooltips}
+                          courseId={course.id}
+                          sectionId={section.id}
+                        />
+                      ) : (
+                        <p className="text-slate-500 italic">Notlar hazırlanıyor...</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <style jsx global>{`
         .focus-mode p {
