@@ -25,6 +25,8 @@ function formatLog(level: LogLevel, message: string, context?: string, data?: Re
   }
 }
 
+import { prisma } from "./prisma"
+
 export const logger = {
   debug(message: string, context?: string, data?: Record<string, unknown>) {
     if (process.env.NODE_ENV === "development") {
@@ -40,7 +42,25 @@ export const logger = {
     console.warn(JSON.stringify(formatLog("warn", message, context, data)))
   },
 
-  error(message: string, error?: Error, context?: string, data?: Record<string, unknown>) {
+  async error(message: string, error?: Error, context?: string, data?: Record<string, unknown>) {
     console.error(JSON.stringify(formatLog("error", message, context, data, error)))
+    
+    // Veritabanına (SystemError) kaydet
+    try {
+      if (prisma) {
+        await prisma.systemError.create({
+          data: {
+            type: "server",
+            message: message.substring(0, 1000) || error?.message || "Unknown server error",
+            path: context, // context genelde path veya component ismi olarak kullanılıyor
+            stackTrace: error?.stack?.substring(0, 2000),
+            // userId eklenecekse data içine koyup buradan alabiliriz
+            userId: data?.userId as string | undefined,
+          }
+        })
+      }
+    } catch (dbError) {
+      console.error("Logger DB kaydı başarısız:", dbError)
+    }
   },
 }

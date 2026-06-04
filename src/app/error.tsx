@@ -11,7 +11,20 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
+    // 1. Terminale bas
     console.error("[APP_ERROR]", error)
+    
+    // 2. Veritabanına (SystemError tablosuna) gönder
+    fetch("/api/log/error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "client",
+        message: error.message,
+        stackTrace: error.stack,
+        path: window.location.pathname,
+      })
+    }).catch(e => console.error("Error logging failed", e))
   }, [error])
 
   return (
