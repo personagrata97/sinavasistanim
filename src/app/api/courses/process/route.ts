@@ -314,6 +314,8 @@ async function processInBackground(slug: string, course: any) {
         // Bölüm işleme ana try-catch bloğu
         try {
           console.log(`[BG] [${sIdx + 1 + alreadyDone}/${totalSections}] ${section.title} - İŞLEME BAŞLADI (Deneme #${sectionRetries + 1}/${maxSectionRetries})`)
+          
+          try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `🧠 ${sIdx + 1}/${totalSections}. Bölüm Notları Çıkarılıyor (Deneme #${sectionRetries + 1})` }) } }) } catch { }
 
           let notes = section.notes || ""
           let currentScore = section.verificationScore || 0
@@ -445,6 +447,7 @@ async function processInBackground(slug: string, course: any) {
               // Doğrulama yap - KÖKLÜ VE TUTARLI ÇÖZÜM: Sayfa çakışmalarını ve mükerrerlikleri tamamen engellemek için,
               // not doğrulama aşamasında PDF dosyasını (fileUri) pas geçerek SADECE veritabanındaki izole rawContent kullanılır!
               console.log(`[BG] Not Doğrulanıyor (Deneme #${vAttempt})...`)
+              try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `🛡️ ${sIdx + 1}/${totalSections}. Bölüm Kalite Kontrolörü Tarafından Denetleniyor (Tur #${vAttempt})` }) } }) } catch { }
               const { verifyNotesAgainstSource } = await import("@/lib/ai-service")
               const verification = await verifyNotesAgainstSource(
                 section.rawContent, notes, section.title,
@@ -520,6 +523,7 @@ async function processInBackground(slug: string, course: any) {
               // Eğer skor tam 100 ise Müfettiş Derin Denetimine geç
               if (verification.score === 100) {
                 console.log(`[BG] 🎉 KONTROLÖR ONAYI (%100) — 4. Katman: Müfettiş Derin Denetimi (Deep Audit) Başlıyor...`)
+                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `🕵️ ${sIdx + 1}/${totalSections}. Bölüme 3'lü Paketler Halinde Müfettiş Çapraz Denetimi Yapılıyor...` }) } }) } catch { }
 
                 // 1. Tüm konuları çıkar
                 const analysisForAudit = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
@@ -727,6 +731,7 @@ async function processInBackground(slug: string, course: any) {
           } else {
             console.log(`[BG] Onaylanmış not üzerinden Flashcard ve Sorular üretiliyor...`)
             const fullContent = `${section.rawContent}\n\n--- DERS NOTLARI (PDF görselleri dahil) ---\n${notes}`
+            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `🃏 ${sIdx + 1}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
 
             // Flashcard'ları üret (3 kere deneme şansı)
             for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
@@ -743,6 +748,7 @@ async function processInBackground(slug: string, course: any) {
             await new Promise(r => setTimeout(r, 15000))
 
             // Bölüm analizi yap
+            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `🔍 ${sIdx + 1}/${totalSections}. Bölüm Soru Üretimi İçin Bilişsel Rotalama Yapılıyor...` }) } }) } catch { }
             analysis = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
             await new Promise(r => setTimeout(r, 15000))
 
@@ -751,6 +757,7 @@ async function processInBackground(slug: string, course: any) {
             if (!requiresQuestions) {
               console.log(`[BG] 🧠 COGNITIVE ROUTING: Bu bölüm sadece terim/kısaltma içeriyor. Soru üretimi atlanıyor (requiresQuestions: false).`);
             } else {
+              try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `❓ ${sIdx + 1}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
               for (let qAttempt = 1; qAttempt <= 3; qAttempt++) {
                 try {
                   questions = await generateQuestions(fullContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)

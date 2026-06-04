@@ -73,6 +73,24 @@ export async function GET(req: NextRequest) {
       } else if (processedSections < totalSections) {
         phase = "analyzing"
         phaseLabel = `Modüller Hazırlanıyor: Kısım ${processedSections + 1}/${totalSections}`
+        
+        // Mevcut işlenen bölümü bul ve mikro-aşamasını al
+        const currentSection = await prisma.section.findFirst({
+          where: { courseId: course.id, processed: false },
+          orderBy: { order: "asc" },
+          select: { verificationIssues: true }
+        });
+        
+        if (currentSection?.verificationIssues) {
+          try {
+            const issues = typeof currentSection.verificationIssues === "string" 
+              ? JSON.parse(currentSection.verificationIssues) 
+              : currentSection.verificationIssues;
+            if (issues?.currentMicroPhase) {
+              phaseLabel = issues.currentMicroPhase;
+            }
+          } catch (e) { }
+        }
       } else {
         phase = "finalizing"
         phaseLabel = "Sistem İşlemi: Tamamlanıyor..."
