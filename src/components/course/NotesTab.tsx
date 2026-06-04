@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { createPortal } from "react-dom"
-import { BookOpen, ChevronRight, Download, FileText, RefreshCw, Loader2, Bookmark, BookmarkCheck, Highlighter, X, Palette, Sparkles, ShieldCheck, AlertCircle, Bot, Check } from "lucide-react"
+import { BookOpen, ChevronRight, Download, FileText, RefreshCw, Loader2, Bookmark, BookmarkCheck, Highlighter, X, Palette, Sparkles, ShieldCheck, AlertCircle, Bot, Check, Maximize, Minimize } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
@@ -244,6 +244,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     return renderTextWithTooltips(children, mergedDict)
   }, [mergedDict])
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [isFocusMode, setIsFocusMode] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [currentBookmark, setCurrentBookmark] = useState<{ sectionId: string } | null>(null)
   const [highlightPopup, setHighlightPopup] = useState<{ x: number; y: number; text: string; sectionId: string; sectionTitle: string } | null>(null)
@@ -256,6 +257,20 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
   const [mounted, setMounted] = useState(false)
   const [isRefining, setIsRefining] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFocusMode) {
+        setIsFocusMode(false)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isFocusMode])
 
   useEffect(() => {
     setMounted(true)
@@ -930,6 +945,14 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
           )}
 
           <button
+            onClick={() => setIsFocusMode(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-bold border border-slate-700 hover:border-slate-600 shadow-lg shadow-black/20 transition-all"
+            aria-label="Odak Modu"
+          >
+            <Maximize className="w-4 h-4 text-amber-400" /> Odak Modu
+          </button>
+
+          <button
             onClick={exportAllNotesAsPdf}
           disabled={exporting}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 transition-all disabled:opacity-50"
@@ -1252,6 +1275,99 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
         </AnimatePresence>,
         document.body
       )}
+
+      {/* Odak Modu (Zen Mode) Overlay */}
+      <AnimatePresence>
+        {isFocusMode && mounted && createPortal(
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed inset-0 z-[99999] bg-[#020617] overflow-y-auto custom-scrollbar"
+          >
+            <div className="sticky top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex justify-between items-center shadow-2xl">
+              <div className="flex items-center gap-3 text-slate-300">
+                <BookOpen className="w-5 h-5 text-indigo-400" />
+                <h2 className="font-bold text-lg hidden sm:block text-slate-200">Odak Modu</h2>
+                <span className="text-sm font-medium px-3 py-1 bg-white/[0.03] rounded-md text-slate-400 border border-white/[0.05]">
+                  {course.name}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsFocusMode(false)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-white/[0.05] hover:border-red-500/20 transition-all font-bold text-sm shadow-sm"
+              >
+                <Minimize className="w-4 h-4" /> Çıkış (ESC)
+              </button>
+            </div>
+            
+            <div className="max-w-[800px] mx-auto px-6 py-16 pb-32">
+              {noteSections.map((section: any, i: number) => (
+                <div key={section.id} className="mb-24">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-8 border-b border-white/10 pb-6 leading-tight tracking-tight">
+                    {formatTitle(section.title, i, section.notes, section.module)}
+                  </h1>
+                  <div className="text-lg sm:text-xl text-slate-300 leading-loose tracking-wide font-serif markdown-notes focus-mode">
+                    {section.notes ? (
+                      <PremiumMarkdownRenderer 
+                        content={cleanMarkdown(section.notes, true)}
+                        renderTooltips={renderTooltips}
+                        courseId={course.id}
+                        sectionId={section.id}
+                      />
+                    ) : (
+                      <p className="text-slate-500 italic">Notlar hazırlanıyor...</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>,
+          document.body
+        )}
+      </AnimatePresence>
+
+      <style jsx global>{`
+        .focus-mode p {
+          margin-bottom: 2em;
+          color: #cbd5e1; /* slate-300 */
+        }
+        .focus-mode h2 {
+          font-size: 1.75rem;
+          margin-top: 2.5em;
+          margin-bottom: 1em;
+          color: #f8fafc;
+          font-weight: 800;
+        }
+        .focus-mode h3 {
+          font-size: 1.35rem;
+          margin-top: 2em;
+          margin-bottom: 1em;
+          color: #e2e8f0;
+          font-weight: 700;
+        }
+        .focus-mode li {
+          margin-bottom: 0.75em;
+        }
+        .focus-mode table {
+          font-family: 'Inter', sans-serif;
+          font-size: 0.9em;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      `}</style>
     </section>
   )
 }
