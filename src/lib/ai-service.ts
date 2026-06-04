@@ -769,6 +769,7 @@ B) Seçenek 2
 ...gibi her şıkkı yeni satıra yaz.)
 
 ⛔ YAPMA LİSTESİ:
+- 🚫 **YAPAY ZEKA KLİŞELERİ KULLANMA:** "eksiksiz bir yol haritasıdır", "kapsamlı bir rehberdir", "eşsiz", "derinlemesine", "bu bölüm bize şunu sunar" gibi abartılı, pazarlamacı ve yapay zeka olduğunu bas bas bağıran süslü ifadeleri KESİNLİKLE YASAKLIYORUM.
 - "Merhaba", "Bugün şunu işleyeceğiz" gibi meta-anlatım cümleleri KULLANMA.
 - **ASLA KENDİ KAFANDAN SINAV TAKTİĞİ VEYA YORUM UYDURMA!** "Sınavda doğrudan şu terimler sorulmaktadır", "Buraya çok dikkat edin", "Bu konu çok önemlidir" gibi HOCALIK TASLAYAN veya kaynak metinde (PDF'te) olmayan hiçbir yönlendirici/abartı cümleyi **ASLA KULLANMA.** Sadece ve sadece ham metindeki teknik bilgiyi çevir.
 - "PDF'in X. sayfasındaki" gibi kaynağa atıf YAPMA.
