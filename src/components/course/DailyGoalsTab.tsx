@@ -37,6 +37,16 @@ function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: a
 
   if (loading) return <LoadingSkeleton />
 
+  if (course?.sections?.length === 0 || goals.length === 0) {
+    return (
+      <EmptyState
+        icon={Calendar}
+        title="İçerik Hazırlanıyor"
+        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
+      />
+    )
+  }
+
   if (!hasExamDate) {
     return (
       <EmptyState
@@ -51,16 +61,6 @@ function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: a
             Sınav Tarihi ve Planı Belirle
           </button>
         }
-      />
-    )
-  }
-
-  if (goals.length === 0) {
-    return (
-      <EmptyState
-        icon={Calendar}
-        title="İçerik Hazırlanıyor"
-        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
     )
   }
