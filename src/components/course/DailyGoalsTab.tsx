@@ -59,8 +59,8 @@ function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: a
     return (
       <EmptyState
         icon={Calendar}
-        title="Çalışma Planı Hazırlanıyor"
-        description="Ders içerikleri tamamen analiz edildikten sonra size özel günlük hedefler ve çalışma planınız burada yer alacaktır."
+        title="İçerik Hazırlanıyor"
+        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
     )
   }

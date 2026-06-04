@@ -148,11 +148,11 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
 
   if (cards.length === 0) {
     return (
-      <div className="p-12 rounded-2xl border-2 border-dashed border-white/5 text-center">
-        <Brain className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-        <h3 className="text-lg font-bold text-slate-400 mb-2">Flashcard Yok</h3>
-        <p className="text-sm text-slate-600">Bu dersin flashcardları yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol ediniz.</p>
-      </div>
+      <EmptyState
+        icon={Brain}
+        title="İçerik Hazırlanıyor"
+        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
+      />
     )
   }
 

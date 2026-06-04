@@ -820,7 +820,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       <EmptyState
         icon={BookOpen}
         title="İçerik Hazırlanıyor"
-        description="Bu dersin materyalleri yapay zeka asistanımız tarafından analiz ediliyor. Arka planda çalışma notlarınız ve sorularınız oluşturulurken lütfen daha sonra tekrar kontrol ediniz."
+        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
     )
   }
@@ -1114,8 +1114,8 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                   ) : (
                     <EmptyState
                       icon={BookOpen}
-                      title="Bölüm Notları Hazırlanıyor..."
-                      description="Yapay zeka asistanımız bu bölümün ders notlarını, flashcard'larını ve sorularını otonom olarak şu an hazırlıyor. İşlem tamamlandığında burası otomatik olarak güncellenecektir."
+                      title="İçerik Hazırlanıyor"
+                      description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
                     />
                   )}
                 </div>
