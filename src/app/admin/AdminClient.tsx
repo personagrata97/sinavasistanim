@@ -222,7 +222,7 @@ export default function AdminClient({ users, reportedQuestions, sectionsQuality,
                     <tr className="border-b border-white/10 text-slate-400 text-sm">
                       <th className="py-3 px-4 font-medium">Kullanıcı</th>
                       <th className="py-3 px-4 font-medium">Rol</th>
-                      <th className="py-3 px-4 font-medium">Seri (Streak)</th>
+                      <th className="py-3 px-4 font-medium">Çalışma Serisi</th>
                       <th className="py-3 px-4 font-medium">Çözülen Soru</th>
                       <th className="py-3 px-4 font-medium">Son Görülme</th>
                       <th className="py-3 px-4 font-medium">Kayıt Tarihi</th>

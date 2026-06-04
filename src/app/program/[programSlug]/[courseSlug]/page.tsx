@@ -1499,11 +1499,9 @@ function OverviewTab({
 
       {course.sections.length === 0 && !isProcessing ? (
         <EmptyState
-          icon={isAdmin ? Upload : Target}
-          title={isAdmin ? "Henüz İçerik Yok" : "İçerik Hazırlanıyor"}
-          description={isAdmin ? 
-            "Bu ders için başlamak üzere yukarıdaki \"PDF Yükle\" kartına tıklayarak ders notlarınızı yükleyin. Sistem otomatik olarak tüm materyalleri oluşturacak." : 
-            "Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."}
+          icon={Target}
+          title="İçerik Hazırlanıyor"
+          description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
         />
       ) : course.sections.length > 0 ? (
         <>
