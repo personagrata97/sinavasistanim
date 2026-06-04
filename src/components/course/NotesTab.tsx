@@ -370,13 +370,30 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
         // Şemalardaki uzun kutu metinlerini otomatik bölen yardımcı fonksiyon (Mermaid'in devasa kutu çizmesini engeller)
         function wrapLongText(str: string, maxLineLength = 15): string {
           if (str.includes('<br>') || str.includes('<br/>') || str.toLowerCase().includes('<br')) return str;
-          if (str.length <= maxLineLength || !str.includes(' ')) return str;
+          if (str.length <= maxLineLength) return str;
+          
+          // Boşluk yoksa karakter bazlı zorla böl (Türkçe uzun terimler için fallback)
+          if (!str.includes(' ')) {
+            const chunks: string[] = [];
+            for (let i = 0; i < str.length; i += maxLineLength) {
+              chunks.push(str.substring(i, i + maxLineLength));
+            }
+            return chunks.join('<br>');
+          }
           
           const words = str.split(' ');
           const lines: string[] = [];
           let currentLine = '';
           
           words.forEach(word => {
+            // Tek kelime bile maxLineLength'ten uzunsa onu da böl
+            if (word.length > maxLineLength) {
+              if (currentLine) { lines.push(currentLine); currentLine = ''; }
+              for (let i = 0; i < word.length; i += maxLineLength) {
+                lines.push(word.substring(i, i + maxLineLength));
+              }
+              return;
+            }
             if ((currentLine + ' ' + word).trim().length <= maxLineLength) {
               currentLine = (currentLine + ' ' + word).trim();
             } else {
@@ -621,6 +638,11 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       margin: 15px auto !important;
       border-collapse: collapse !important;
     }
+    .print-table td, .print-table th {
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+      max-width: 250px !important;
+    }
 
     table { page-break-inside: auto; }
     tr { page-break-inside: avoid; }
@@ -649,9 +671,12 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     .mermaid-wrap svg {
       display: block !important;
       margin: 0 auto !important;
-      /* Çok uzun dikey şemaların (örn: El Koyma İşlemi) sayfadan taşıp 2'ye bölünmesini KESİN engeller */
-      max-height: 800px !important; 
+      /* Responsive ölçekleme: şema sayfadan taşmaz, otomatik küçülür */
+      width: 100% !important;
+      max-width: 100% !important;
       height: auto !important;
+      /* viewBox korunduğu sürece SVG kendi kendini ölçekler */
+      overflow: visible !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }

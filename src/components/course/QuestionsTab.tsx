@@ -50,13 +50,21 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
   const exportQuestionsAsPdf = () => {
     setExporting(true)
     try {
+      // Basit Markdown→HTML dönüşümü
+      function mdInline(text: string): string {
+        return (text || '')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/`(.+?)`/g, '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:10px;color:#be185d;">$1</code>')
+      }
+
       const qHtml = filteredQuestions.map((q, i) => `
         <div class="question-block" style="break-inside: avoid; page-break-inside: avoid;">
-          <h3>${i + 1}. ${q.text}</h3>
+          <h3>${i + 1}. ${mdInline(q.text)}</h3>
           <div class="options-container">
             ${q.options.map((opt: string, oi: number) => `
               <div class="option">
-                <strong>${String.fromCharCode(65 + oi)})</strong> ${opt}
+                <strong>${String.fromCharCode(65 + oi)})</strong> ${mdInline(opt)}
               </div>
             `).join('')}
           </div>
@@ -98,7 +106,7 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
           .question-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12pt; padding: 10pt; border: 1pt solid #e2e8f0; border-radius: 6pt; background: white; }
           .question-block h3 { font-size:11pt; margin-bottom:8pt; font-weight:700; color: #1e293b; line-height: 1.4; }
           .options-container { margin-left: 4pt; }
-          .option { break-inside: avoid; page-break-inside: avoid; margin-bottom:4pt; font-size:10pt; padding: 4pt 8pt; border-radius: 4pt; background: #f8fafc; border: 1pt solid #e2e8f0; color: #334155; }
+          .option { break-inside: avoid; page-break-inside: avoid; margin-bottom:4pt; font-size:10pt; padding: 4pt 8pt; border-radius: 4pt; background: #f8fafc; border: 1pt solid #e2e8f0; color: #334155; word-break: break-word; overflow-wrap: break-word; }
           .option strong { color: #3b82f6; margin-right: 4pt; font-size: 10.5pt; }
           .answers-section { page-break-before: always; padding-top: 15pt; }
           .answers-title { text-align:center; font-size:16pt; margin-bottom:15pt; padding-bottom:10pt; border-bottom:1pt solid #e2e8f0; font-weight: 800; }

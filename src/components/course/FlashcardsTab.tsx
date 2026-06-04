@@ -9,19 +9,8 @@ import { toast } from "sonner"
 import { EmptyState, LoadingSkeleton, ConfettiEffect, formatTitle, SplitNotesLayout, CustomSelect } from "./shared"
 import rehypeRaw from "rehype-raw"
 
-const PDF_SHARED_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-  body { font-family: 'Inter', sans-serif; color: #0f172a; padding: 40px; max-width: 800px; margin: 0 auto; background: #f8fafc; }
-  .print-bar { position: fixed; top:0; left:0; right:0; background: linear-gradient(135deg, #1e3a5f, #1e40af); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 9999; }
-  .print-bar span { color: white; font-size: 14px; font-weight: 600; }
-  .print-btn { background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border: none; padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-  body { padding-top: 56px; }
-  @media print { .print-bar { display: none; } body { padding-top: 0; } }
-  .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 85vh; page-break-after: always; text-align: center; }
-  .cover-badge { font-size:12px; letter-spacing:4px; color:#3b82f6; margin-bottom:16px; font-weight:700; text-transform: uppercase; }
-  .cover h1 { font-size:36px; margin-bottom:12px; color: #0f172a; font-weight: 900; }
-  .cover p { color:#64748b; font-size:14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
-`
+
+
 
 export default
 function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string }) {
@@ -48,10 +37,22 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
   const exportFlashcardsAsPdf = () => {
     setExporting(true)
     try {
+      // Basit Markdown→HTML dönüşümü (flashcard cevaplarındaki bold, liste, emoji düzgün görünsün)
+      function mdToHtml(text: string): string {
+        return (text || '')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/`(.+?)`/g, '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:11px;color:#be185d;">$1</code>')
+          .replace(/^[-•]\s(.+)/gm, '<div style="display:flex;gap:4px;margin:2px 0 2px 8px;"><span style="color:#3b82f6;">▸</span><span>$1</span></div>')
+          .replace(/^(\d+)\.\s(.+)/gm, '<div style="display:flex;gap:4px;margin:2px 0 2px 8px;"><span style="color:#3b82f6;font-weight:700;">$1.</span><span>$2</span></div>')
+          .replace(/\n\n/g, '<div style="height:6px;"></div>')
+          .replace(/\n/g, '<br/>')
+      }
+
       const rowsHtml = topicFilteredCards.map((c, i) => `
         <tr style="break-inside: avoid; page-break-inside: avoid;">
-          <td class="td-front">${c.front}</td>
-          <td class="td-back">${c.back}</td>
+          <td class="td-front">${mdToHtml(c.front)}</td>
+          <td class="td-back">${mdToHtml(c.back)}</td>
         </tr>
       `).join('')
 
@@ -61,13 +62,30 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
         <meta charset="UTF-8">
         <title>Flashcards (Çalışma Kartları)</title>
         <style>
-          ${PDF_SHARED_CSS}
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body { font-family: 'Inter', sans-serif; color: #0f172a; padding: 40px; max-width: 800px; margin: 0 auto; background: #f8fafc; padding-top: 56px; }
+          .print-bar { position: fixed; top:0; left:0; right:0; background: linear-gradient(135deg, #1e3a5f, #1e40af); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+          .print-bar span { color: white; font-size: 14px; font-weight: 600; }
+          .print-btn { background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border: none; padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+          .print-btn:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4); }
+          .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 85vh; page-break-after: always; text-align: center; border-left: 12px solid #3b82f6; }
+          .cover-badge { font-size:12px; letter-spacing:4px; color:#3b82f6; margin-bottom:16px; font-weight:700; text-transform: uppercase; }
+          .cover h1 { font-size:36px; margin-bottom:12px; color: #0f172a; font-weight: 900; max-width: 80%; }
+          .cover p { color:#64748b; font-size:14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
           table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-size:12px; background: white; }
           th { background:#f1f5f9; padding:10px 12px; text-align:left; color:#475569; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; }
-          td { padding:10px 12px; border-bottom:1px solid #e2e8f0; line-height: 1.4; }
+          td { padding:10px 12px; border-bottom:1px solid #e2e8f0; line-height: 1.6; word-break: break-word; overflow-wrap: break-word; }
           tr:last-child td { border-bottom: none; }
           tr:nth-child(even) td { background: #f8fafc; }
           .td-front { font-weight: 700; color: #0f172a; width: 35%; border-right: 1px dashed #cbd5e1; }
+          .td-back { color: #334155; }
+          @media print {
+            body { padding: 0; background: white; max-width: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print, .print-bar { display: none !important; }
+            @page { size: A4; margin: 18mm 15mm 15mm 15mm; }
+            @page :first { margin: 0; }
+            .cover { min-height: 100vh; border: none; border-left: 12px solid #3b82f6; margin: 0; border-radius: 0; }
+          }
         </style>
       </head>
       <body>
