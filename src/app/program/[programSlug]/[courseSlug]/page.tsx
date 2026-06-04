@@ -1532,7 +1532,7 @@ function OverviewTab({
 
       {course.sections.length === 0 && !isProcessing ? (
         <EmptyState
-          icon={isAdmin ? Upload : BookOpen}
+          icon={isAdmin ? Upload : Target}
           title={isAdmin ? "Henüz İçerik Yok" : "İçerik Hazırlanıyor"}
           description={isAdmin ? 
             "Bu ders için başlamak üzere yukarıdaki \"PDF Yükle\" kartına tıklayarak ders notlarınızı yükleyin. Sistem otomatik olarak tüm materyalleri oluşturacak." : 

@@ -272,7 +272,7 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
   if (questions.length === 0) {
     return (
       <EmptyState
-        icon={Brain}
+        icon={HelpCircle}
         title="İçerik Hazırlanıyor"
         description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
