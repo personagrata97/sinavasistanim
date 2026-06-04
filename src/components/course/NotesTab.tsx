@@ -1084,7 +1084,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                   <div className="mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
                     <div className="flex items-center gap-2 mb-2">
                       <Highlighter className="w-3.5 h-3.5 text-yellow-400" />
-                      <span className="text-xs font-bold text-slate-400">İşaretlerim ({sectionHighlights[section.id]?.length})</span>
+                      <span className="text-xs font-bold text-slate-400">Özet Panom ({sectionHighlights[section.id]?.length})</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {sectionHighlights[section.id]?.map(hl => (
@@ -1145,7 +1145,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
           }}
         >
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-bold text-slate-300">Renkli İşaretle & Not Ekle</span>
+            <span className="text-xs font-bold text-slate-300">Özet Panosuna İğnele</span>
             <textarea 
               value={highlightNote}
               onChange={(e) => setHighlightNote(e.target.value)}
@@ -1154,10 +1154,10 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
             />
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-white/5">
-            <span className="text-[10px] text-slate-400">Renk seçerek kaydet:</span>
+            <span className="text-[10px] text-slate-400">Kategori seçerek kaydet:</span>
             <div className="flex items-center gap-1">
               {(["yellow", "green", "red", "blue"] as const).map(color => (
-                <Tooltip key={color} content={color === "yellow" ? "Sarı" : color === "green" ? "Yeşil" : color === "red" ? "Kırmızı" : "Mavi"}>
+                <Tooltip key={color} content={color === "yellow" ? "Kritik Kavram" : color === "green" ? "Sınavda Çıkabilir" : color === "red" ? "Önemli Uyarı" : "Hatırlatma"}>
                   <button
                     onClick={() => doHighlight(color)}
                     className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-125 ${
