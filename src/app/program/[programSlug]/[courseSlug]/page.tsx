@@ -613,7 +613,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
               {course.status === "processing" ? (
                 <>
                   <div className="flex items-center gap-2 mb-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                    {(() => {
+                      const label = processingStatus?.phaseLabel || "";
+                      if (label.includes("Notları Çıkarılıyor")) return <Brain className="w-4 h-4 animate-pulse text-purple-400" />;
+                      if (label.includes("Kontrolör")) return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
+                      if (label.includes("Müfettiş")) return <Search className="w-4 h-4 text-amber-400" />;
+                      if (label.includes("Flashcard")) return <Sparkles className="w-4 h-4 text-pink-400" />;
+                      if (label.includes("Rotalama")) return <RefreshCw className="w-4 h-4 text-sky-400 animate-spin" />;
+                      if (label.includes("Soru Havuzu")) return <HelpCircle className="w-4 h-4 text-indigo-400" />;
+                      return <Loader2 className="w-4 h-4 animate-spin text-blue-400" />;
+                    })()}
                     <span className="text-xs font-bold text-blue-300">İşleniyor</span>
                   </div>
                   <div className="text-[11px] text-slate-400 mb-1">{processingStatus?.phaseLabel || "Hazırlanıyor..."}</div>
@@ -1505,7 +1514,6 @@ function OverviewTab({
         />
       ) : course.sections.length > 0 ? (
         <>
-          <h3 className="text-lg font-bold">Ders Konuları ({course.sections.filter((s: any) => !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar")).length})</h3>
           <div className="space-y-3">
             {course.sections
               .filter((section: any) => !section.title.toLowerCase().includes("kaynakça") && !section.title.toLowerCase().includes("kaynaklar"))

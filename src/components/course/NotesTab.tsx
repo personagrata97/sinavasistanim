@@ -866,7 +866,6 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       {/* Header Stats + PDF Export */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-400">{noteSections.length} bölüm ders notu</span>
           {currentBookmark && (
             <button
               onClick={() => {
