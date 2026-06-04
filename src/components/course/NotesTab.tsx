@@ -269,7 +269,17 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       }
     }
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    
+    if (isFocusMode) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = "unset"
+    }
   }, [isFocusMode])
 
   useEffect(() => {
