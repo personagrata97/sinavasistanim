@@ -104,15 +104,15 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
           .cover p { color:#64748b; font-size:14px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
           .questions { padding: 20px; }
           .question-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12pt; padding: 10pt; border: 1pt solid #e2e8f0; border-radius: 6pt; background: white; }
-          .question-block h3 { font-size:11pt; margin-bottom:8pt; font-weight:700; color: #1e293b; line-height: 1.4; }
+          .question-block h3 { font-size:12pt; margin-bottom:8pt; font-weight:700; color: #1e293b; line-height: 1.4; }
           .options-container { margin-left: 4pt; }
-          .option { break-inside: avoid; page-break-inside: avoid; margin-bottom:4pt; font-size:10pt; padding: 4pt 8pt; border-radius: 4pt; background: #f8fafc; border: 1pt solid #e2e8f0; color: #334155; word-break: break-word; overflow-wrap: break-word; }
-          .option strong { color: #3b82f6; margin-right: 4pt; font-size: 10.5pt; }
+          .option { break-inside: avoid; page-break-inside: avoid; margin-bottom:4pt; font-size:11pt; padding: 4pt 8pt; border-radius: 4pt; background: #f8fafc; border: 1pt solid #e2e8f0; color: #334155; word-break: break-word; overflow-wrap: break-word; }
+          .option strong { color: #3b82f6; margin-right: 4pt; font-size: 11pt; }
           .answers-section { page-break-before: always; padding-top: 15pt; }
           .answers-title { text-align:center; font-size:16pt; margin-bottom:15pt; padding-bottom:10pt; border-bottom:1pt solid #e2e8f0; font-weight: 800; }
           .answer-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 10pt; padding:10pt 12pt; background:#f0fdf4; border-radius:6pt; border:1pt solid #bbf7d0; }
-          .answer-block h4 { font-size:11pt; margin-bottom:6pt; color:#166534; font-weight: 700; }
-          .answer-block p { font-size:10pt; color:#15803d; line-height:1.4; }
+          .answer-block h4 { font-size:12pt; margin-bottom:6pt; color:#166534; font-weight: 700; }
+          .answer-block p { font-size:11pt; color:#15803d; line-height:1.5; }
           .print-bar {
             position: fixed; top:0; left:0; right:0;
             background: linear-gradient(135deg, #1e3a5f, #1e40af);
