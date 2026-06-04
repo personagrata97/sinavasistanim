@@ -10,7 +10,7 @@ import {
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import dynamic from "next/dynamic"
-import { LoadingSkeleton, cleanExplanationText } from "./shared"
+import { EmptyState, LoadingSkeleton, cleanExplanationText } from "./shared"
 import { Tooltip } from "@/components/ui/shared"
 import { toast } from "sonner"
 
@@ -262,14 +262,11 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
         </div>
 
         {(!processingStatus || processingStatus.status !== "completed" || allQuestions.length < QUESTION_COUNT) ? (
-          <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 text-center">
-            <p className="text-sm text-red-400">
-              <strong className="flex items-center justify-center gap-2 mb-2 text-base"><Lock className="w-4 h-4" /> Deneme Sınavı Kilitli</strong>
-              Gerçekçi bir sonuç alabilmeniz için dersin tüm bölümlerinin (%100) işlenmesi ve havuzda en az {QUESTION_COUNT} soru birikmiş olması gerekmektedir. 
-              <br/><br/>
-              Mevcut Durum: {processingStatus ? `%${processingStatus.progress} İşlendi` : 'Kontrol ediliyor...'} | Soru Havuzu: {allQuestions.length}/{QUESTION_COUNT}
-            </p>
-          </div>
+          <EmptyState
+            icon={Clock}
+            title="İçerik Hazırlanıyor"
+            description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
+          />
         ) : (
           programSlug === "masak" ? (
             <div className="grid grid-cols-2 gap-4 mb-8">
