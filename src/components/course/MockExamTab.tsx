@@ -229,7 +229,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
   if (examState === "setup") {
     return (
       <div className="max-w-lg mx-auto text-center py-8">
-        <div className="mb-6 flex justify-center"><ClipboardSignature className="w-16 h-16 text-slate-600" /></div>
+        <div className="mb-6 flex justify-center"><Clock className="w-16 h-16 text-slate-600" /></div>
         <h2 className="text-2xl font-bold mb-3">Deneme Sınavı</h2>
         <p className="text-sm text-slate-400 mb-8">
           Gerçek SPL sınav koşullarında kendinizi test edin. {QUESTION_COUNT} soru, {EXAM_DURATION_MINUTES} dakika süre.

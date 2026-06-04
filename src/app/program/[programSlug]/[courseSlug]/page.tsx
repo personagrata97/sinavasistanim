@@ -22,7 +22,7 @@ import QuestionsTab from "@/components/course/QuestionsTab"
 import CoverageTab from "@/components/course/CoverageTab"
 import DailyGoalsTab from "@/components/course/DailyGoalsTab"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
-import { Modal } from "@/components/course/shared"
+import { Modal, EmptyState, LoadingSkeleton } from "@/components/course/shared"
 import { Tabs } from "@/components/ui/shared"
 import { DatePicker } from "@/components/ui/DatePicker"
 import { toast } from "sonner"
@@ -65,40 +65,7 @@ const PDF_SHARED_CSS = `
   }
 `;
 
-function EmptyState({ icon: Icon, title, description, action }: { icon: any, title: string, description: string, action?: React.ReactNode }) {
-  return (
-    <div className="p-12 rounded-3xl border-2 border-dashed border-white/5 bg-white/[0.02] text-center max-w-2xl mx-auto my-8">
-      <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-6 shadow-inner">
-        <Icon className="w-10 h-10 text-slate-500" />
-      </div>
-      <h3 className="text-xl font-bold text-white mb-3 tracking-tight">{title}</h3>
-      <p className="text-slate-400 text-sm leading-relaxed mb-6">{description}</p>
-      {action && <div>{action}</div>}
-    </div>
-  )
-}
 
-function LoadingSkeleton() {
-  return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 animate-pulse p-4">
-      <div className="h-8 bg-white/5 rounded-lg w-1/3 mb-8"></div>
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="p-6 rounded-2xl border border-white/5 bg-white/[0.02]">
-            <div className="flex gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white/5 shrink-0"></div>
-              <div className="flex-1 space-y-3">
-                <div className="h-5 bg-white/5 rounded w-1/4"></div>
-                <div className="h-4 bg-white/5 rounded w-3/4"></div>
-                <div className="h-4 bg-white/5 rounded w-1/2"></div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 type BadgeProps = { children: React.ReactNode; variant?: "default" | "success" | "warning" | "danger" | "info"; className?: string }
 function Badge({ children, variant = "default", className = "" }: BadgeProps) {
