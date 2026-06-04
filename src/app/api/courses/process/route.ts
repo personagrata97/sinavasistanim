@@ -52,10 +52,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ders dosyası bulunamadı." }, { status: 404 })
     }
 
-    // 🔒 Çift tıklama koruması: Zaten processing'deyse tekrar başlatma (sadece aktif olarak bellek üzerindeyse engelle)
-    if (course.status === "processing" && activeProcesses.has(slug)) {
+    // 🔒 Çift tıklama koruması: Sadece aktif olarak bellek üzerindeyse engelle (kullanıcı iptal etse bile arka plan işçisi bitene kadar yenisini başlatma)
+    if (activeProcesses.has(slug)) {
       console.log(`[PROCESS] ⚠️ Zaten işlemde (bellekte aktif): ${course.name} — tekrar tetikleme engellendi.`)
-      return NextResponse.json({ message: "İşlem zaten devam ediyor." }, { status: 200 })
+      return NextResponse.json({ message: "İşlem zaten arka planda devam ediyor. Lütfen birkaç dakika bekleyin." }, { status: 200 })
     }
 
     activeProcesses.add(slug)
