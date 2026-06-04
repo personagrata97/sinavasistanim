@@ -60,7 +60,7 @@ export default function OnboardingPage() {
             </div>
             
             <div className="grid gap-4">
-              {["SPL Düzey 3", "MASAK Eğitimleri", "Bilgi Sistemleri Bağımsız Denetim", "YDS / YÖKDİL", "Genel Akademik"].map(item => (
+              {["SPL Düzey 3", "MASAK Uyum Görevlisi Sınavı", "Bilgi Sistemleri Bağımsız Denetim", "YDS / YÖKDİL", "Genel Akademik"].map(item => (
                 <button
                   key={item}
                   onClick={() => { setGoal(item); setStep(2) }}
