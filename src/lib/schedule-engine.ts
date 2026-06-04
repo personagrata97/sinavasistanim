@@ -18,6 +18,7 @@ interface ScheduleConfig {
   sectionTitles: string[]
   sectionIds: string[]
   weakSectionIds?: string[] // E-25: Zayıf bölümler adaptif planlama için
+  targetHours?: number // Kullanıcının günlük hedef süresi (Örn: 0.5, 2 vb.)
 }
 
 // Seviyeye göre süre dağılımı (yüzde)
@@ -45,7 +46,10 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
   const dist = LEVEL_DISTRIBUTION[config.userLevel]
   const schedule: ScheduleItem[] = []
 
-  // Faz süreleri
+  // Günlük maksimum süre (dk)
+  const dailyTargetMinutes = (config.targetHours || 2) * 60
+
+  // Faz süreleri (gün sayısı olarak)
   const readingDays = Math.max(1, Math.floor(totalDays * dist.reading))
   const questionDays = Math.max(1, Math.floor(totalDays * dist.questions))
   const flashcardDays = Math.max(1, Math.floor(totalDays * dist.flashcards))
@@ -64,22 +68,23 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
 
     if (todaySections.length === 0) break
 
-    // E-25: Zayıf bölümlere daha fazla süre ayır
     const hasWeakSection = config.weakSectionIds?.some(wid => todaySectionIds.includes(wid))
-    const baseDuration = Math.min(180, todaySections.length * 45)
+    
+    // Süre, kullanıcının seçtiği günlük süreyi geçmemeli ama en az 15dk olmalı
+    let duration = hasWeakSection ? dailyTargetMinutes : Math.floor(dailyTargetMinutes * 0.8)
+    duration = Math.max(15, Math.min(duration, dailyTargetMinutes))
 
     schedule.push({
       date: addDays(today, currentDay),
       task: `Okuma: ${todaySections.length} Bölüm (${todaySections[0].substring(0, 20)}...)${hasWeakSection ? " ⚠️ Zayıf Konu" : ""}`,
       type: "reading",
-      duration: hasWeakSection ? Math.min(240, baseDuration * 1.5) : baseDuration,
+      duration,
       sectionIds: todaySectionIds,
     })
     currentDay++
   }
 
   // === FAZ 2: SORU ÇÖZME ===
-  // E-25: Zayıf bölümlere öncelik ver
   const orderedSectionIds = [...(config.weakSectionIds || []), ...config.sectionIds.filter(id => !config.weakSectionIds?.includes(id))]
   const orderedTitles = orderedSectionIds.map(id => {
     const idx = config.sectionIds.indexOf(id)
@@ -89,11 +94,15 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
   for (let d = 0; d < questionDays && currentDay < totalDays; d++) {
     const sectionIdx = d % orderedSectionIds.length
     const isWeak = config.weakSectionIds?.includes(orderedSectionIds[sectionIdx])
+    
+    let duration = isWeak ? dailyTargetMinutes : Math.floor(dailyTargetMinutes * 0.7)
+    duration = Math.max(15, Math.min(duration, dailyTargetMinutes))
+
     schedule.push({
       date: addDays(today, currentDay),
-      task: `Soru Çözme: ${orderedTitles[sectionIdx] || "Karma Sorular"} (50 soru)${isWeak ? " 🎯 Telafi" : ""}`,
+      task: `Soru Çözme: ${orderedTitles[sectionIdx] || "Karma Sorular"} (Soru Egzersizi)${isWeak ? " 🎯 Telafi" : ""}`,
       type: "questions",
-      duration: isWeak ? 90 : 60,
+      duration,
       sectionIds: orderedSectionIds[sectionIdx] ? [orderedSectionIds[sectionIdx]] : [],
     })
     currentDay++
@@ -101,11 +110,14 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
 
   // === FAZ 3: FLASHCARD ===
   for (let d = 0; d < flashcardDays && currentDay < totalDays; d++) {
+    let duration = Math.floor(dailyTargetMinutes * 0.5)
+    duration = Math.max(10, Math.min(duration, dailyTargetMinutes))
+
     schedule.push({
       date: addDays(today, currentDay),
-      task: `Flashcard Tekrarı: Tüm konular (30 kart)`,
+      task: `Flashcard Tekrarı: Tüm konular`,
       type: "flashcards",
-      duration: 30,
+      duration,
       sectionIds: [],
     })
     currentDay++
@@ -113,11 +125,14 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
 
   // === FAZ 4: TEKRAR ===
   for (let d = 0; d < reviewDays && currentDay < totalDays; d++) {
+    let duration = dailyTargetMinutes
+    duration = Math.max(20, Math.min(duration, dailyTargetMinutes))
+
     schedule.push({
       date: addDays(today, currentDay),
       task: `Genel Tekrar: Zayıf konulara odaklanma`,
       type: "review",
-      duration: 60,
+      duration,
       sectionIds: config.weakSectionIds || [],
     })
     currentDay++
@@ -125,11 +140,13 @@ export function generateStudySchedule(config: ScheduleConfig): ScheduleItem[] {
 
   // === FAZ 5: DENEME SINAVI ===
   for (let d = 0; d < mockDays && currentDay < totalDays; d++) {
+    let duration = dailyTargetMinutes > 60 ? 90 : dailyTargetMinutes // Deneme sınavı en azından gerçekçi olmalı, ama limite yakın olmalı
+
     schedule.push({
       date: addDays(today, currentDay),
       task: `Deneme Sınavı #${d + 1}`,
       type: "mock_exam",
-      duration: 90,
+      duration,
       sectionIds: [],
     })
     currentDay++

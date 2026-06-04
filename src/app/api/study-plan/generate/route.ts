@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { courseId, targetExamDate } = await req.json()
+    const { courseId, targetExamDate, targetHours } = await req.json()
     if (!courseId || !targetExamDate) {
       return NextResponse.json({ error: "courseId and targetExamDate are required" }, { status: 400 })
     }
@@ -21,10 +21,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Update user's target exam date
+    // Kullanıcının hedeflerini güncelle
     await prisma.user.update({
       where: { id: user.id },
-      data: { targetExamDate: new Date(targetExamDate) }
+      data: { 
+        targetExamDate: new Date(targetExamDate),
+        targetHours: targetHours ? Number(targetHours) : user.targetHours
+      }
     })
 
     const course = await prisma.course.findUnique({
@@ -41,7 +44,6 @@ export async function POST(req: Request) {
     }
 
     // Zayıf Konuları Bul (Mock Exam sonuçlarından)
-    // Öğrencinin bu dersteki en son deneme sınavı sonuçlarına bakıp weakAreas'ı çekiyoruz
     const mockResults = await prisma.userMockExamResult.findMany({
       where: { userId: user.id, courseId: course.id },
       orderBy: { createdAt: "desc" },
@@ -72,7 +74,8 @@ export async function POST(req: Request) {
       totalSections: course.sections.length,
       sectionTitles: course.sections.map(s => s.title),
       sectionIds: course.sections.map(s => s.id),
-      weakSectionIds
+      weakSectionIds,
+      targetHours: targetHours ? Number(targetHours) : user.targetHours
     })
 
     // Veritabanına kaydet

@@ -314,6 +314,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
   const [selectedSectionId, setSelectedSectionId] = useState<string | undefined>(undefined)
   const [selectedScrollKeyword, setSelectedScrollKeyword] = useState<string | undefined>(undefined)
   const [showExamDateModal, setShowExamDateModal] = useState(false)
+  const [targetHours, setTargetHours] = useState(2)
   // Seviye özelliği kaldırıldı (kullanıcılar PDF yeniden işleme yapamadığı için işlevsizdi)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
@@ -470,7 +471,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
           const genRes = await fetch("/api/study-plan/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ courseId: course.id, targetExamDate: examDateInput })
+            body: JSON.stringify({ 
+              courseId: course.id, 
+              targetExamDate: examDateInput,
+              targetHours: targetHours 
+            })
           })
           if (genRes.ok) {
             toast.success("Akıllı çalışma programı başarıyla oluşturuldu!")
@@ -940,14 +945,30 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
       <AnimatePresence>
         {showExamDateModal && (
           <Modal onClose={() => setShowExamDateModal(false)} overflowVisible={true}>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-indigo-400" /> Sınav Tarihi</h3>
-            <p className="text-sm text-slate-400 mb-6">Bu ders için sınav tarihini girin. Program otomatik oluşturulacak.</p>
-            <div className="mb-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-indigo-400" /> Sınav Tarihi ve Plan</h3>
+            <p className="text-sm text-slate-400 mb-6">Sınav tarihini ve günlük ortalama çalışma sürenizi belirleyin. Sistem buna uygun bir program oluşturacaktır.</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Hedef Sınav Tarihi</label>
               <DatePicker 
                 value={examDateInput} 
                 onChange={(val) => setExamDateInput(val)} 
                 placeholder="Sınav tarihi seçin..." 
               />
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Günlük Çalışma Süresi (Saat)</label>
+              <select
+                value={targetHours}
+                onChange={(e) => setTargetHours(Number(e.target.value))}
+                className="w-full bg-[#1e293b] border border-slate-700 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500/50"
+              >
+                <option value={0.5}>0.5 Saat (Yarım Saat)</option>
+                <option value={1}>1 Saat</option>
+                <option value={2}>2 Saat</option>
+                <option value={3}>3 Saat</option>
+                <option value={4}>4 Saat</option>
+                <option value={5}>5 Saat</option>
+              </select>
             </div>
             <div className="flex gap-3">
               {activeExamDate && (

@@ -5,12 +5,6 @@ export default withAuth(
   function middleware(req) {
     const isAuth = !!req.nextauth.token
     const isAuthPage = req.nextUrl.pathname.startsWith('/login')
-    const isOnboardingPage = req.nextUrl.pathname.startsWith('/onboarding')
-    const hasCompletedOnboarding = req.nextauth.token?.onboardingCompleted
-
-    if (isAuth && !hasCompletedOnboarding && !isOnboardingPage) {
-      return NextResponse.redirect(new URL('/onboarding', req.url))
-    }
 
     // Security headers
     const response = NextResponse.next()
