@@ -79,8 +79,8 @@ export function PremiumMarkdownRenderer({
 
     // 2. Eğer "İlgili Konuya Git" (autoScrollKeyword) çalıştırıldıysa:
     if (autoScrollKeyword && !searchTerm) {
-      const keywordTokens = autoScrollKeyword.toLowerCase().replace(/[()[\]]/g, '').split(/\s+/).filter(w => w.length > 3);
-      const elements = containerRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, blockquote');
+      // Ana metinlere odaklan, blockquote (hikaye/örnek) kısımlarını aramadan dışla
+      const elements = containerRef.current.querySelectorAll('h1, h2, h3, h4, p, li');
       
       let bestMatch: HTMLElement | null = null;
       let maxScore = 0;
@@ -142,7 +142,8 @@ export function PremiumMarkdownRenderer({
          if (directChild) {
             let prev = directChild.previousElementSibling;
             while (prev) {
-               if (['H1', 'H2', 'H3'].includes(prev.nodeName)) {
+               // Sadece ana başlıklarda (H1, H2) dur ki konunun bağlamını kaçırmasın (H3 hikayelerini es geçsin)
+               if (['H1', 'H2'].includes(prev.nodeName)) {
                   scrollTarget = prev as HTMLElement;
                   break;
                }
