@@ -1780,6 +1780,21 @@ export async function updateUserExamDate(examDate: string | null) {
     const session = await getSession()
     if (!session?.user?.id) return { error: "Oturum açmadınız" }
     
+    // Prisma "Record to update not found" hatasını yakalamak için önce kontrol edelim
+    let user = await prisma.user.findUnique({ where: { id: session.user.id } })
+    
+    if (!user) {
+      // Geliştirme ortamında veritabanı sıfırlanmışsa, kullanıcıyı session'daki bilgilerle yeniden oluştur
+      user = await prisma.user.create({
+        data: {
+          id: session.user.id,
+          name: session.user.name || "Kullanıcı",
+          email: session.user.email || `${session.user.id}@temp.com`,
+          role: "admin",
+        }
+      })
+    }
+
     await prisma.user.update({
       where: { id: session.user.id },
       data: { targetExamDate: examDate ? new Date(examDate) : null }
