@@ -314,7 +314,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
   const [selectedSectionId, setSelectedSectionId] = useState<string | undefined>(undefined)
   const [selectedScrollKeyword, setSelectedScrollKeyword] = useState<string | undefined>(undefined)
   const [showExamDateModal, setShowExamDateModal] = useState(false)
-  const [targetHours, setTargetHours] = useState(2)
+  const [targetMinutes, setTargetMinutes] = useState<number | "">(120)
   // Seviye özelliği kaldırıldı (kullanıcılar PDF yeniden işleme yapamadığı için işlevsizdi)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
@@ -452,6 +452,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
     if (examDate) {
       setExamDateInput(new Date(examDate).toISOString().split("T")[0])
     }
+    if (stats?.targetHours) {
+      setTargetMinutes(Math.round(stats.targetHours * 60))
+    }
     const results = data?.id ? await getMockExamResults(data.id) : []
     setPastExamResults(results || [])
     setLoading(false)
@@ -474,7 +477,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
             body: JSON.stringify({ 
               courseId: course.id, 
               targetExamDate: examDateInput,
-              targetHours: targetHours 
+              targetHours: (Number(targetMinutes) || 120) / 60
             })
           })
           if (genRes.ok) {
@@ -956,19 +959,20 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
               />
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Günlük Çalışma Süresi (Saat)</label>
-              <select
-                value={targetHours}
-                onChange={(e) => setTargetHours(Number(e.target.value))}
-                className="w-full bg-[#1e293b] border border-slate-700 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500/50"
-              >
-                <option value={0.5}>0.5 Saat (Yarım Saat)</option>
-                <option value={1}>1 Saat</option>
-                <option value={2}>2 Saat</option>
-                <option value={3}>3 Saat</option>
-                <option value={4}>4 Saat</option>
-                <option value={5}>5 Saat</option>
-              </select>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Günlük Çalışma Süresi (Dakika)</label>
+              <div className="relative flex items-center">
+                <Clock className="absolute left-4 w-5 h-5 text-indigo-400" />
+                <input
+                  type="number"
+                  min={10}
+                  max={600}
+                  value={targetMinutes}
+                  onChange={(e) => setTargetMinutes(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="w-full pl-12 pr-16 py-4 rounded-xl bg-[#1e293b] border border-slate-700 text-white font-medium focus:outline-none focus:border-indigo-500/50 transition-all"
+                  placeholder="Örn: 45"
+                />
+                <span className="absolute right-4 text-slate-500 font-medium">dk</span>
+              </div>
             </div>
             <div className="flex gap-3">
               {activeExamDate && (

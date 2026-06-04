@@ -1,10 +1,10 @@
-import { useState } from "react"
+"use client"
+
+import { useState, useRef, useEffect } from "react"
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, addMonths, subMonths, isSameMonth, isSameDay, isToday } from "date-fns"
 import { tr } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { createPortal } from "react-dom"
-import { useRef, useEffect } from "react"
 
 interface DatePickerProps {
   value: string // YYYY-MM-DD
@@ -98,85 +98,77 @@ export function DatePicker({ value, onChange, placeholder = "Tarih seçin..." }:
 
       {/* Popover */}
       <AnimatePresence>
-        {isOpen && createPortal(
-          <>
-            {/* Backdrop to close when clicking outside */}
-            <div 
-              className="fixed inset-0 z-[99998]" 
-              onClick={() => setIsOpen(false)}
-            />
-            
-            <motion.div
-              id="datepicker-portal-content"
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              style={popupStyle}
-              className="absolute z-[99999] p-4 rounded-2xl bg-[#0f1523] border border-white/[0.08] shadow-2xl shadow-black/50 backdrop-blur-xl"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center mb-4">
-                <button 
-                  onClick={prevMonth}
-                  className="p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="font-bold text-white capitalize">
-                  {format(currentMonth, "MMMM yyyy", { locale: tr })}
+        {isOpen && (
+          <motion.div
+            id="datepicker-portal-content"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 8, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute left-0 top-full z-[99999] p-4 rounded-2xl bg-[#0f1523] border border-white/[0.12] shadow-2xl shadow-black/80 backdrop-blur-3xl w-80"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <button 
+                onClick={prevMonth}
+                type="button"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="font-bold text-white capitalize">
+                {format(currentMonth, "MMMM yyyy", { locale: tr })}
+              </div>
+              <button 
+                onClick={nextMonth}
+                type="button"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Days of Week */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekDays.map((day) => (
+                <div key={day} className="text-center text-[10px] font-bold text-slate-500">
+                  {day}
                 </div>
-                <button 
-                  onClick={nextMonth}
-                  className="p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+              ))}
+            </div>
 
-              {/* Days of Week */}
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {weekDays.map((day) => (
-                  <div key={day} className="text-center text-[10px] font-bold text-slate-500">
-                    {day}
-                  </div>
-                ))}
-              </div>
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {days.map((day, i) => {
+                const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
+                const isCurrentMonth = isSameMonth(day, monthStart)
+                const isDayToday = isToday(day)
 
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-1">
-                {days.map((day, i) => {
-                  const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
-                  const isCurrentMonth = isSameMonth(day, monthStart)
-                  const isDayToday = isToday(day)
+                let btnClass = "w-9 h-9 mx-auto rounded-full flex items-center justify-center text-sm transition-all duration-200 "
+                
+                if (isSelected) {
+                  btnClass += "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-600/30"
+                } else if (isDayToday) {
+                  btnClass += "bg-white/10 text-indigo-300 font-bold hover:bg-white/20"
+                } else if (isCurrentMonth) {
+                  btnClass += "text-slate-300 hover:bg-white/10 hover:text-white"
+                } else {
+                  btnClass += "text-slate-600 hover:bg-white/5"
+                }
 
-                  let btnClass = "w-9 h-9 mx-auto rounded-full flex items-center justify-center text-sm transition-all duration-200 "
-                  
-                  if (isSelected) {
-                    btnClass += "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-600/30"
-                  } else if (isDayToday) {
-                    btnClass += "bg-white/10 text-indigo-300 font-bold hover:bg-white/20"
-                  } else if (isCurrentMonth) {
-                    btnClass += "text-slate-300 hover:bg-white/10 hover:text-white"
-                  } else {
-                    btnClass += "text-slate-600 hover:bg-white/5"
-                  }
-
-                  return (
-                    <button
-                      key={day.toString()}
-                      type="button"
-                      onClick={(e) => onDateClick(day, e)}
-                      className={btnClass}
-                    >
-                      {format(day, "d")}
-                    </button>
-                  )
-                })}
-              </div>
-            </motion.div>
-          </>,
-          document.body
+                return (
+                  <button
+                    key={day.toString()}
+                    type="button"
+                    onClick={(e) => onDateClick(day, e)}
+                    className={btnClass}
+                  >
+                    {format(day, "d")}
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

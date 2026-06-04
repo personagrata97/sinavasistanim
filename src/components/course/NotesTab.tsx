@@ -1112,18 +1112,11 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                       autoScrollKeyword={scrollKeyword}
                     />
                   ) : (
-                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] text-center my-4">
-                      <div className="flex justify-center mb-4">
-                        <div className="w-12 h-12 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-indigo-400" />
-                        </div>
-                      </div>
-                      <h4 className="text-base font-bold text-white mb-2">Bölüm Notları Hazırlanıyor...</h4>
-                      <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                        Yapay zeka asistanımız bu bölümün ders notlarını, flashcard'larını ve sorularını otonom olarak şu an hazırlıyor. 
-                        İşlem tamamlandığında burası otomatik olarak güncellenecektir.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={BookOpen}
+                      title="Bölüm Notları Hazırlanıyor..."
+                      description="Yapay zeka asistanımız bu bölümün ders notlarını, flashcard'larını ve sorularını otonom olarak şu an hazırlıyor. İşlem tamamlandığında burası otomatik olarak güncellenecektir."
+                    />
                   )}
                 </div>
               </motion.div>
