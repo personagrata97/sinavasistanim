@@ -37,14 +37,14 @@ export async function GET(req: NextRequest) {
 
     // 🛡️ İşleme kurtarma: 60 dakikadan fazla processing'te kalan dersleri kurtarma
     if (course.status === "processing") {
-      const sixtyMinAgo = new Date(Date.now() - 60 * 60 * 1000)
-      if (course.updatedAt < sixtyMinAgo) {
+      const threeHoursAgo = new Date(Date.now() - 180 * 60 * 1000)
+      if (course.updatedAt < threeHoursAgo) {
         await prisma.course.update({
           where: { slug },
           data: { status: "error" }
         })
         course.status = "error"
-        console.log(`[STATUS] ⚠️ ${slug} 60dk'dan fazla processing'te kaldı — error'a çekildi`)
+        console.log(`[STATUS] ⚠️ ${slug} 180dk'dan fazla processing'te kaldı — error'a çekildi`)
       }
     }
 

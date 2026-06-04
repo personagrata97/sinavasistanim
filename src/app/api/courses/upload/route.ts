@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
         geminiFileUris: Object.keys(geminiFileUris).length > 0 ? JSON.stringify(geminiFileUris) : null,
         totalPages,
         processedPages: 0,
-        status: "uploading",
+        status: "uploaded",
       }
     })
 

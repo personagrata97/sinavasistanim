@@ -22,15 +22,19 @@ export async function GET(
     }
 
     if (!course.blueprint) {
-      // Şablon yoksa eski usül rastgele 25 soru çek (SPL standardı)
+      // Şablon yoksa rastgele soru çek (SPL: 25, MASAK: 50)
       const isMasak = course.program?.slug === "masak"
       const takeCount = isMasak ? 50 : 25
-      const randomQuestions = await prisma.question.findMany({
+      const allQuestions = await prisma.question.findMany({
         where: { courseId: course.id, reported: false },
-        take: takeCount,
-        orderBy: { id: 'asc' }, // Gerçekte rastgele olması için raw query gerekebilir
         include: { section: { select: { title: true } } }
       })
+      // Fisher-Yates Shuffle — her denemede farklı sorular
+      for (let i = allQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]]
+      }
+      const randomQuestions = allQuestions.slice(0, takeCount)
       const parsedRandomQuestions = randomQuestions.map(q => ({
         ...q,
         options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options

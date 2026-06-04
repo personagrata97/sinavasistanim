@@ -36,11 +36,11 @@ const activeProcesses = new Set<string>()
 
 export async function POST(req: NextRequest) {
   try {
-    // const session = await getServerSession(authOptions)
-    // if (!session?.user?.email) {
-    //   console.warn("[PROCESS] 🔴 Yetkisiz tetikleme engellendi.")
-    //   return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 })
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      console.warn("[PROCESS] 🔴 Yetkisiz tetikleme engellendi.")
+      return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 })
+    }
 
     const { slug } = await req.json()
 
