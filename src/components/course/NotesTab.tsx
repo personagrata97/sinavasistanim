@@ -861,8 +861,33 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     }
   }
 
-  return (
     <section className="space-y-6" aria-label="Ders notları">
+      {/* Live Processing Banner */}
+      {processingStatus && course?.status === "processing" && (
+        <div className="w-full bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+            <div>
+              <h3 className="text-sm font-bold text-blue-100">Yapay Zeka İçerikleri Hazırlıyor</h3>
+              <p className="text-xs text-blue-300">{processingStatus.phaseLabel || "Lütfen bekleyin..."}</p>
+            </div>
+          </div>
+          <div className="flex-1 max-w-md w-full">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-slate-400">İlerleme durumu</span>
+              <span className="font-bold text-blue-400">%{Math.min(processingStatus.progress || 0, 99)}</span>
+            </div>
+            <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 relative"
+                style={{ width: `${Math.min(processingStatus.progress || 0, 99)}%` }}
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header Stats + PDF Export */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
