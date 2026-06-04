@@ -935,7 +935,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
               {activeTab === "coverage" && <CoverageTab slug={slug} />}
               {activeTab === "mock_exam" && <MockExamTab slug={slug} programSlug={programSlug} courseName={course.name} pastExamResults={pastExamResults} onReloadCourse={loadCourse} processingStatus={processingStatus} />}
               {activeTab === "achievements" && <AchievementsTab />}
-              {activeTab === "schedule" && <DailyGoalsTab course={course} slug={slug} />}
+              {activeTab === "schedule" && <DailyGoalsTab course={course} slug={slug} hasExamDate={!!activeExamDate} onSetExamDate={() => setShowExamDateModal(true)} />}
             </ErrorBoundary>
           </motion.div>
         </AnimatePresence>

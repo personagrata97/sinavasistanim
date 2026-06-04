@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { LoadingSkeleton, EmptyState, cleanExplanationText } from "./shared"
 
 export default
-function DailyGoalsTab({ course, slug }: { course: any; slug: string }) {
+function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: any; slug: string; hasExamDate?: boolean; onSetExamDate?: () => void }) {
   const [goals, setGoals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [dailyQuestion, setDailyQuestion] = useState<any>(null)
@@ -36,6 +36,29 @@ function DailyGoalsTab({ course, slug }: { course: any; slug: string }) {
   }, [slug])
 
   if (loading) return <LoadingSkeleton />
+
+  if (!hasExamDate) {
+    return (
+      <div className="max-w-2xl mx-auto mt-8">
+        <div className="p-8 rounded-3xl bg-[#0f172a] border border-slate-800 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-50" />
+          <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
+            <Calendar className="w-10 h-10 text-blue-400" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-white mb-3">Çalışma Planınızı Oluşturun</h2>
+          <p className="text-slate-400 max-w-md mx-auto mb-8 leading-relaxed">
+            Size özel, yapay zeka destekli dinamik günlük hedeflerinizi hesaplayabilmemiz için lütfen hedef sınav tarihinizi ve günlük ayırabileceğiniz ortalama çalışma süresini belirleyin.
+          </p>
+          <button
+            onClick={onSetExamDate}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+          >
+            Sınav Tarihi ve Planı Belirle
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (goals.length === 0) {
     return (
