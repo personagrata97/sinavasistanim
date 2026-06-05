@@ -774,7 +774,17 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     )
   }
 
-  const noteSections = sections.filter((s: any) => !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar"))
+  const noteSections = useMemo(() => {
+    let contentCounter = 1;
+    return sections
+      .filter((s: any) => !s.title.toLowerCase().includes("kaynakça") && !s.title.toLowerCase().includes("kaynaklar"))
+      .map((s: any, i: number) => {
+        const rawTitle = formatTitle(s.title, i, s.notes, s.module);
+        const isIntro = /kısaltmalar|tanımlar|önsöz|giriş/i.test(rawTitle);
+        const displayTitle = isIntro ? rawTitle : `${contentCounter++}. ${rawTitle}`;
+        return { ...s, displayTitle, rawTitle };
+      });
+  }, [sections]);
 
   const toggleExpand = (id: string) => {
     const next = new Set(expandedIds)
@@ -925,7 +935,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
         const isExpanded = expandedIds.has(section.id)
 
         return (
-          <article id={`section-card-${section.id}`} key={section.id} className="rounded-2xl border border-white/[0.08]" role="article" aria-label={formatTitle(section.title, i, section.notes, section.module)}>
+          <article id={`section-card-${section.id}`} key={section.id} className="rounded-2xl border border-white/[0.08]" role="article" aria-label={section.displayTitle}>
             {/* Section Header */}
             <div
               onClick={() => toggleExpand(section.id)}
@@ -943,7 +953,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                   </span>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-lg">{formatTitle(section.title, i, section.notes, section.module)}</h3>
+                      <h3 className="font-bold text-lg">{section.displayTitle}</h3>
                       {section.module && (
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                           section.module === "Modül 1" 
@@ -980,7 +990,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                 <div className="flex items-center gap-2">
                   <Tooltip content={currentBookmark?.sectionId === section.id ? "Yer imini kaldır" : "Burada kaldım 📌"}>
                     <button
-                      onClick={(e) => handleBookmark(e, section.id, formatTitle(section.title, i, section.notes, section.module))}
+                      onClick={(e) => handleBookmark(e, section.id, section.displayTitle)}
                       className={`p-1.5 rounded-lg transition-all ${
                         currentBookmark?.sectionId === section.id
                           ? "bg-amber-500/20 text-amber-400 shadow-lg shadow-amber-500/10"
@@ -1006,7 +1016,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                 animate={{ opacity: 1, height: "auto" }}
                 className="p-6 border-t border-white/5 relative rounded-b-2xl"
                 id={`notes-content-${section.id}`}
-                onMouseUp={() => handleTextSelect(section.id, formatTitle(section.title, i, section.notes, section.module))}
+                onMouseUp={() => handleTextSelect(section.id, section.displayTitle)}
               >
                 {/* İşaretler bar */}
                 {(sectionHighlights[section.id]?.length || 0) > 0 && (
@@ -1252,7 +1262,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                 {noteSections.map((section: any, i: number) => (
                   <div key={section.id} className="mb-24">
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-8 border-b border-white/10 pb-6 leading-tight tracking-tight">
-                      {formatTitle(section.title, i, section.notes, section.module)}
+                      {section.displayTitle}
                     </h1>
                     <div className="text-lg sm:text-[21px] text-slate-300 leading-[1.85] tracking-normal font-sans font-medium markdown-notes focus-mode">
                       {section.notes ? (
