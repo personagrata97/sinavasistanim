@@ -272,8 +272,8 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
     // verification (Maker-Checker): Yalnızca gemini-2.5-flash ile denetim yapılır.
     const modelChain = mode === "verification"
       ? [
-          { id: "gemini-2.5-flash", tokens: 16384 }
-        ]
+        { id: "gemini-2.5-flash", tokens: 16384 }
+      ]
       : priority === "high"
         ? [{ id: "gemini-2.5-flash", tokens: 65536 }]
         : [{ id: "gemini-2.5-flash", tokens: 32768 }]
@@ -878,9 +878,9 @@ export async function generateFlashcards(
   pageEnd?: number,
 ): Promise<Array<{ front: string; back: string; difficulty: string }>> {
   fileUri = undefined; // 429 Kota engeli için PDF kapatıldı
-  const isGlossary = sectionTitle.toLocaleUpperCase("tr-TR").includes("KISALTMALAR") || 
-                     sectionTitle.toLocaleUpperCase("tr-TR").includes("SÖZLÜK") || 
-                     sectionTitle.toLocaleUpperCase("tr-TR").includes("TANIMLAR")
+  const isGlossary = sectionTitle.toLocaleUpperCase("tr-TR").includes("KISALTMALAR") ||
+    sectionTitle.toLocaleUpperCase("tr-TR").includes("SÖZLÜK") ||
+    sectionTitle.toLocaleUpperCase("tr-TR").includes("TANIMLAR")
 
   const MAX_CONTENT_CHARS = isGlossary ? 150000 : 50000
   const truncated = content.length > MAX_CONTENT_CHARS
@@ -908,7 +908,7 @@ export async function generateFlashcards(
     `,
   }
 
-  const instructionLimit = isGlossary 
+  const instructionLimit = isGlossary
     ? `🚨 ÖZEL TALİMAT: Bu bölüm bir "${sectionTitle}" (Sözlük/Kısaltmalar) bölümüdür.\nBurada yer alan yüzlerce kısaltma/terim içinden SADECE Sermaye Piyasası Lisanslama (SPL) sınavlarında veya bu dersin akademik müfredatında doğrudan sorulma potansiyeli yüksek olan, sektörel ve teknik öneme sahip kritik terimleri seç. "USB, SMS, PC, Wi-Fi, LAN" gibi genel kültür, aşırı basit veya herkesçe bilinen terimleri KESİNLİKLE ATLA. Sadece seçtiğin nitelikli terimlerin her biri için bir flashcard oluştur. Maksimum kart limiti yoktur ancak sadece 'Sınav Kalitesinde' olanların filtrelenmesi ZORUNLUDUR.`
     : `${courseName} - "${sectionTitle}" bölümü için EN AZ 15, EN FAZLA 30 adet flashcard oluştur.`
 
