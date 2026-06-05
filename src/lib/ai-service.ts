@@ -523,6 +523,7 @@ export async function generateCourseNotes(
   chunkCount = 1,
   previousContext?: string
 ): Promise<string> {
+  fileUri = undefined; // 429 Kota engeli için PDF kapatıldı
   const isBibliography = sectionTitle.toLowerCase().includes("kaynakça") || sectionTitle.toLowerCase().includes("referans") || sectionTitle.toLowerCase().includes("bibliography")
   const isGlossary = sectionTitle.toLowerCase().includes("kısaltma") || sectionTitle.toLowerCase().includes("terimler") || sectionTitle.toLowerCase().includes("sözlük") || sectionTitle.toLowerCase().includes("glossary")
 
@@ -878,6 +879,7 @@ export async function generateFlashcards(
   pageStart?: number,
   pageEnd?: number,
 ): Promise<Array<{ front: string; back: string; difficulty: string }>> {
+  fileUri = undefined; // 429 Kota engeli için PDF kapatıldı
   const MAX_CONTENT_CHARS = 50000
   const truncated = content.length > MAX_CONTENT_CHARS
     ? content.substring(0, MAX_CONTENT_CHARS) + `\n\n[...İçerik kısaltıldı...]`
@@ -1038,6 +1040,7 @@ export async function generateQuestions(
   pageEnd?: number,
   importance?: string,
 ): Promise<Array<{ text: string; options: string[]; correct: string; explanation: string; difficulty: string }>> {
+  fileUri = undefined; // 429 Kota engeli için PDF kapatıldı
   const MAX_CONTENT_CHARS = 50000
   const truncated = content.length > MAX_CONTENT_CHARS
     ? content.substring(0, MAX_CONTENT_CHARS) + `\n\n[...İçerik kısaltıldı...]`

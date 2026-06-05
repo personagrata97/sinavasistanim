@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { extractAllText, detectSectionsMultimodal, detectSectionsTextAI, checkPdfQuality } from "@/lib/pdf-engine"
+import { extractAllText, detectSectionsMultimodal, detectSectionsTextAI, checkPdfQuality, extractSectionsRegex } from "@/lib/pdf-engine"
 import { analyzeSectionContent, generateCourseNotes, generateFlashcards, generateQuestions, setFileUrisMap, auditNotesAgainstSourceSpecific } from "@/lib/ai-service"
 import { generateStudySchedule } from "@/lib/schedule-engine"
 import { getServerSession } from "next-auth"
@@ -30,10 +30,6 @@ interface DetectedSection {
 // Küçük chunk'lar sığ/tekrarlı içerik üretiyor!
 const MAX_CHUNK_CHARS = 12000 // ~5 sayfa = daha detaylı, eksik konu riski düşük
 
-// Aktif arka plan işlemlerini in-memory takip et
-// Server restart olduğunda db'de "processing" kalsa bile in-memory Set boş olacağı için işlem kurtarılabilir (zombie process engellenir)
-const activeProcesses = new Set<string>()
-
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -42,7 +38,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 })
     }
 
-    const { slug } = await req.json()
+    const { slug, forceRetry = false } = await req.json()
+    if (!slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 })
 
     const course = await prisma.course.findUnique({
       where: { slug },
@@ -50,6 +47,12 @@ export async function POST(req: NextRequest) {
     })
     if (!course || !course.pdfPath) {
       return NextResponse.json({ error: "Ders dosyası bulunamadı." }, { status: 404 })
+    }
+
+    // Zombi işlemi önleme: Eğer önceden iptal edildiyse listeden çıkar
+    if (cancelledProcesses.has(slug)) {
+      cancelledProcesses.delete(slug)
+      activeProcesses.delete(slug)
     }
 
     // 🔒 Çift tıklama koruması: Sadece aktif olarak bellek üzerindeyse engelle (kullanıcı iptal etse bile arka plan işçisi bitene kadar yenisini başlatma)
@@ -245,7 +248,7 @@ export async function POST(req: NextRequest) {
 
       // ⚠️ KAYNAKÇA BÖLÜMÜ FİLTRESİ (TAMAMEN SİLME)
       // Kaynakça sınavda sorulmaz — UI'da veya veritabanında yer kaplamaması için tamamen atılır
-      const BIBLIO_KEYWORDS = ["KAYNAKÇA", "KAYNAKLAR", "REFERENCES", "BİBLİYOGRAFYA"]
+      const BIBLIO_KEYWORDS = ["KAYNAKÇA", "KAYNAKLAR", "REFERENCES", "BİBLİYOGRAFYA", "SINAV ALT KONU"]
       sections = sections.filter(sec => {
         const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
         const isBibliography = BIBLIO_KEYWORDS.some(kw => titleUpper.includes(kw))

@@ -264,3 +264,82 @@ ${tocText}
     return match ? JSON.parse(match[0]) : []
   }
 }
+
+// 🛡️ GENEL REGEX YEDEĞİ: Tüm AI servisleri çökerse devreye giren Jenerik Bölüm Çıkarıcı
+export function extractSectionsRegex(pageTexts: string[]): Array<{ title: string; pageStart: number; pageEnd: number }> {
+  const sections: Array<{ title: string; pageStart: number; pageEnd: number }> = [];
+  
+  // Akademik dokümanlardaki genel bölüm başlık formatları
+  const patterns = [
+    /^(\d+)\.\s+([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü\s]{4,60})$/m, // "1. BİLGİ GÜVENLİĞİ", "2. Varlık Yönetimi"
+    /^(BÖLÜM|ÜNİTE)\s+(\d+)\s*[:.–-]?\s*([A-ZÇĞİÖŞÜ].{4,60})$/im, // "BÖLÜM 1: GİRİŞ"
+    /^([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜ\s]{5,60})$/m // "KISALTMALAR", "KAYNAKLAR" (Tamamı büyük harf)
+  ];
+
+  let currentSection = null;
+
+  for (let i = 0; i < pageTexts.length; i++) {
+    const pageText = pageTexts[i];
+    const lines = pageText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // Her sayfanın ilk 5 satırına bak (Bölüm başlıkları genelde sayfa başındadır)
+    for (let j = 0; j < Math.min(5, lines.length); j++) {
+      const line = lines[j];
+      
+      // İçindekiler tablosunu atla (sayfa 1-10 arası çok fazla eşleşme olur)
+      if (i < 10 && (line.toUpperCase().includes("İÇİNDEKİLER") || line.toUpperCase().includes("CONTENTS"))) {
+        break; // Bu sayfayı atla
+      }
+
+      let matchedTitle = null;
+      for (const pattern of patterns) {
+        const match = line.match(pattern);
+        if (match) {
+          // Başlık çok uzunsa muhtemelen paragraftır, atla
+          if (line.length > 80) continue;
+          
+          // Grup yakalamalarına göre başlığı belirle
+          if (match.length === 3 && typeof match[1] === "string" && !isNaN(Number(match[1]))) {
+            matchedTitle = `${match[1]}. ${match[2].trim()}`;
+          } else if (match.length === 4) {
+            matchedTitle = `${match[2]}. ${match[3].trim()}`;
+          } else {
+            matchedTitle = match[1] || match[0];
+          }
+          break;
+        }
+      }
+
+      if (matchedTitle) {
+        // Eğer aynı başlık zaten varsa veya çok benziyorsa (header/footer tekrarı), ekleme
+        const isDuplicate = sections.some(s => s.title.toUpperCase() === matchedTitle?.toUpperCase());
+        
+        if (!isDuplicate) {
+          // Önceki bölümün bitiş sayfasını ayarla
+          if (currentSection) {
+            currentSection.pageEnd = i; // Önceki bölüm bu sayfadan önce bitti
+          }
+
+          currentSection = {
+            title: matchedTitle,
+            pageStart: i + 1,
+            pageEnd: pageTexts.length // Şimdilik sonuna kadar
+          };
+          sections.push(currentSection);
+          break; // Bu sayfada başlık bulduk, diğer satırlara bakmaya gerek yok
+        }
+      }
+    }
+  }
+
+  // Eğer hiçbir bölüm bulunamadıysa fallback olarak tüm PDF'i tek bölüm yap
+  if (sections.length === 0) {
+    sections.push({
+      title: "Ana Metin",
+      pageStart: 1,
+      pageEnd: pageTexts.length
+    });
+  }
+
+  return sections;
+}

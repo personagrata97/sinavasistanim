@@ -169,10 +169,6 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
   }, [isFocusMode])
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
     if (course?.sections) {
       setSections(course.sections)
     }
