@@ -144,7 +144,7 @@ Bu kitaptaki tüm ana bölümleri/üniteleri, başlangıç ve bitiş sayfaların
 
 ÇOK ÖNEMLİ KURALLAR:
 1. FİZİKSEL SAYFA NUMARALARI (ÇOK KRİTİK): Bana İçindekiler Tablosunun (TOC) bulunduğu sayfayı SAKIN VERME! İçindekiler tablosu genelde ilk 10 sayfadadır. Sen bana bölümün GERÇEKTE BAŞLADIĞI FİZİKSEL (MUTLAK) SAYFA İNDEKSİNİ vereceksin. Örneğin "Sayfa 103" yazan sayfa, PDF'in 115. fiziksel sayfası olabilir. Lütfen kitabın asıl içeriğinin başladığı gerçek mutlak sayfa sırasını hesapla ve onu ver! Her bölüm için "pageStart" değeri GİDEREK ARTMALIDIR, asla aynı sayfa (örnek: 4) olamaz!
-2. EKSİKSİZLİK: "Kısaltmalar", "Tanımlar" veya "Kavramlar" gibi sınav için kritik olan başlıklar varsa, bunları da mutlaka ayrı bir bölüm olarak listeye dahil et, asla atlama.
+2. EKSİKSİZLİK: "Kısaltmalar", "Tanımlar", "Kavramlar" veya en sondaki "Kaynakça", "Kaynaklar" gibi başlıkları da MUTLAKA ayrı birer bölüm olarak listeye dahil et, asla atlama.
 3. TEMİZ BAŞLIK: Başlıklara ASLA "(Bölüm 3/20)" gibi bölüm numarası veya parantez içi sayaçlar EKLEME. "Ünite 1" gibi genel başlıklar kullanma, direkt konunun öz adını yaz (Örn: "Bilgi Güvenliği Yönetimi").
 
 Sadece aşağıdaki JSON array formatında çıktı ver (başka hiçbir şey yazma):
@@ -205,16 +205,10 @@ ADIM 3: Tespit ettiğin her başlığı, KİTABIN ASIL METNİ İÇİNDE (ilerley
 ADIM 4: Başlığı asıl metinde bulduğunda, o başlığın tam üstünde yazan "--- SAYFA X ---" etiketindeki X numarasını o bölümün "pageStart" değeri olarak kabul et.
 
 ÇOK ÖNEMLİ KURALLAR:
-1. "Kısaltmalar", "Tanımlar", "Kavramlar" veya "Kaynakça" gibi başlıkları da mutlaka dahil et.
-2. Başlıklara "(Bölüm 3/20)" gibi sayaçlar veya "Ünite 1" gibi ekler KOYMA.
-3. TÜM KİTABI son sayfasına kadar tara.
-
-Sadece aşağıdaki JSON array formatında çıktı ver (başka hiçbir şey yazma):
-[
-  {"title": "Kısaltmalar", "pageStart": 7, "pageEnd": 10},
-  {"title": "Üçüncü Taraflarla İletişim Güvenliği", "pageStart": 113, "pageEnd": 118},
-  {"title": "Kaynakça", "pageStart": 119, "pageEnd": 121}
-]
+1. SADECE ANA BÖLÜMLERİ ÇIKAR. Alt başlıkları (örneğin 1.1, 1.2 vb.) dahil etme! Sadece kitabın ana ünitelerini/bölümlerini al.
+2. "Kısaltmalar", "Tanımlar", "Kavramlar" veya PDF'in en sonundaki "Kaynakça", "Kaynaklar" gibi başlıkları da mutlaka ayrı bir bölüm olarak dahil et.
+3. "pageStart" mutlaka ilgili bölümün başladığı ilk sayfanın (dizideki index + 1) sırası olmalıdır.
+4. Çıktı SADECE ve SADECE JSON formatında bir array olmalıdır. Başka hiçbir açıklama yazma.
 
 KAYNAK METİN:
 ${tocText}

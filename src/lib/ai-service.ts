@@ -735,22 +735,20 @@ ${visualRulesInstruction}
 9. 🇹🇷 DİL KALİTESİ: Türkçe dil bilgisi, kelime dizilimi ve akıcılığa %100 uy. İngilizce'den doğrudan çevrilmiş gibi duran yapay veya ters yapılar ("Özeti [Konu]", "Sözlüğü [Konu]", "Notları [Konu]") KESİNLİKLE kullanma. Her zaman doğal ve düzgün bir Türkçe ile akıcı cümleler kur.
 
 ${isGlossary ? `
-📋 NOT YAPISI (Markdown - HAFIZA TEKNİKLİ TERİMLER SÖZLÜĞÜ MODELİ):
+📋 NOT YAPISI (Markdown - SADE KISALTMALAR SÖZLÜĞÜ):
 
 ## 📌 \${sectionTitle}
 
 ### 🎯 Bu Bölüm Ne Anlatıyor?
-Bu bölüm, Bilgi Sistemleri Güvenliği dersinde karşımıza çıkacak tüm kritik kısaltmalar, teknik terimler ve standartların yasal tanımlarını, İngilizce açılımlarını ve sınavda çıkabilecek önemli kavramları hafıza teknikleriyle bir arada sunan özel bir kılavuzdur.
+Bu bölüm, derste karşımıza çıkacak tüm kritik kısaltmaların ve teknik terimlerin derlendiği basit ve net bir sözlüktür. Metindeki tüm kısaltmaların listesini aşağıda bulabilirsiniz.
 
-Metindeki her bir kısaltma veya terim için aşağıdaki şablona %100 uyarak detaylı bilgi ver:
+Metindeki her bir kısaltma veya terim için aşağıdaki sade şablona %100 uyarak detaylı bilgi ver:
 
 ### 🔑 [Kısaltma/Terim Adı]
-- **Açılımı veya Resmi Tanımı:** [Kaynak metindeki resmi Türkçe tanımını/açıklamasını veya açılımını birebir yaz, tek bir kelimeyi bile değiştirme]
+- **Açılımı veya Tanımı:** [Kaynak metindeki resmi Türkçe tanımını/açıklamasını veya açılımını birebir yaz, tek bir kelimeyi bile değiştirme]
 - **İngilizce Karşılığı (varsa):** [Terimin İngilizce açılımı veya karşılığı]
-- 💡 **Benzetme:** [Bu kısaltmayı veya terimi akılda tutacak, finans, hukuk, kurumsal yönetim, denetim veya yakın günlük yaşamdan seçilmiş, kavramın gerçek dünyadaki teknik/operasyonel işlevini %100 doğrudan ve mantıksal olarak yansıtan yakın metafor. KESİNLİKLE konuyla ilgisiz uzak disiplinlerden (örn. gastronomi/aşçılık belgesi, pilot brövesi, uçak, uzay gemisi vb.) yapay ve zorlama benzetmeler yapmayın! Örn: CISA için şeflik belgesi değil, BT sistemlerinin röntgenini çeken yeminli mali müşavir kimliği; BSBDL için transokyanus uçuş brövesi değil, binanın dayanıklılığını onaylayan bağımsız yapı denetim uzmanı belgesi.]
-- 🎬 **Mikro-Senaryo - [Kısa Senaryo Başlığı]:** [Bu terimin/kısaltmanın veya arkasındaki kavramın gerçekte/sınavda nasıl karşımıza çıkacağını canlandıran 3-4 cümlelik somut ve pratik bir senaryo. İsim ver, olay kurgula. Örn format: "🎬 *Mikro-Senaryo - Ali Bey'in İhlali:* Ali Bey..."]
 
-⚠️ KESİNLİKLE hiçbir Mermaid.js diyagramı veya tablo (karşılaştırma tablosu vb.) eklemeyiniz. Temiz ve sade bir sözlük formatını koruyunuz.
+⚠️ KESİNLİKLE hiçbir benzetme, senaryo, hikaye, akrostiş, Mermaid.js diyagramı veya tablo eklemeyiniz. Sadece sade bir kısaltma/terim listesi oluşturunuz.
 ` : `
 📋 NOT YAPISI (Markdown - KONUSAL ENTEGRASYON MODELİ):
 
@@ -880,7 +878,11 @@ export async function generateFlashcards(
   pageEnd?: number,
 ): Promise<Array<{ front: string; back: string; difficulty: string }>> {
   fileUri = undefined; // 429 Kota engeli için PDF kapatıldı
-  const MAX_CONTENT_CHARS = 50000
+  const isGlossary = sectionTitle.toLocaleUpperCase("tr-TR").includes("KISALTMALAR") || 
+                     sectionTitle.toLocaleUpperCase("tr-TR").includes("SÖZLÜK") || 
+                     sectionTitle.toLocaleUpperCase("tr-TR").includes("TANIMLAR")
+
+  const MAX_CONTENT_CHARS = isGlossary ? 150000 : 50000
   const truncated = content.length > MAX_CONTENT_CHARS
     ? content.substring(0, MAX_CONTENT_CHARS) + `\n\n[...İçerik kısaltıldı...]`
     : content
@@ -906,11 +908,14 @@ export async function generateFlashcards(
     `,
   }
 
+  const instructionLimit = isGlossary 
+    ? `🚨 ÖZEL TALİMAT: Bu bölüm bir "${sectionTitle}" (Sözlük/Kısaltmalar) bölümüdür.\nBurada yer alan yüzlerce kısaltma/terim içinden SADECE Sermaye Piyasası Lisanslama (SPL) sınavlarında veya bu dersin akademik müfredatında doğrudan sorulma potansiyeli yüksek olan, sektörel ve teknik öneme sahip kritik terimleri seç. "USB, SMS, PC, Wi-Fi, LAN" gibi genel kültür, aşırı basit veya herkesçe bilinen terimleri KESİNLİKLE ATLA. Sadece seçtiğin nitelikli terimlerin her biri için bir flashcard oluştur. Maksimum kart limiti yoktur ancak sadece 'Sınav Kalitesinde' olanların filtrelenmesi ZORUNLUDUR.`
+    : `${courseName} - "${sectionTitle}" bölümü için EN AZ 15, EN FAZLA 30 adet flashcard oluştur.`
 
   const prompt = `
 ${getExamIntelligence(aiMode)}
 
-${courseName} - "${sectionTitle}" bölümü için EN AZ 15, EN FAZLA 30 adet flashcard oluştur.
+${instructionLimit}
 ${fileUri ? `SAYFA ARALIĞI: Ekteki dosyanın ${pageStart} ile ${pageEnd}. sayfaları aralığı.` : ""}
 
 KART SEVİYESİ VE HEDEF KİTLE:
