@@ -204,15 +204,24 @@ export async function POST(req: NextRequest) {
         return true
       })
 
-      console.log(`[PROCESS] ${sections.length} bölüm algılandı (filtreler sonrası).`)
+      console.log(`[PROCESS] ${sections.length} bölüm algılandı (İçindekiler filtresi sonrası).`)
+
+      // ⚠️ KAYNAKÇA BÖLÜMÜ FİLTRESİ (TAMAMEN SİLME)
+      // Kaynakça sınavda sorulmaz — UI'da veya veritabanında yer kaplamaması için tamamen atılır
+      const BIBLIO_KEYWORDS = ["KAYNAKÇA", "KAYNAKLAR", "REFERENCES", "BİBLİYOGRAFYA"]
+      sections = sections.filter(sec => {
+        const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
+        const isBibliography = BIBLIO_KEYWORDS.some(kw => titleUpper.includes(kw))
+        if (isBibliography) {
+          console.log(`[PROCESS] 🗑️ Kaynakça filtresi: "${sec.title}" (Sayfa ${sec.pageStart}-${sec.pageEnd}) veritabanına eklenmeyecek.`)
+          return false
+        }
+        return true
+      })
+
+      console.log(`[PROCESS] ${sections.length} bölüm algılandı (Tüm filtreler sonrası).`)
 
       for (let i = 0; i < sections.length; i++) {
-        // ⚠️ KAYNAKÇA BÖLÜMÜ OTOMATİK ATLAMA
-        // Kaynakça sınavda sorulmaz — not üretmek gereksiz API maliyeti
-        const titleUpper = sections[i].title.toLocaleUpperCase("tr-TR")
-        const isBibliography = titleUpper.includes("KAYNAKÇA") || titleUpper.includes("KAYNAKLAR") ||
-          titleUpper.includes("REFERENCES") || titleUpper.includes("BİBLİYOGRAFYA")
-
         await prisma.section.create({
           data: {
             courseId: course.id,
@@ -221,13 +230,10 @@ export async function POST(req: NextRequest) {
             pageStart: sections[i].pageStart,
             pageEnd: sections[i].pageEnd,
             rawContent: sections[i].content,
-            processed: isBibliography, // Kaynakça otomatik olarak "işlenmiş" sayılır
-            notes: isBibliography ? `## 📚 Kaynakça\n\nBu bölüm kaynakça/referans listesi içermektedir. Sınav kapsamında değildir.` : null,
+            processed: false,
+            notes: null,
           }
         })
-        if (isBibliography) {
-          console.log(`[PROCESS] 📚 Kaynakça bölümü otomatik atlandı: "${sections[i].title}"`)
-        }
       }
     } else {
       console.log(`[PROCESS] Devam: ${existingSections} bölüm zaten var, kaldığı yerden devam ediliyor...`)
