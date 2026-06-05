@@ -149,7 +149,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
   if (cards.length === 0) {
     return (
       <EmptyState
-        icon={Brain}
+        tabId="flashcards"
         title="İçerik Hazırlanıyor"
         description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />

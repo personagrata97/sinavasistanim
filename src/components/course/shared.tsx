@@ -2,13 +2,27 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, BookOpen, Search, ChevronDown } from "lucide-react"
+import { X, Search, ChevronDown, Target, BookOpen, Layers, HelpCircle, BarChart3, Clock, Trophy, CalendarDays, Brain } from "lucide-react"
+
+export const COURSE_TABS = [
+  { id: "overview", label: "Genel", icon: Target },
+  { id: "notes", label: "Ders Notları", icon: BookOpen },
+  { id: "flashcards", label: "Flashcard", icon: Layers },
+  { id: "questions", label: "Sorular", icon: HelpCircle },
+  { id: "coverage", label: "Kapsam", icon: BarChart3 },
+  { id: "mock_exam", label: "Deneme", icon: Clock },
+  { id: "achievements", label: "Rozet", icon: Trophy },
+  { id: "goals", label: "Program", icon: CalendarDays }
+]
 
 // ==================== EMPTY STATE ====================
-export function EmptyState({ icon: Icon, title, description, action }: { icon: any, title: string, description: string, action?: React.ReactNode }) {
+export function EmptyState({ tabId, icon: IconFallback, title, description, action }: { tabId?: string, icon?: any, title: string, description: string, action?: React.ReactNode }) {
+  const tab = COURSE_TABS.find(t => t.id === tabId)
+  const FinalIcon = tab?.icon || IconFallback || Brain
+
   return (
     <div className="p-12 rounded-2xl border-2 border-dashed border-white/5 text-center">
-      <Icon className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+      <FinalIcon className="w-12 h-12 text-slate-700 mx-auto mb-4" />
       <h3 className="text-lg font-bold text-slate-400 mb-2">{title}</h3>
       <p className="text-sm text-slate-600 max-w-md mx-auto">
         {description}

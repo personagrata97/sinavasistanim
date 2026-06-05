@@ -263,7 +263,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
 
         {(!processingStatus || processingStatus.status !== "completed" || allQuestions.length < QUESTION_COUNT) ? (
           <EmptyState
-            icon={Clock}
+            tabId="mock_exam"
             title="İçerik Hazırlanıyor"
             description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
           />

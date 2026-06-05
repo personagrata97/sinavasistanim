@@ -828,7 +828,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
   if (sections.length === 0) {
     return (
       <EmptyState
-        icon={BookOpen}
+        tabId="notes"
         title="İçerik Hazırlanıyor"
         description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
