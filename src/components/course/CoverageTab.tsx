@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
-import { BarChart3, Target, CheckCircle2, AlertTriangle, BookOpen } from "lucide-react"
+import { BarChart3, Target, CheckCircle2, AlertTriangle, BookOpen, Loader2, XCircle } from "lucide-react"
 import { LoadingSkeleton } from "./shared"
 
 export default
@@ -34,6 +34,7 @@ function CoverageTab({ slug }: { slug: string }) {
     mastered: { color: "text-emerald-400", bg: "bg-emerald-500", label: "Tamamlandı" },
     learning: { color: "text-amber-400", bg: "bg-amber-500", label: "Devam Ediyor" },
     started: { color: "text-blue-400", bg: "bg-blue-500", label: "Başlandı" },
+    processing: { color: "text-indigo-400", bg: "bg-indigo-500", label: "İşleniyor ⏳" },
     not_started: { color: "text-slate-600", bg: "bg-slate-700", label: "Başlanmadı" },
   }
 
@@ -114,49 +115,66 @@ function CoverageTab({ slug }: { slug: string }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-lg text-xs font-bold ${config.color}`}>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold ${config.color} flex items-center gap-2`}>
+                      {item.status === 'processing' && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full" />}
                       {config.label}
                     </span>
-                    <span className="text-lg font-black text-white">%{item.overallScore}</span>
+                    <span className="text-lg font-black text-white">
+                      {item.status === 'processing' ? '—' : `%${item.overallScore}`}
+                    </span>
                   </div>
                 </div>
 
                 {/* İlerleme Çubuğu */}
-                <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden mb-3" role="progressbar" aria-valuenow={item.overallScore} aria-valuemin={0} aria-valuemax={100} aria-label={`${item.title} ilerleme: %${item.overallScore}`}>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.overallScore}%` }}
-                    transition={{ duration: 0.8, delay: i * 0.05 }}
-                    className={`h-full rounded-full ${
-                      item.overallScore >= 80 ? "bg-gradient-to-r from-emerald-500 to-green-400" :
-                      item.overallScore >= 50 ? "bg-gradient-to-r from-amber-500 to-yellow-400" :
-                      item.overallScore > 0 ? "bg-gradient-to-r from-blue-500 to-cyan-400" :
-                      "bg-slate-700"
-                    }`}
-                  />
+                <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden mb-3 relative" role="progressbar" aria-valuenow={item.status === 'processing' ? undefined : item.overallScore} aria-valuemin={0} aria-valuemax={100}>
+                  {item.status === 'processing' ? (
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"
+                    />
+                  ) : (
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${item.overallScore}%` }}
+                      transition={{ duration: 0.8, delay: i * 0.05 }}
+                      className={`h-full rounded-full ${
+                        item.overallScore >= 80 ? "bg-gradient-to-r from-emerald-500 to-green-400" :
+                        item.overallScore >= 50 ? "bg-gradient-to-r from-amber-500 to-yellow-400" :
+                        item.overallScore > 0 ? "bg-gradient-to-r from-blue-500 to-cyan-400" :
+                        "bg-slate-700"
+                      }`}
+                    />
+                  )}
                 </div>
 
                 {/* Detay İstatistikler */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className={`grid grid-cols-4 gap-2 transition-opacity ${item.status === 'processing' ? 'opacity-30 pointer-events-none' : ''}`}>
                   <div className="text-center p-2 rounded-lg bg-black/20">
                     <div className="text-[10px] text-slate-600 font-bold uppercase">Notlar</div>
-                    <div className={`text-xs font-bold mt-0.5 ${item.hasNotes ? "text-emerald-400" : "text-slate-600"}`}>
-                      {item.hasNotes ? "✅ Var" : "❌ Yok"}
+                    <div className={`text-xs font-bold mt-0.5 flex items-center justify-center gap-1.5 ${item.status === 'processing' ? 'text-slate-500' : item.hasNotes ? "text-emerald-400" : "text-slate-600"}`}>
+                      {item.status === 'processing' ? (
+                        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> <span>İşleniyor</span></>
+                      ) : item.hasNotes ? (
+                        <><CheckCircle2 className="w-3.5 h-3.5" /> <span>Var</span></>
+                      ) : (
+                        <><XCircle className="w-3.5 h-3.5" /> <span>Yok</span></>
+                      )}
                     </div>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-black/20">
                     <div className="text-[10px] text-slate-600 font-bold uppercase">Soru Çözüm</div>
-                    <div className="text-xs font-bold mt-0.5 text-slate-300">{item.answeredQuestions}/{item.totalQuestions}</div>
+                    <div className="text-xs font-bold mt-0.5 text-slate-300">{item.status === 'processing' ? "—" : `${item.answeredQuestions}/${item.totalQuestions}`}</div>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-black/20">
                     <div className="text-[10px] text-slate-600 font-bold uppercase">Doğruluk</div>
-                    <div className={`text-xs font-bold mt-0.5 ${item.questionAccuracy >= 70 ? "text-emerald-400" : item.questionAccuracy >= 50 ? "text-amber-400" : "text-red-400"}`}>
-                      {item.answeredQuestions > 0 ? `%${item.questionAccuracy}` : "—"}
+                    <div className={`text-xs font-bold mt-0.5 ${item.status === 'processing' ? 'text-slate-500' : item.questionAccuracy >= 70 ? "text-emerald-400" : item.questionAccuracy >= 50 ? "text-amber-400" : "text-red-400"}`}>
+                      {item.status === 'processing' ? "—" : item.answeredQuestions > 0 ? `%${item.questionAccuracy}` : "—"}
                     </div>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-black/20">
                     <div className="text-[10px] text-slate-600 font-bold uppercase">Flashcard</div>
-                    <div className="text-xs font-bold mt-0.5 text-slate-300">{item.masteredFlashcards}/{item.totalFlashcards}</div>
+                    <div className="text-xs font-bold mt-0.5 text-slate-300">{item.status === 'processing' ? "—" : `${item.masteredFlashcards}/${item.totalFlashcards}`}</div>
                   </div>
                 </div>
               </motion.div>

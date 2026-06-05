@@ -1678,7 +1678,8 @@ export async function getCoverageMap(courseSlug: string) {
         masteredFlashcards,
         flashcardProgress,
         overallScore,
-        status: overallScore >= 80 ? "mastered" : overallScore >= 50 ? "learning" : overallScore > 0 ? "started" : "not_started"
+        processed: section.processed,
+        status: !section.processed ? "processing" : overallScore >= 80 ? "mastered" : overallScore >= 50 ? "learning" : overallScore > 0 ? "started" : "not_started"
       }
     })
   } catch (error) {
