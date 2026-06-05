@@ -1860,3 +1860,74 @@ export async function toggleTaskCompletion(taskId: string, completed: boolean) {
     return { success: false }
   }
 }
+
+// ==================== USER ANNOTATIONS (ODAK MODU BOYAMA) ====================
+
+export async function saveUserAnnotation(data: {
+  courseId: string;
+  sectionId: string;
+  text: string;
+  cfi?: string;
+  color?: string;
+  note?: string;
+}) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    const annotation = await prisma.userAnnotation.create({
+      data: {
+        userId: session.user.id,
+        courseId: data.courseId,
+        sectionId: data.sectionId,
+        text: data.text,
+        cfi: data.cfi || null,
+        color: data.color || "yellow",
+        note: data.note || null,
+      }
+    })
+
+    return { success: true, annotation }
+  } catch (error: any) {
+    console.error("saveUserAnnotation error", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function getSectionAnnotations(sectionId: string) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) return []
+
+    const annotations = await prisma.userAnnotation.findMany({
+      where: {
+        userId: session.user.id,
+        sectionId: sectionId
+      },
+      orderBy: { createdAt: "desc" }
+    })
+
+    return annotations
+  } catch (error) {
+    console.error("getSectionAnnotations error", error)
+    return []
+  }
+}
+
+export async function deleteUserAnnotation(id: string) {
+  try {
+    const session = await getSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    const annotation = await prisma.userAnnotation.findUnique({ where: { id } })
+    if (!annotation || annotation.userId !== session.user.id) {
+      return { success: false, error: "Not found or unauthorized" }
+    }
+
+    await prisma.userAnnotation.delete({ where: { id } })
+    return { success: true }
+  } catch (error: any) {
+    console.error("deleteUserAnnotation error", error)
+    return { success: false, error: error.message }
+  }
+}

@@ -266,13 +266,14 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
       }
     }
 
-    // MODEL: gemini-2.5-flash (tek model — başka seçenek yok)
-    // ⚠️ Thinking model — düşünme token'ları da maxOutputTokens bütçesinden yenir!
-    // priority="high" (not üretimi): 65K token — düşünme ~8K + çıktı ~57K, kesilme riski sıfır
-    // priority="normal" (flashcard/soru): 32K token — yeterli
-    // verification: 16K token — doğrulama için yeterli
+    // MODEL MİMARİSİ: Şelale (Cascade) Yöntemi
+    // ⚠️ priority="high" (not üretimi): gemini-2.5-flash | 65K token — kesilme riski sıfır, Google kota engeli yok (3.5 kısıtlamasına takılmaz)
+    // ⚠️ priority="normal" (flashcard/soru): gemini-2.5-flash | 32K token — hızlı ve güvenilir
+    // verification (Maker-Checker): Yalnızca gemini-2.5-flash ile denetim yapılır.
     const modelChain = mode === "verification"
-      ? [{ id: "gemini-2.5-flash", tokens: 16384 }]
+      ? [
+          { id: "gemini-2.5-flash", tokens: 16384 }
+        ]
       : priority === "high"
         ? [{ id: "gemini-2.5-flash", tokens: 65536 }]
         : [{ id: "gemini-2.5-flash", tokens: 32768 }]
@@ -293,7 +294,7 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
         try {
           const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent`,
-            geminiBody(prompt, model.tokens, keyFileUri), { headers: geminiHeaders, timeout: 60000 }
+            geminiBody(prompt, model.tokens, undefined), { headers: geminiHeaders, timeout: 60000 }
           )
           const parts = response.data?.candidates?.[0]?.content?.parts || []
           // Thinking model (3.5-flash, 2.5-flash): thought=true olan part'ları ATLA
@@ -527,8 +528,8 @@ export async function generateCourseNotes(
 
   // Sözlük bölümlerinde yapay zeka her kelime için destan (senaryo, tanım vb.) yazdığından,
   // 22000 karakterlik standart bir girdi, çıktı limitini (8192 token) anında doldurur ve not yarıda kesilir.
-  // Bu yüzden sözlüklerde parça boyutunu çok daha küçük (6000 karakter) tutuyoruz.
-  const chunkThreshold = isGlossary ? 6000 : 18000;
+  // Kullanıcının altın kuralı: 22.000! 3.5 Flash için en stabil, en mükemmel tatlı nokta.
+  const chunkThreshold = isGlossary ? 6000 : 22000;
 
   if (!isChunked && content.length > chunkThreshold) {
     const chunks = splitContentIntoChunks(content, chunkThreshold)
@@ -1463,7 +1464,8 @@ Sadece aşağıdaki JSON formatında bir çıktı ver:
       findings
     }
   } catch {
-    return { passed: false, missingDetails: ["Denetim API çağrısı başarısız oldu."], contradictions: [], findings: [{ description: "Denetim API çağrısı başarısız oldu.", severity: "CRITICAL", type: "missing" }] }
+    // ⚠️ MERHAMET KURALI KALDIRILDI: Sistem çökerse onay verme, hata fırlat!
+    return { passed: false, missingDetails: ["Denetim sırasında API hatası oluştu"], contradictions: ["Denetim motoru yanıt veremedi"], findings: [{ description: "Denetim motoru çöktü, güvenlik gereği reddedildi.", severity: "CRITICAL", type: "missing" }] }
   }
 }
 
@@ -1509,7 +1511,8 @@ Sadece aşağıdaki JSON formatında çıktı ver:
       missingTopics: result.missingTopics || []
     }
   } catch {
-    return { passed: true, issues: [], missingTopics: [] } // Hata durumunda akışı kilitlememek için true dön
+    // ⚠️ MERHAMET KURALI KALDIRILDI
+    return { passed: false, issues: ["Denetim sırasında API hatası oluştu, güvenlik gereği sorular reddedildi."], missingTopics: ["Denetim motoru çöktü"] }
   }
 }
 
@@ -1552,7 +1555,8 @@ Sadece aşağıdaki JSON formatında çıktı ver:
       issues: result.issues || []
     }
   } catch {
-    return { passed: true, issues: [] } // Hata durumunda akışı kilitlememek için true dön
+    // ⚠️ MERHAMET KURALI KALDIRILDI
+    return { passed: false, issues: ["Denetim sırasında API hatası oluştu, güvenlik gereği flashcardlar reddedildi."] }
   }
 }
 

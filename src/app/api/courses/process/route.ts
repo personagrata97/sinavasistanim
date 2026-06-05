@@ -169,13 +169,50 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // İkisi de çöktüyse Bekleme Süresini Katlayarak Artır (Exponential Backoff) ve TEKRAR DENE
+        // İkisi de çöktüyse REGEX (Zırhlı) yedeğe geç!
         if (sections.length === 0) {
-          // Deneme sayısına göre logaritmik bekleme: 1dk, 2dk, 4dk, 8dk, 15dk (Max 15 dk)
-          const waitMinutes = Math.min(Math.pow(2, tocAttempts - 1), 15);
-          const waitMs = waitMinutes * 60000;
-          console.log(`[PROCESS] ⛔ Tüm AI denemeleri çöktü! Ban yememek için bekleme süresi uzatılıyor. ${waitMinutes} dakika (${waitMs}ms) bekleniyor...`)
-          await new Promise(resolve => setTimeout(resolve, waitMs))
+          console.log(`[PROCESS] ⛔ Tüm AI denemeleri çöktü! Zırhlı REGEX yedeğine geçiliyor...`)
+          const regexSections = extractSectionsRegex(pageTexts)
+          if (regexSections.length >= 2) {
+            console.log(`[PROCESS] ✅ REGEX: ${regexSections.length} bölüm algılandı!`)
+            sections = regexSections.map(rs => ({
+              title: rs.title,
+              pageStart: rs.pageStart,
+              pageEnd: rs.pageEnd,
+              content: pageTexts.slice(Math.max(0, rs.pageStart - 1), rs.pageEnd).join("\n\n")
+            }))
+          } else {
+            console.log(`[PROCESS] ⛔ REGEX de başarısız! Mecburen bekleniyor...`)
+            const waitMinutes = Math.min(Math.pow(2, tocAttempts - 1), 15);
+            const waitMs = waitMinutes * 60000;
+            console.log(`[PROCESS] ⛔ Ban yememek için bekleme süresi uzatılıyor. ${waitMinutes} dakika (${waitMs}ms) bekleniyor...`)
+            await new Promise(resolve => setTimeout(resolve, waitMs))
+          }
+        }
+        
+        if (sections.length > 0) {
+          // =========================================================================
+          // GLOBAL ZIRH: MULTIMODAL VEYA TEXT AI FARK ETMEZ, YZ HALÜSİNASYONLARINI EZ
+          // =========================================================================
+          console.log(`[PROCESS] 🛡️ Global Zırh Devrede: Başlıklar temizleniyor...`)
+
+          for (let i = 0; i < sections.length; i++) {
+            // 1. Sadece "1.", "1.2 ", "Bölüm 1 - " gibi saçma önekleri temizle, gerisine dokunma!
+            let cleanTitle = sections[i].title.replace(/^(Bölüm|Ünite|Kısım)?\s*\d+[\.\-\:]?\s*/i, "").trim()
+            sections[i].title = cleanTitle
+          }
+          
+          // 2. pageEnd değerlerini düzelt (Bir sonraki bölümün başlangıcından 1 çıkararak)
+          for (let i = 0; i < sections.length; i++) {
+            if (i < sections.length - 1) {
+              sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i+1].pageStart - 1)
+            } else {
+              sections[i].pageEnd = pageTexts.length // Son bölüm kitabın sonuna kadar gider
+            }
+            // 3. İçeriği (content) doğru sayfalara göre yeniden kes
+            sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
+          }
+          console.log(`[PROCESS] 🛡️ Global Zırh İşlemi Tamamlandı.`)
         }
       }
 

@@ -747,7 +747,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
                           onConfirm: async () => {
                             try {
                               const { reprocessCourse } = await import("@/lib/actions")
+                              toast.loading("Eski veriler temizleniyor...")
+                              
+                              processLockRef.current = false
+                              setProcessLock(false)
+                              
                               const res = await reprocessCourse(slug)
+                              toast.dismiss()
                               if (res.success) {
                                 toast.success("Eski veriler temizlendi! Sıfırdan işleme başlıyor...")
                                 triggerProcess()
@@ -906,7 +912,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
               {activeTab === "coverage" && <CoverageTab slug={slug} />}
               {activeTab === "mock_exam" && <MockExamTab slug={slug} programSlug={programSlug} courseName={course.name} pastExamResults={pastExamResults} onReloadCourse={loadCourse} processingStatus={processingStatus} />}
               {activeTab === "achievements" && <AchievementsTab />}
-              {activeTab === "schedule" && <DailyGoalsTab course={course} slug={slug} hasExamDate={!!activeExamDate} onSetExamDate={() => setShowExamDateModal(true)} />}
+              {activeTab === "goals" && <DailyGoalsTab course={course} slug={slug} hasExamDate={!!activeExamDate} onSetExamDate={() => setShowExamDateModal(true)} />}
             </ErrorBoundary>
           </motion.div>
         </AnimatePresence>

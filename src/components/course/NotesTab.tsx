@@ -223,31 +223,89 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     })
   }, [])
 
-  const doHighlight = useCallback((color: Highlight["color"]) => {
+  const doHighlight = useCallback(async (color: Highlight["color"]) => {
     if (!highlightPopup) return
-    const hl = addHighlight({
-      sectionId: highlightPopup.sectionId,
+    const { saveUserAnnotation } = await import("@/lib/actions")
+
+    const noteText = highlightNote.trim() || undefined
+    const selectedText = highlightPopup.text
+    const sectionId = highlightPopup.sectionId
+
+    // 1. Önce iyimser (optimistic) olarak UI'a ekle (Hızlı tepki)
+    const tempId = `temp-${Date.now()}`
+    const tempHl: Highlight = {
+      id: tempId,
+      sectionId,
       sectionTitle: highlightPopup.sectionTitle,
       courseSlug: slug,
-      selectedText: highlightPopup.text,
+      selectedText,
       color,
-      note: highlightNote.trim() || undefined
-    })
+      note: noteText,
+      createdAt: new Date().toISOString()
+    }
+
     setSectionHighlights(prev => ({
       ...prev,
-      [highlightPopup.sectionId]: [...(prev[highlightPopup.sectionId] || []), hl]
+      [sectionId]: [...(prev[sectionId] || []), tempHl]
     }))
+
     setHighlightPopup(null)
     setHighlightNote("")
     window.getSelection()?.removeAllRanges()
-    toast.success(`"${hl.selectedText.substring(0, 30)}..." işaretlendi! 🖍️`)
-  }, [highlightPopup, slug])
+    toast.success(`"${selectedText.substring(0, 30)}..." işaretleniyor... 🖍️`)
+
+    // 2. Arka planda DB'ye kaydet
+    try {
+      const res = await saveUserAnnotation({
+        courseId: course.id,
+        sectionId,
+        text: selectedText,
+        color,
+        note: noteText
+      })
+
+      if (res.success && res.annotation) {
+        // Geçici ID'yi gerçek DB ID'si ile değiştir
+        setSectionHighlights(prev => {
+          const sectionArray = prev[sectionId] || []
+          return {
+            ...prev,
+            [sectionId]: sectionArray.map(h => h.id === tempId ? { ...h, id: res.annotation!.id } : h)
+          }
+        })
+      } else {
+        toast.error("İşaretleme kaydedilemedi: " + res.error)
+        // Başarısız olursa geçici ekleneni sil
+        setSectionHighlights(prev => {
+          const sectionArray = prev[sectionId] || []
+          return {
+            ...prev,
+            [sectionId]: sectionArray.filter(h => h.id !== tempId)
+          }
+        })
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }, [highlightPopup, slug, highlightNote, course.id])
 
   // Highlights yükle (section expand olduğunda)
-  const loadHighlights = useCallback((sectionId: string) => {
-    const hls = getHighlightsForSection(sectionId)
-    setSectionHighlights(prev => ({ ...prev, [sectionId]: hls }))
-  }, [])
+  const loadHighlights = useCallback(async (sectionId: string) => {
+    const { getSectionAnnotations } = await import("@/lib/actions")
+    const dbAnns = await getSectionAnnotations(sectionId)
+    // DB modellerini UI modeline çevir
+    const mappedHls: Highlight[] = dbAnns.map((a: any) => ({
+      id: a.id,
+      sectionId: a.sectionId,
+      sectionTitle: "", // Not strictly needed here for UI render
+      courseSlug: slug,
+      selectedText: a.text,
+      color: (a.color as Highlight["color"]) || "yellow",
+      note: a.note || undefined,
+      createdAt: a.createdAt.toISOString ? a.createdAt.toISOString() : a.createdAt
+    }))
+    setSectionHighlights(prev => ({ ...prev, [sectionId]: mappedHls }))
+  }, [slug])
 
   // Popup kapat (dışarı tıklayınca)
   useEffect(() => {
@@ -880,8 +938,8 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-xs font-bold text-blue-400">
-                    {i + 1}
+                  <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                    <BookOpen className="w-4 h-4" />
                   </span>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -967,13 +1025,26 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                           <span className="max-w-[200px] truncate">{hl.selectedText}</span>
                           {hl.note && <span className="text-white/70">📝</span>}
                           <button
-                            onClick={() => {
-                              removeHighlight(hl.id)
+                            onClick={async () => {
+                              // İyimser olarak sil
                               setSectionHighlights(prev => ({
                                 ...prev,
                                 [section.id]: prev[section.id]?.filter(h => h.id !== hl.id) || []
                               }))
-                              toast.success("İşaret kaldırıldı")
+                              
+                              const { deleteUserAnnotation } = await import("@/lib/actions")
+                              const res = await deleteUserAnnotation(hl.id)
+                              
+                              if (res.success) {
+                                toast.success("İşaret kaldırıldı")
+                              } else {
+                                toast.error("Kaldırılamadı: " + res.error)
+                                // Geri al
+                                setSectionHighlights(prev => ({
+                                  ...prev,
+                                  [section.id]: [...(prev[section.id] || []), hl]
+                                }))
+                              }
                             }}
                             className="ml-0.5 hover:text-red-400 transition-colors"
                           >
