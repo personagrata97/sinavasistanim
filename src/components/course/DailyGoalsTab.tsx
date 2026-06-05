@@ -40,7 +40,7 @@ function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: a
   if (course?.sections?.length === 0 || goals.length === 0) {
     return (
       <EmptyState
-        icon={Calendar}
+        tabId="goals"
         title="İçerik Hazırlanıyor"
         description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
       />
@@ -50,7 +50,7 @@ function DailyGoalsTab({ course, slug, hasExamDate, onSetExamDate }: { course: a
   if (!hasExamDate) {
     return (
       <EmptyState
-        icon={Calendar}
+        tabId="goals"
         title="Çalışma Planınızı Oluşturun"
         description="Size özel, yapay zeka destekli dinamik günlük hedeflerinizi hesaplayabilmemiz için lütfen hedef sınav tarihinizi ve günlük ayırabileceğiniz ortalama çalışma süresini belirleyin."
         action={

@@ -22,7 +22,7 @@ import QuestionsTab from "@/components/course/QuestionsTab"
 import CoverageTab from "@/components/course/CoverageTab"
 import DailyGoalsTab from "@/components/course/DailyGoalsTab"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
-import { Modal, EmptyState, LoadingSkeleton } from "@/components/course/shared"
+import { Modal, EmptyState, LoadingSkeleton, COURSE_TABS } from "@/components/course/shared"
 import { Tabs } from "@/components/ui/shared"
 import { DatePicker } from "@/components/ui/DatePicker"
 import { toast } from "sonner"
@@ -253,16 +253,7 @@ function PomodoroTimer() {
   )
 }
 
-const TABS = [
-  { id: "overview", label: "Genel", icon: Target },
-  { id: "notes", label: "Ders Notları", icon: BookOpen },
-  { id: "flashcards", label: "Flashcard", icon: Layers },
-  { id: "questions", label: "Sorular", icon: HelpCircle },
-  { id: "coverage", label: "Kapsam", icon: BarChart3 },
-  { id: "mock_exam", label: "Deneme", icon: Clock },
-  { id: "achievements", label: "Rozet", icon: Trophy },
-  { id: "schedule", label: "Program", icon: Calendar },
-]
+
 
 import { useSession } from "next-auth/react"
 import StudyBuddy from "@/components/StudyBuddy"
@@ -346,20 +337,21 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
 
       // 1-8 tuşları → tab
       const num = parseInt(e.key)
-      if (num >= 1 && num <= TABS.length) {
+      if (num >= 1 && num <= COURSE_TABS.length) {
         e.preventDefault()
-        setActiveTab(TABS[num - 1].id)
+        setActiveTab(COURSE_TABS[num - 1].id)
         return
       }
 
       // ← → tab arası gezinme
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const currentIdx = TABS.findIndex(t => t.id === activeTab)
+      if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && e.metaKey) {
+        e.preventDefault()
+        const currentIdx = COURSE_TABS.findIndex(t => t.id === activeTab)
         if (currentIdx === -1) return
         const next = e.key === "ArrowRight"
-          ? (currentIdx + 1) % TABS.length
-          : (currentIdx - 1 + TABS.length) % TABS.length
-        setActiveTab(TABS[next].id)
+          ? (currentIdx + 1) % COURSE_TABS.length
+          : (currentIdx - 1 + COURSE_TABS.length) % COURSE_TABS.length
+        setActiveTab(COURSE_TABS[next].id)
       }
     }
     window.addEventListener("keydown", handleKeyDown)
@@ -866,7 +858,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
 
         {/* Tab Navigation (Merkezi Bileşen) */}
         <Tabs 
-          tabs={TABS} 
+          tabs={COURSE_TABS} 
           activeTab={activeTab} 
           onChange={setActiveTab} 
           className="mb-8" 
@@ -1508,7 +1500,7 @@ function OverviewTab({
 
       {course.sections.length === 0 && !isProcessing ? (
         <EmptyState
-          icon={Target}
+          tabId="overview"
           title="İçerik Hazırlanıyor"
           description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
         />
