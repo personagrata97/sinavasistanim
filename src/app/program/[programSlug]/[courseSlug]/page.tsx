@@ -256,7 +256,7 @@ function PomodoroTimer() {
 const TABS = [
   { id: "overview", label: "Genel", icon: Target },
   { id: "notes", label: "Ders Notları", icon: BookOpen },
-  { id: "flashcards", label: "Flashcard", icon: Brain },
+  { id: "flashcards", label: "Flashcard", icon: Layers },
   { id: "questions", label: "Sorular", icon: HelpCircle },
   { id: "coverage", label: "Kapsam", icon: BarChart3 },
   { id: "mock_exam", label: "Deneme", icon: Clock },
