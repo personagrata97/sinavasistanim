@@ -85,6 +85,9 @@ export function PremiumMarkdownRenderer({
       let bestMatch: HTMLElement | null = null;
       let maxScore = 0;
 
+      // Arama kelimelerini küçük harfe çevir ve kelimelere ayır
+      const keywordTokens = autoScrollKeyword.toLowerCase().split(/[\s,.'"-]+/).filter(Boolean);
+
       // Tüm elemanlarda en iyi eşleşmeyi bul
       for (let i = 0; i < elements.length; i++) {
         const el = elements[i] as HTMLElement;
@@ -131,25 +134,9 @@ export function PremiumMarkdownRenderer({
          bestMatch = elements[0] as HTMLElement;
       }
 
+      // Çıkan sonucu tam olarak o satırda göster (üst başlığa gitme)
       if (bestMatch) {
-         // En yakın üst başlığı (H1, H2, H3) bul ki kullanıcı konunun başından itibaren okuyabilsin (sadece hikayeye atlamasın)
-         let scrollTarget = bestMatch;
-         let directChild: HTMLElement | null = bestMatch;
-         while (directChild && directChild.parentElement && directChild.parentElement !== containerRef.current) {
-            directChild = directChild.parentElement as HTMLElement;
-         }
-         
-         if (directChild) {
-            let prev = directChild.previousElementSibling;
-            while (prev) {
-               // Sadece ana başlıklarda (H1, H2) dur ki konunun bağlamını kaçırmasın (H3 hikayelerini es geçsin)
-               if (['H1', 'H2'].includes(prev.nodeName)) {
-                  scrollTarget = prev as HTMLElement;
-                  break;
-               }
-               prev = prev.previousElementSibling;
-            }
-         }
+         let scrollTarget = bestMatch as HTMLElement;
 
          // Framer Motion tam 400ms sürüyor.
          setTimeout(() => {
@@ -159,11 +146,11 @@ export function PremiumMarkdownRenderer({
                  const parentRect = scrollParent.getBoundingClientRect();
                  const elRect = scrollTarget.getBoundingClientRect();
                  const relativeTop = elRect.top - parentRect.top;
-                 const targetTop = scrollParent.scrollTop + relativeTop - 40; // Üstten biraz boşluk bırak
+                 const targetTop = scrollParent.scrollTop + relativeTop - (parentRect.height / 3); // Ekranda ortalamaya yakın bir yerde tut
                  scrollParent.scrollTo({ top: targetTop, behavior: 'smooth' });
               }, 300);
            } else {
-              scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
            }
            
            const elementToHighlight = scrollTarget || bestMatch;

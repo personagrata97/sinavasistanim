@@ -79,6 +79,7 @@ model Course {
   status         String      @default("not_started") // not_started, uploading, processing, ready
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  glossary       String?     // Dinamik sözlük JSON formatında
 
   sections    Section[]
   flashcards  Flashcard[]

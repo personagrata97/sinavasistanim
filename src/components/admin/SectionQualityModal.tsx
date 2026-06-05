@@ -190,7 +190,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
             }`}>
               {isSkipped ? "DOĞRULAMA BYPASS EDİLDİ" :
                 hasMufettisPassed ? ( actualAttempt === 1 ? "İLK DENEMEDE KUSURSUZ (ÇİFTE ONAY)" : `${actualAttempt}. TURDA ÇİFTE ONAY ALINDI` ) :
-                hasMufettisIssues ? "YASAL İHLAL TESPİT EDİLDİ" :
+                hasMufettisIssues ? "ONAYDAN GEÇMEDİ (EKSİKLER VAR)" :
                 isExcellent ? "MÜFETTİŞ (İNSAN) ONAYI BEKLENİYOR" :
                 `${actualAttempt}. KALİTE DÖNGÜSÜ DEVAM EDİYOR`}
             </div>
@@ -227,7 +227,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
           <div className="w-full mt-4 p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-2 text-left animate-pulse">
             <h4 className="text-[10px] font-black tracking-wider text-red-500 uppercase flex items-center gap-1.5">
               <AlertCircle className="w-4 h-4" />
-              MÜFETTİŞ TESPİTLERİ (KILCAL DETAY VE YASAL UYUM)
+              MÜFETTİŞ TESPİTLERİ (KILCAL DETAY KONTROLÜ)
             </h4>
             <p className="text-[11px] text-red-400/80 leading-relaxed mb-2 font-medium">
               Kalite Kontrolörü onayından geçmesine rağmen, Müfettişin kaynak PDF ile satır satır çapraz eşleşmesinde yakaladığı kritik hatalar aşağıdadır:
@@ -235,23 +235,23 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
             <ul className="list-disc pl-4 text-[11px] text-slate-300 space-y-1.5">
               {mufettisMissing.map((d: string, idx: number) => (
                 <li key={`md-${idx}`} className="leading-relaxed">
-                  <span className="text-amber-400 font-bold block mb-0.5">Yasal / Teknik Detay Eksik:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                  <span className="text-amber-400 font-bold block mb-0.5">Eksik Detay:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
                 </li>
               ))}
               {issuesObj.auditResult?.missingDetails?.map((d: string, idx: number) => (
                 <li key={`mda-${idx}`} className="leading-relaxed">
-                  <span className="text-amber-400 font-bold block mb-0.5">Yasal / Teknik Detay Eksik:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                  <span className="text-amber-400 font-bold block mb-0.5">Eksik Detay:</span> {d.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
                 </li>
               ))}
               
               {mufettisIssues.map((c: string, idx: number) => (
                 <li key={`ct-${idx}`} className="leading-relaxed">
-                  <span className="text-red-500 font-bold block mb-0.5">Yasal Süre / Kurum Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                  <span className="text-red-500 font-bold block mb-0.5">Bilgi Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
                 </li>
               ))}
               {issuesObj.auditResult?.contradictions?.map((c: string, idx: number) => (
                 <li key={`cta-${idx}`} className="leading-relaxed">
-                  <span className="text-red-500 font-bold block mb-0.5">Yasal Süre / Kurum Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
+                  <span className="text-red-500 font-bold block mb-0.5">Bilgi Hatası:</span> {c.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}
                 </li>
               ))}
             </ul>
@@ -404,17 +404,17 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                                   </div>
                                   {mufettisMissing.length > 0 && (
                                     <div className="text-[10px] text-amber-400/90 mb-1">
-                                      <span className="font-bold text-amber-500/70">Eksik Yasal Detaylar:</span>
+                                      <span className="font-bold text-amber-500/70">Eksik Detaylar:</span>
                                       <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
-                                        {mufettisMissing.map((m: string, idx: number) => <li key={idx}>{m.replace("[MÜFETTİŞ EKSİĞİ] ", "")}</li>)}
+                                        {mufettisMissing.map((m: string, idx: number) => <li key={idx}>{m.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}</li>)}
                                       </ul>
                                     </div>
                                   )}
                                   {mufettisIssues.length > 0 && (
                                     <div className="text-[10px] text-red-400/90">
-                                      <span className="font-bold text-red-500/70">Yasal Çelişkiler:</span>
+                                      <span className="font-bold text-red-500/70">Bilgi Hataları:</span>
                                       <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
-                                        {mufettisIssues.map((m: string, idx: number) => <li key={idx}>{m.replace("[MÜFETTİŞ HATASI] ", "")}</li>)}
+                                        {mufettisIssues.map((m: string, idx: number) => <li key={idx}>{m.replace(/\[(?:MÜFETTİŞ (?:EKSİĞİ|HATASI)|CRITICAL|MEDIUM|LOW)\]\s*/g, "")}</li>)}
                                       </ul>
                                     </div>
                                   )}

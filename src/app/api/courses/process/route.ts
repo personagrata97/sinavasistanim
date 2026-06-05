@@ -181,13 +181,13 @@ export async function POST(req: NextRequest) {
 
       // 🚨 EN KÖTÜ SENARYO: Tüm denemelere rağmen çökerse...
       if (sections.length === 0) {
-         console.error(`[PROCESS] 🚨 FATAL: ${MAX_TOC_ATTEMPTS} denemeye rağmen İçindekiler çıkarılamadı! PDF zorunlu olarak tek parça halinde işlenecek.`)
-         sections = [{
-           title: "Bölüm İçeriği (Ana Metin)",
-           pageStart: 1,
-           pageEnd: totalPages,
-           content: pageTexts.join("\n\n")
-         }]
+        console.error(`[PROCESS] 🚨 FATAL: ${MAX_TOC_ATTEMPTS} denemeye rağmen İçindekiler çıkarılamadı! PDF zorunlu olarak tek parça halinde işlenecek.`)
+        sections = [{
+          title: "Bölüm İçeriği (Ana Metin)",
+          pageStart: 1,
+          pageEnd: totalPages,
+          content: pageTexts.join("\n\n")
+        }]
       }
 
       // ⚠️ İÇİNDEKİLER / ÖNSÖZ / KAPAK FİLTRESİ
@@ -320,7 +320,7 @@ async function processInBackground(slug: string, course: any) {
         // Bölüm işleme ana try-catch bloğu
         try {
           console.log(`[BG] [${sIdx + 1 + alreadyDone}/${totalSections}] ${section.title} - İŞLEME BAŞLADI (Deneme #${sectionRetries + 1}/${maxSectionRetries})`)
-          
+
           try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Notları Çıkarılıyor (Deneme #${sectionRetries + 1})` }) } }) } catch { }
 
           let notes = section.notes || ""
@@ -343,389 +343,389 @@ async function processInBackground(slug: string, course: any) {
           // En fazla 5 GERÇEK deneme. Kota hataları deneme hakkından düşmez.
           if (!notesAttemptSuccess) {
             for (let vAttempt = 1; vAttempt <= 5; vAttempt++) {
-            try {
-              console.log(`[BG] Not Üretim Denemesi #${vAttempt}...`)
+              try {
+                console.log(`[BG] Not Üretim Denemesi #${vAttempt}...`)
 
-              // ==================== SMART INJECT (TARGETED REFINEMENT) KONTROLÜ ====================
-              let isSmartInject = false;
-              let enrichedContent = section.rawContent;
+                // ==================== SMART INJECT (TARGETED REFINEMENT) KONTROLÜ ====================
+                let isSmartInject = false;
+                let enrichedContent = section.rawContent;
 
-              if (vAttempt > 1 && lastVerification) {
-                const feedbackItems: string[] = [];
-                if (lastVerification.missingTopics?.length > 0) {
-                  feedbackItems.push("ATLANAN KONULAR (Kesinlikle ekle):\n- " + lastVerification.missingTopics.join("\n- "));
-                }
-                if (lastVerification.issues?.length > 0) {
-                  feedbackItems.push("BİLGİ/MANTIK HATALARI (Kesinlikle düzelt):\n- " + lastVerification.issues.join("\n- "));
-                }
-                if (lastVerification.suggestions?.length > 0) {
-                  feedbackItems.push("GELİŞTİRME ÖNERİLERİ (İyileştir):\n- " + lastVerification.suggestions.join("\n- "));
-                }
-
-                if (feedbackItems.length > 0) {
-                  // ==================== 3-KATMANLI KUSURSUZ YÖNLENDİRME (Smart Routing) ====================
-                  
-                  // 1. Kontrolör Yapısal Puanını al
-                  const kontrolorStructuralScore = lastVerification.score; // lastVerification.score Kontrolör'ün yapısal iskelet puanıdır.
-                  
-                  // 2. Müfettişin Critical bulgu sayısını hesapla
-                  let prevCriticalCount = 0;
-                  if (lastVerification.inspectorFindings) {
-                    prevCriticalCount = lastVerification.inspectorFindings.filter((f: any) => f.severity === 'CRITICAL').length;
-                  } else {
-                    // Eski format veya Kontrolör'ün kendi bulduğu yapısal eksiklik durumu
-                    const hasMajorMissingTopics = lastVerification.missingTopics?.some((t: string) => !t.includes("[MÜFETTİŞ"));
-                    if (hasMajorMissingTopics) prevCriticalCount = 10; // Yapısal iskelet eksiği varsa sıfırdan yazmaya zorla
+                if (vAttempt > 1 && lastVerification) {
+                  const feedbackItems: string[] = [];
+                  if (lastVerification.missingTopics?.length > 0) {
+                    feedbackItems.push("ATLANAN KONULAR (Kesinlikle ekle):\n- " + lastVerification.missingTopics.join("\n- "));
+                  }
+                  if (lastVerification.issues?.length > 0) {
+                    feedbackItems.push("BİLGİ/MANTIK HATALARI (Kesinlikle düzelt):\n- " + lastVerification.issues.join("\n- "));
+                  }
+                  if (lastVerification.suggestions?.length > 0) {
+                    feedbackItems.push("GELİŞTİRME ÖNERİLERİ (İyileştir):\n- " + lastVerification.suggestions.join("\n- "));
                   }
 
-                  // 3. Yönlendirme Kararı
-                  
-                  // Daha önce kaç kere Smart Inject yapıldığını say
-                  const pastSmartInjects = attemptHistory.filter((h: any) => h.isSmartInject).length;
-                  const lastAttemptWasSmartInject = attemptHistory.length > 0 ? attemptHistory[attemptHistory.length - 1].isSmartInject : false;
+                  if (feedbackItems.length > 0) {
+                    // ==================== 3-KATMANLI KUSURSUZ YÖNLENDİRME (Smart Routing) ====================
 
-                  if (kontrolorStructuralScore < 70) {
-                    // İskelet çok zayıf
-                    console.log(`[BG] ⛔ Yapısal İskelet Çok Zayıf (Kontrolör: %${kontrolorStructuralScore} < 70): Yama yapılmaz, sıfırdan yazım devreye giriyor...`);
-                    isSmartInject = false;
-                  } else if (kontrolorStructuralScore >= 70 && kontrolorStructuralScore < 85) {
-                    // İskelet orta seviye
-                    if (prevCriticalCount <= 3) {
-                      console.log(`[BG] 🧠 Yapısal İskelet Orta (%${kontrolorStructuralScore}) ve KRİTİK bulgu az (${prevCriticalCount} ≤ 3): 2-Aşamalı Biçim-Duyarlı Akıllı Yama devreye giriyor...`);
-                      isSmartInject = true;
+                    // 1. Kontrolör Yapısal Puanını al
+                    const kontrolorStructuralScore = lastVerification.score; // lastVerification.score Kontrolör'ün yapısal iskelet puanıdır.
+
+                    // 2. Müfettişin Critical bulgu sayısını hesapla
+                    let prevCriticalCount = 0;
+                    if (lastVerification.inspectorFindings) {
+                      prevCriticalCount = lastVerification.inspectorFindings.filter((f: any) => f.severity === 'CRITICAL').length;
                     } else {
-                      console.log(`[BG] ⛔ Yapısal İskelet Orta (%${kontrolorStructuralScore}) ama çok fazla KRİTİK boşluk var (${prevCriticalCount} > 3): Sıfırdan yazıma dönülüyor...`);
-                      isSmartInject = false;
+                      // Eski format veya Kontrolör'ün kendi bulduğu yapısal eksiklik durumu
+                      const hasMajorMissingTopics = lastVerification.missingTopics?.some((t: string) => !t.includes("[MÜFETTİŞ"));
+                      if (hasMajorMissingTopics) prevCriticalCount = 10; // Yapısal iskelet eksiği varsa sıfırdan yazmaya zorla
                     }
-                  } else {
-                    // İskelet sağlam (>= 85)
-                    // "Müfettiş 5 bulgu da bulsa, 15 de bulsa, bunlar yapısal değil bilgisel eksikler. Sağlam iskelete Format-Duyarlı enjeksiyon ile yerleştirilir."
-                    isSmartInject = true; 
-                  }
 
-                  // ==================== KATMAN 3: DOĞRULAMA KALKANI ====================
-                  // Cilalama sonrası Müfettiş TEK BİR son kontrol daha yapar. Eğer hâlâ CRITICAL bulgu varsa:
-                  if (lastAttemptWasSmartInject && prevCriticalCount > 0) {
-                    if (prevCriticalCount > 2) {
-                      console.log(`[BG] ⚠️ Katman 3 Kalkanı: Cilalama sonrası ${prevCriticalCount} KRİTİK bulgu kaldı (> 2). Yapay zeka konuyu sürekli atlıyor, sıfırdan yazıma dönülüyor.`);
+                    // 3. Yönlendirme Kararı
+
+                    // Daha önce kaç kere Smart Inject yapıldığını say
+                    const pastSmartInjects = attemptHistory.filter((h: any) => h.isSmartInject).length;
+                    const lastAttemptWasSmartInject = attemptHistory.length > 0 ? attemptHistory[attemptHistory.length - 1].isSmartInject : false;
+
+                    if (kontrolorStructuralScore < 70) {
+                      // İskelet çok zayıf
+                      console.log(`[BG] ⛔ Yapısal İskelet Çok Zayıf (Kontrolör: %${kontrolorStructuralScore} < 70): Yama yapılmaz, sıfırdan yazım devreye giriyor...`);
                       isSmartInject = false;
+                    } else if (kontrolorStructuralScore >= 70 && kontrolorStructuralScore < 85) {
+                      // İskelet orta seviye
+                      if (prevCriticalCount <= 3) {
+                        console.log(`[BG] 🧠 Yapısal İskelet Orta (%${kontrolorStructuralScore}) ve KRİTİK bulgu az (${prevCriticalCount} ≤ 3): 2-Aşamalı Biçim-Duyarlı Akıllı Yama devreye giriyor...`);
+                        isSmartInject = true;
+                      } else {
+                        console.log(`[BG] ⛔ Yapısal İskelet Orta (%${kontrolorStructuralScore}) ama çok fazla KRİTİK boşluk var (${prevCriticalCount} > 3): Sıfırdan yazıma dönülüyor...`);
+                        isSmartInject = false;
+                      }
                     } else {
-                      // Bulgu sayısı <= 2 ise
-                      if (pastSmartInjects >= 2) {
-                        console.log(`[BG] ⚠️ Katman 3 Kalkanı: 2 tur Smart Inject yapılmasına rağmen KRİTİK bulgu sıfırlanamadı. "Kör Nokta" tespit edildi, yama anlamsız, sıfırdan yazıma dönülüyor.`);
+                      // İskelet sağlam (>= 85)
+                      // "Müfettiş 5 bulgu da bulsa, 15 de bulsa, bunlar yapısal değil bilgisel eksikler. Sağlam iskelete Format-Duyarlı enjeksiyon ile yerleştirilir."
+                      isSmartInject = true;
+                    }
+
+                    // ==================== KATMAN 3: DOĞRULAMA KALKANI ====================
+                    // Cilalama sonrası Müfettiş TEK BİR son kontrol daha yapar. Eğer hâlâ CRITICAL bulgu varsa:
+                    if (lastAttemptWasSmartInject && prevCriticalCount > 0) {
+                      if (prevCriticalCount > 2) {
+                        console.log(`[BG] ⚠️ Katman 3 Kalkanı: Cilalama sonrası ${prevCriticalCount} KRİTİK bulgu kaldı (> 2). Yapay zeka konuyu sürekli atlıyor, sıfırdan yazıma dönülüyor.`);
                         isSmartInject = false;
                       } else {
-                        console.log(`[BG] 🛡️ Katman 3 Kalkanı: Cilalama sonrası ${prevCriticalCount} KRİTİK bulgu kaldı (≤ 2). Bir tur daha Smart Inject yapılıyor.`);
-                        isSmartInject = true;
-                      }
-                    }
-                  } else if (kontrolorStructuralScore >= 85 && !lastAttemptWasSmartInject) {
-                     console.log(`[BG] 🧠 Yapısal İskelet Sağlam (Kontrolör: %${kontrolorStructuralScore} ≥ 85): 2-Aşamalı Biçim-Duyarlı Akıllı Yama (Smart Inject + Polish) devreye giriyor...`);
-                  }
-
-                  if (isSmartInject) {
-                    const { smartInjectCourseNotes } = await import("@/lib/ai-service");
-                    notes = await smartInjectCourseNotes(
-                      notes, // Eski mükemmel not
-                      feedbackItems.join("\n\n"),
-                      section.title,
-                      course.name,
-                      course.userLevel,
-                      aiMode
-                    );
-                  } else {
-                    console.log(`[BG] 📋 Önceki denemeden kalan geri bildirimler dikkate alınarak baştan yazım (Rewrite)...`);
-                    enrichedContent = `⚠️⚠️⚠️ ÖNCEKİ DENEMEDE TESPİT EDİLEN EKSİKLER VE HATALAR:\nLütfen aşağıdaki geri bildirimleri dikkate alarak ders notunu baştan, organik bir akışla tekrar yaz:\n\n${feedbackItems.join("\n\n")}\n\n---\n\n${section.rawContent}`;
-                  }
-                }
-              }
-
-              if (!isSmartInject) {
-                notes = await generateCourseNotes(
-                  enrichedContent, section.title, course.name, course.userLevel,
-                  aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd
-                )
-              }
-              
-              console.log(`[BG] ✅ Notes generated/injected: ${notes.length} chars`)
-              await new Promise(r => setTimeout(r, 8000)) // Rate limit koruması
-
-              // Doğrulama yap - KÖKLÜ VE TUTARLI ÇÖZÜM: Sayfa çakışmalarını ve mükerrerlikleri tamamen engellemek için,
-              // not doğrulama aşamasında PDF dosyasını (fileUri) pas geçerek SADECE veritabanındaki izole rawContent kullanılır!
-              console.log(`[BG] Not Doğrulanıyor (Deneme #${vAttempt})...`)
-              try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Kalite Kontrolörü Tarafından Denetleniyor (Tur #${vAttempt})` }) } }) } catch { }
-              const { verifyNotesAgainstSource } = await import("@/lib/ai-service")
-              const verification = await verifyNotesAgainstSource(
-                section.rawContent, notes, section.title,
-                undefined, section.pageStart, section.pageEnd
-              )
-
-              currentScore = verification.score
-
-              // En yüksek başarılı doğrulama skorunu ve notlarını koru
-              if (currentScore > bestScore) {
-                bestScore = currentScore
-                bestNotes = notes
-                console.log(`[BG] 🏆 Yeni en yüksek skor: %${bestScore}`)
-              }
-
-              // KONTROLÖR ÇELİŞKİ DENETÇİSİ (Consistency Check)
-              // Kontrolör "hata/eksik var" deyip puanı 100 döndürürse, çelişkiyi tespit edip puanı
-              // dürüst bir şekilde eksik ve hata sayısına oranla düşürüyoruz.
-              const hasCriticalFeedback = verification.missingTopics.length > 0 || verification.issues.length > 0;
-              if (currentScore === 100 && hasCriticalFeedback) {
-                // Eksik ve hata sayısına göre matematiksel düşüş
-                const penaltyCount = verification.missingTopics.length + verification.issues.length;
-                const rawPenalty = penaltyCount * 5; // Her tespit -5 puan
-                currentScore = Math.max(50, 100 - rawPenalty);
-                verification.score = currentScore;
-                console.log(`[BG] ⚠️ KONTROLÖR ÇELİŞKİSİ: Model 100 verdi ama ${penaltyCount} hata/eksik buldu. Dürüst puan: %${currentScore}`);
-              }
-
-              // Kontrolörün yapısal skor değerini kaydet (SmartInject routing kararı için)
-              const kontrolorStructuralScore = verification.score;
-
-              lastVerification = verification
-
-              const historyEntry = {
-                attempt: vAttempt,
-                score: verification.score,
-                missingTopics: verification.missingTopics || [],
-                issues: verification.issues || [],
-                suggestions: verification.suggestions || [],
-                isSmartInject: isSmartInject
-              }
-              attemptHistory.push(historyEntry)
-
-              // CANLI RAPOR GÜNCELLEMESİ
-              try {
-                await prisma.section.update({
-                  where: { id: section.id },
-                  data: {
-                    verificationScore: currentScore,
-                    ...(verification.score === 100 ? { notes: notes || null } : {}),
-                    verificationIssues: JSON.stringify({
-                      missingTopics: lastVerification.missingTopics || [],
-                      issues: lastVerification.issues || [],
-                      suggestions: lastVerification.suggestions || [],
-                      currentAttempt: vAttempt,
-                      isCheckingAgain: currentScore < 95 && vAttempt < 5,
-                      attemptHistory: attemptHistory
-                    })
-                  }
-                })
-              } catch (dbErr) {
-                console.error("[BG_DB_ERROR] Canlı skor DB kaydı başarısız:", dbErr)
-              }
-
-              console.log(`[BG] 🔍 DOĞRULAMA (Deneme #${vAttempt}): ${section.title} → Skor: ${verification.score}/100`)
-              if (verification.missingTopics.length > 0) {
-                console.log(`[BG] ⚠️ Eksik konular: ${verification.missingTopics.join(", ")}`)
-              }
-              if (verification.issues.length > 0) {
-                console.log(`[BG] 🔴 Hatalı bilgiler/sorunlar: ${verification.issues.join(", ")}`)
-              }
-
-              // Eğer skor tam 100 ise Müfettiş Derin Denetimine geç
-              if (verification.score === 100) {
-                console.log(`[BG] 🎉 KONTROLÖR ONAYI (%100) — 4. Katman: Müfettiş Derin Denetimi (Deep Audit) Başlıyor...`)
-                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüme 3'lü Paketler Halinde Müfettiş Çapraz Denetimi Yapılıyor...` }) } }) } catch { }
-
-                // 1. Tüm konuları çıkar
-                const analysisForAudit = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
-                const sectionTopics = analysisForAudit.topics || []
-
-                if (sectionTopics.length > 0) {
-                  // 2. 3'erli paketlere böl
-                  const packages: string[][] = []
-                  for (let i = 0; i < sectionTopics.length; i += 3) {
-                    packages.push(sectionTopics.slice(i, i + 3))
-                  }
-
-                  let overallPassed = true
-                  const allMissingDetails: string[] = []
-                  const allContradictions: string[] = []
-                  const allFindings: Array<{ description: string; severity: string; type: string }> = []
-
-                  console.log(`[BG] 📦 Toplam Paket Sayısı: ${packages.length} paket denetlenecek.`)
-
-                  let packIdx = 1
-                  for (const pack of packages) {
-                    console.log(`[BG] 👉 [Paket ${packIdx}/${packages.length}] Müfettiş inceliyor...`)
-                    await new Promise(r => setTimeout(r, 4000))
-
-                    try {
-                      const auditResult = await auditNotesAgainstSourceSpecific(
-                        section.rawContent,
-                        notes,
-                        section.title,
-                        pack,
-                        undefined,
-                        section.pageStart,
-                        section.pageEnd
-                      )
-
-                      if (!auditResult.passed) {
-                        overallPassed = false
-                        console.warn(`[BG] ❌ [Paket ${packIdx} BAŞARISIZ]`)
-                        if (auditResult.missingDetails?.length) allMissingDetails.push(...auditResult.missingDetails)
-                        if (auditResult.contradictions?.length) allContradictions.push(...auditResult.contradictions)
-                      } else {
-                        console.log(`[BG] ✅ [Paket ${packIdx} BAŞARILI]`)
-                      }
-
-                      // Severity-weighted findings biriktir
-                      if (auditResult.findings?.length) {
-                        allFindings.push(...auditResult.findings)
-                      }
-                    } catch (err: any) {
-                      overallPassed = false
-                      allMissingDetails.push(`[Paket ${packIdx} Hatası] ${err.message}`)
-                      allFindings.push({ description: `Paket ${packIdx} API Hatası: ${err.message}`, severity: "CRITICAL", type: "missing" })
-                    }
-                    packIdx++
-                  }
-
-                  if (!overallPassed) {
-                    // ==================== DÜRÜST PUANLAMA MOTORU (Severity-Weighted True Scoring) ====================
-                    // Her bulgunun ağırlığına göre puanı DÜRÜSTÇE hesapla.
-                    const SEVERITY_PENALTIES: Record<string, number> = { CRITICAL: 10, MEDIUM: 5, LOW: 2 }
-                    let totalPenalty = 0
-                    let criticalCount = 0
-                    let mediumCount = 0
-                    let lowCount = 0
-
-                    for (const finding of allFindings) {
-                      const penalty = SEVERITY_PENALTIES[finding.severity] || 5
-                      totalPenalty += penalty
-                      if (finding.severity === "CRITICAL") criticalCount++
-                      else if (finding.severity === "MEDIUM") mediumCount++
-                      else lowCount++
-                    }
-
-                    // Kontrolör 100 vermişti. Müfettiş bulgularına göre GERÇEK skoru hesapla.
-                    const trueScore = Math.max(30, 100 - totalPenalty) // 30'un altına düşmesin (not var sonuçta)
-                    currentScore = trueScore
-                    verification.score = trueScore
-
-                    // FIX #5: Müfettiş en üst otoritedir — bestScore'u da düzelt
-                    // Kontrolör 100 dedi ama müfettiş düşürdü. bestScore=100 kalırsa
-                    // bir sonraki kota hatasında yanlış geri yüklenir.
-                    bestScore = trueScore
-                    bestNotes = notes
-                    console.log(`[BG] 🏆 Müfettiş düzeltmesi sonrası bestScore güncellendi: %${bestScore}`)
-
-                    console.log(`[BG] ⛔ MÜFETTİŞ DENETİMİ SONUCU:`)
-                    console.log(`[BG]   → KRİTİK: ${criticalCount} bulgu (x10 puan)`)
-                    console.log(`[BG]   → ORTA: ${mediumCount} bulgu (x5 puan)`)
-                    console.log(`[BG]   → DÜŞÜK: ${lowCount} bulgu (x2 puan)`)
-                    console.log(`[BG]   → Toplam Ceza: -${totalPenalty} puan`)
-                    console.log(`[BG]   → DÜRÜST PUAN: %${trueScore} (Kontrolör: %100 → Müfettiş düzeltmesi: %${trueScore})`)
-
-                    // Müfettişin bulgularını lastVerification'a ekle ki sonraki üretimde Yazar bunları düzeltsin
-                    lastVerification.missingTopics.push(...allMissingDetails.map(d => `[MÜFETTİŞ EKSİĞİ] ${d}`))
-                    lastVerification.issues.push(...allContradictions.map(c => `[MÜFETTİŞ HATASI] ${c}`))
-
-                    // UI Bug Fix: Update the history entry with the true lowered score from Deep Audit
-                    if (historyEntry) {
-                      historyEntry.score = trueScore;
-                      historyEntry.missingTopics = [...lastVerification.missingTopics];
-                      historyEntry.issues = [...lastVerification.issues];
-                    }
-
-                    // DB Live Update for Inspector Failure — DÜRÜST SKOR ile
-                    try {
-                      await prisma.section.update({
-                        where: { id: section.id },
-                        data: {
-                          verificationScore: trueScore,
-                          verificationIssues: JSON.stringify({
-                            missingTopics: lastVerification.missingTopics,
-                            issues: lastVerification.issues,
-                            suggestions: lastVerification.suggestions,
-                            currentAttempt: vAttempt,
-                            isCheckingAgain: true,
-                            attemptHistory: attemptHistory,
-                            inspectorFailed: true,
-                            inspectorFindings: allFindings // Ağırlıklı bulgu detayları
-                          })
+                        // Bulgu sayısı <= 2 ise
+                        if (pastSmartInjects >= 2) {
+                          console.log(`[BG] ⚠️ Katman 3 Kalkanı: 2 tur Smart Inject yapılmasına rağmen KRİTİK bulgu sıfırlanamadı. "Kör Nokta" tespit edildi, yama anlamsız, sıfırdan yazıma dönülüyor.`);
+                          isSmartInject = false;
+                        } else {
+                          console.log(`[BG] 🛡️ Katman 3 Kalkanı: Cilalama sonrası ${prevCriticalCount} KRİTİK bulgu kaldı (≤ 2). Bir tur daha Smart Inject yapılıyor.`);
+                          isSmartInject = true;
                         }
-                      })
-                    } catch (e) { }
+                      }
+                    } else if (kontrolorStructuralScore >= 85 && !lastAttemptWasSmartInject) {
+                      console.log(`[BG] 🧠 Yapısal İskelet Sağlam (Kontrolör: %${kontrolorStructuralScore} ≥ 85): 2-Aşamalı Biçim-Duyarlı Akıllı Yama (Smart Inject + Polish) devreye giriyor...`);
+                    }
 
-                    // "Kaliteden taviz yok" - Akıllı Çıkış stratejisi tamamen iptal edildi.
-                    // Notun %100 kusursuz olması ZORUNLUDUR. 96 veya 99 alınsa dahi,
-                    // sistem eksikleri Smart Inject ile kapatmaya çalışacaktır.
+                    if (isSmartInject) {
+                      const { smartInjectCourseNotes } = await import("@/lib/ai-service");
+                      notes = await smartInjectCourseNotes(
+                        notes, // Eski mükemmel not
+                        feedbackItems.join("\n\n"),
+                        section.title,
+                        course.name,
+                        course.userLevel,
+                        aiMode
+                      );
+                    } else {
+                      console.log(`[BG] 📋 Önceki denemeden kalan geri bildirimler dikkate alınarak baştan yazım (Rewrite)...`);
+                      enrichedContent = `⚠️⚠️⚠️ ÖNCEKİ DENEMEDE TESPİT EDİLEN EKSİKLER VE HATALAR:\nLütfen aşağıdaki geri bildirimleri dikkate alarak ders notunu baştan, organik bir akışla tekrar yaz:\n\n${feedbackItems.join("\n\n")}\n\n---\n\n${section.rawContent}`;
+                    }
                   }
-                } else {
-                  console.log(`[BG] ⚠️ Konu çıkarılamadı, Müfettiş denetimi atlanıyor.`)
                 }
 
+                if (!isSmartInject) {
+                  notes = await generateCourseNotes(
+                    enrichedContent, section.title, course.name, course.userLevel,
+                    aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd
+                  )
+                }
+
+                console.log(`[BG] ✅ Notes generated/injected: ${notes.length} chars`)
+                await new Promise(r => setTimeout(r, 8000)) // Rate limit koruması
+
+                // Doğrulama yap - KÖKLÜ VE TUTARLI ÇÖZÜM: Sayfa çakışmalarını ve mükerrerlikleri tamamen engellemek için,
+                // not doğrulama aşamasında PDF dosyasını (fileUri) pas geçerek SADECE veritabanındaki izole rawContent kullanılır!
+                console.log(`[BG] Not Doğrulanıyor (Deneme #${vAttempt})...`)
+                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Kalite Kontrolörü Tarafından Denetleniyor (Tur #${vAttempt})` }) } }) } catch { }
+                const { verifyNotesAgainstSource } = await import("@/lib/ai-service")
+                const verification = await verifyNotesAgainstSource(
+                  section.rawContent, notes, section.title,
+                  undefined, section.pageStart, section.pageEnd
+                )
+
+                currentScore = verification.score
+
+                // En yüksek başarılı doğrulama skorunu ve notlarını koru
+                if (currentScore > bestScore) {
+                  bestScore = currentScore
+                  bestNotes = notes
+                  console.log(`[BG] 🏆 Yeni en yüksek skor: %${bestScore}`)
+                }
+
+                // KONTROLÖR ÇELİŞKİ DENETÇİSİ (Consistency Check)
+                // Kontrolör "hata/eksik var" deyip puanı 100 döndürürse, çelişkiyi tespit edip puanı
+                // dürüst bir şekilde eksik ve hata sayısına oranla düşürüyoruz.
+                const hasCriticalFeedback = verification.missingTopics.length > 0 || verification.issues.length > 0;
+                if (currentScore === 100 && hasCriticalFeedback) {
+                  // Eksik ve hata sayısına göre matematiksel düşüş
+                  const penaltyCount = verification.missingTopics.length + verification.issues.length;
+                  const rawPenalty = penaltyCount * 5; // Her tespit -5 puan
+                  currentScore = Math.max(50, 100 - rawPenalty);
+                  verification.score = currentScore;
+                  console.log(`[BG] ⚠️ KONTROLÖR ÇELİŞKİSİ: Model 100 verdi ama ${penaltyCount} hata/eksik buldu. Dürüst puan: %${currentScore}`);
+                }
+
+                // Kontrolörün yapısal skor değerini kaydet (SmartInject routing kararı için)
+                const kontrolorStructuralScore = verification.score;
+
+                lastVerification = verification
+
+                const historyEntry = {
+                  attempt: vAttempt,
+                  score: verification.score,
+                  missingTopics: verification.missingTopics || [],
+                  issues: verification.issues || [],
+                  suggestions: verification.suggestions || [],
+                  isSmartInject: isSmartInject
+                }
+                attemptHistory.push(historyEntry)
+
+                // CANLI RAPOR GÜNCELLEMESİ
+                try {
+                  await prisma.section.update({
+                    where: { id: section.id },
+                    data: {
+                      verificationScore: currentScore,
+                      ...(verification.score === 100 ? { notes: notes || null } : {}),
+                      verificationIssues: JSON.stringify({
+                        missingTopics: lastVerification.missingTopics || [],
+                        issues: lastVerification.issues || [],
+                        suggestions: lastVerification.suggestions || [],
+                        currentAttempt: vAttempt,
+                        isCheckingAgain: currentScore < 95 && vAttempt < 5,
+                        attemptHistory: attemptHistory
+                      })
+                    }
+                  })
+                } catch (dbErr) {
+                  console.error("[BG_DB_ERROR] Canlı skor DB kaydı başarısız:", dbErr)
+                }
+
+                console.log(`[BG] 🔍 DOĞRULAMA (Deneme #${vAttempt}): ${section.title} → Skor: ${verification.score}/100`)
+                if (verification.missingTopics.length > 0) {
+                  console.log(`[BG] ⚠️ Eksik konular: ${verification.missingTopics.join(", ")}`)
+                }
+                if (verification.issues.length > 0) {
+                  console.log(`[BG] 🔴 Hatalı bilgiler/sorunlar: ${verification.issues.join(", ")}`)
+                }
+
+                // Eğer skor tam 100 ise Müfettiş Derin Denetimine geç
                 if (verification.score === 100) {
-                  console.log(`[BG] 🎉 KALİTE ONAYLANDI (%100) — Hem Kontrolör Hem Müfettiş Kusursuz Onay Verdi!`)
-                  notesAttemptSuccess = true
-                  break
+                  console.log(`[BG] 🎉 KONTROLÖR ONAYI (%100) — 4. Katman: Müfettiş Derin Denetimi (Deep Audit) Başlıyor...`)
+                  try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüme 3'lü Paketler Halinde Müfettiş Çapraz Denetimi Yapılıyor...` }) } }) } catch { }
+
+                  // 1. Tüm konuları çıkar
+                  const analysisForAudit = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
+                  const sectionTopics = analysisForAudit.topics || []
+
+                  if (sectionTopics.length > 0) {
+                    // 2. 3'erli paketlere böl
+                    const packages: string[][] = []
+                    for (let i = 0; i < sectionTopics.length; i += 3) {
+                      packages.push(sectionTopics.slice(i, i + 3))
+                    }
+
+                    let overallPassed = true
+                    const allMissingDetails: string[] = []
+                    const allContradictions: string[] = []
+                    const allFindings: Array<{ description: string; severity: string; type: string }> = []
+
+                    console.log(`[BG] 📦 Toplam Paket Sayısı: ${packages.length} paket denetlenecek.`)
+
+                    let packIdx = 1
+                    for (const pack of packages) {
+                      console.log(`[BG] 👉 [Paket ${packIdx}/${packages.length}] Müfettiş inceliyor...`)
+                      await new Promise(r => setTimeout(r, 4000))
+
+                      try {
+                        const auditResult = await auditNotesAgainstSourceSpecific(
+                          section.rawContent,
+                          notes,
+                          section.title,
+                          pack,
+                          undefined,
+                          section.pageStart,
+                          section.pageEnd
+                        )
+
+                        if (!auditResult.passed) {
+                          overallPassed = false
+                          console.warn(`[BG] ❌ [Paket ${packIdx} BAŞARISIZ]`)
+                          if (auditResult.missingDetails?.length) allMissingDetails.push(...auditResult.missingDetails)
+                          if (auditResult.contradictions?.length) allContradictions.push(...auditResult.contradictions)
+                        } else {
+                          console.log(`[BG] ✅ [Paket ${packIdx} BAŞARILI]`)
+                        }
+
+                        // Severity-weighted findings biriktir
+                        if (auditResult.findings?.length) {
+                          allFindings.push(...auditResult.findings)
+                        }
+                      } catch (err: any) {
+                        overallPassed = false
+                        allMissingDetails.push(`[Paket ${packIdx} Hatası] ${err.message}`)
+                        allFindings.push({ description: `Paket ${packIdx} API Hatası: ${err.message}`, severity: "CRITICAL", type: "missing" })
+                      }
+                      packIdx++
+                    }
+
+                    if (!overallPassed) {
+                      // ==================== DÜRÜST PUANLAMA MOTORU (Severity-Weighted True Scoring) ====================
+                      // Her bulgunun ağırlığına göre puanı DÜRÜSTÇE hesapla.
+                      const SEVERITY_PENALTIES: Record<string, number> = { CRITICAL: 10, MEDIUM: 5, LOW: 2 }
+                      let totalPenalty = 0
+                      let criticalCount = 0
+                      let mediumCount = 0
+                      let lowCount = 0
+
+                      for (const finding of allFindings) {
+                        const penalty = SEVERITY_PENALTIES[finding.severity] || 5
+                        totalPenalty += penalty
+                        if (finding.severity === "CRITICAL") criticalCount++
+                        else if (finding.severity === "MEDIUM") mediumCount++
+                        else lowCount++
+                      }
+
+                      // Kontrolör 100 vermişti. Müfettiş bulgularına göre GERÇEK skoru hesapla.
+                      const trueScore = Math.max(30, 100 - totalPenalty) // 30'un altına düşmesin (not var sonuçta)
+                      currentScore = trueScore
+                      verification.score = trueScore
+
+                      // FIX #5: Müfettiş en üst otoritedir — bestScore'u da düzelt
+                      // Kontrolör 100 dedi ama müfettiş düşürdü. bestScore=100 kalırsa
+                      // bir sonraki kota hatasında yanlış geri yüklenir.
+                      bestScore = trueScore
+                      bestNotes = notes
+                      console.log(`[BG] 🏆 Müfettiş düzeltmesi sonrası bestScore güncellendi: %${bestScore}`)
+
+                      console.log(`[BG] ⛔ MÜFETTİŞ DENETİMİ SONUCU:`)
+                      console.log(`[BG]   → KRİTİK: ${criticalCount} bulgu (x10 puan)`)
+                      console.log(`[BG]   → ORTA: ${mediumCount} bulgu (x5 puan)`)
+                      console.log(`[BG]   → DÜŞÜK: ${lowCount} bulgu (x2 puan)`)
+                      console.log(`[BG]   → Toplam Ceza: -${totalPenalty} puan`)
+                      console.log(`[BG]   → DÜRÜST PUAN: %${trueScore} (Kontrolör: %100 → Müfettiş düzeltmesi: %${trueScore})`)
+
+                      // Müfettişin bulgularını lastVerification'a ekle ki sonraki üretimde Yazar bunları düzeltsin
+                      lastVerification.missingTopics.push(...allMissingDetails.map(d => `[MÜFETTİŞ EKSİĞİ] ${d}`))
+                      lastVerification.issues.push(...allContradictions.map(c => `[MÜFETTİŞ HATASI] ${c}`))
+
+                      // UI Bug Fix: Update the history entry with the true lowered score from Deep Audit
+                      if (historyEntry) {
+                        historyEntry.score = trueScore;
+                        historyEntry.missingTopics = [...lastVerification.missingTopics];
+                        historyEntry.issues = [...lastVerification.issues];
+                      }
+
+                      // DB Live Update for Inspector Failure — DÜRÜST SKOR ile
+                      try {
+                        await prisma.section.update({
+                          where: { id: section.id },
+                          data: {
+                            verificationScore: trueScore,
+                            verificationIssues: JSON.stringify({
+                              missingTopics: lastVerification.missingTopics,
+                              issues: lastVerification.issues,
+                              suggestions: lastVerification.suggestions,
+                              currentAttempt: vAttempt,
+                              isCheckingAgain: true,
+                              attemptHistory: attemptHistory,
+                              inspectorFailed: true,
+                              inspectorFindings: allFindings // Ağırlıklı bulgu detayları
+                            })
+                          }
+                        })
+                      } catch (e) { }
+
+                      // "Kaliteden taviz yok" - Akıllı Çıkış stratejisi tamamen iptal edildi.
+                      // Notun %100 kusursuz olması ZORUNLUDUR. 96 veya 99 alınsa dahi,
+                      // sistem eksikleri Smart Inject ile kapatmaya çalışacaktır.
+                    }
+                  } else {
+                    console.log(`[BG] ⚠️ Konu çıkarılamadı, Müfettiş denetimi atlanıyor.`)
+                  }
+
+                  if (verification.score === 100) {
+                    console.log(`[BG] 🎉 KALİTE ONAYLANDI (%100) — Hem Kontrolör Hem Müfettiş Kusursuz Onay Verdi!`)
+                    notesAttemptSuccess = true
+                    break
+                  }
                 }
-              }
 
-              // ==================== AKILLI YÖNLENDİRME (Smart Routing) ====================
-              // Döngünün bir sonraki iterasyonunda ne yapılacağına karar veren mantık.
-              // Not: SmartInject kararı artık sahte "99" şifresine değil,
-              // Kontrolörün yapısal değerlendirmesine (kontrolorStructuralScore) dayanır.
-              // Bu değer döngünün başındaki (vAttempt > 1) koşulunda lastVerification.score olarak okunur.
+                // ==================== AKILLI YÖNLENDİRME (Smart Routing) ====================
+                // Döngünün bir sonraki iterasyonunda ne yapılacağına karar veren mantık.
+                // Not: SmartInject kararı artık sahte "99" şifresine değil,
+                // Kontrolörün yapısal değerlendirmesine (kontrolorStructuralScore) dayanır.
+                // Bu değer döngünün başındaki (vAttempt > 1) koşulunda lastVerification.score olarak okunur.
 
-              if (vAttempt < 5) {
-                console.log(`[BG] ⛔ Skor mükemmel değil (%${verification.score}), 10sn beklenip tekrar denenecek...`)
-                await new Promise(r => setTimeout(r, 10000))
+                if (vAttempt < 5) {
+                  console.log(`[BG] ⛔ Skor mükemmel değil (%${verification.score}), 10sn beklenip tekrar denenecek...`)
+                  await new Promise(r => setTimeout(r, 10000))
+                }
+              } catch (notesErr: any) {
+                console.error(`[BG] ❌ Not üretim/doğrulama denemesi #${vAttempt} başarısız:`, notesErr.message)
+
+                // FIX #4: Kota hatası mı yoksa gerçek hata mı?
+                const isQuotaErr = notesErr.message?.includes("kota") ||
+                  notesErr.message?.includes("quota") ||
+                  notesErr.message?.includes("429") ||
+                  notesErr.message?.includes("RESOURCE_EXHAUSTED")
+
+                if (isQuotaErr && quotaFailures < MAX_QUOTA_FAILURES) {
+                  quotaFailures++
+                  vAttempt-- // Kota hatası gerçek deneme hakkını YEMEMELİ
+                  console.log(`[BG] ⏳ Kota hatası (${quotaFailures}/${MAX_QUOTA_FAILURES})! Bu deneme sayılmıyor, 60sn bekleniyor...`)
+                  await new Promise(r => setTimeout(r, 60000))
+                } else if (isQuotaErr) {
+                  console.log(`[BG] ⛔ Kota hatası limiti aşıldı (${MAX_QUOTA_FAILURES}). Mevcut en iyi skorla devam ediliyor.`)
+                }
+
+                // KRİTİK: Kota hatası gibi geçici hatalarda önceki en yüksek skoru koru!
+                if (bestScore > 0) {
+                  currentScore = bestScore
+                  notes = bestNotes
+                  console.log(`[BG] 🛡️ Geçici hata! En iyi skor korunuyor: %${bestScore}`)
+                }
+
+                // Hata geçmişine kaydet
+                attemptHistory.push({
+                  attempt: vAttempt,
+                  score: 0,
+                  missingTopics: [],
+                  issues: [isQuotaErr ? "Kota hatası — deneme sayılmadı" : "Doğrulama yapılamadı"],
+                  suggestions: []
+                })
+
+                if (vAttempt === 5 && !notes) throw notesErr
               }
-            } catch (notesErr: any) {
-              console.error(`[BG] ❌ Not üretim/doğrulama denemesi #${vAttempt} başarısız:`, notesErr.message)
-              
-              // FIX #4: Kota hatası mı yoksa gerçek hata mı?
-              const isQuotaErr = notesErr.message?.includes("kota") ||
-                notesErr.message?.includes("quota") ||
-                notesErr.message?.includes("429") ||
-                notesErr.message?.includes("RESOURCE_EXHAUSTED")
-              
-              if (isQuotaErr && quotaFailures < MAX_QUOTA_FAILURES) {
-                quotaFailures++
-                vAttempt-- // Kota hatası gerçek deneme hakkını YEMEMELİ
-                console.log(`[BG] ⏳ Kota hatası (${quotaFailures}/${MAX_QUOTA_FAILURES})! Bu deneme sayılmıyor, 60sn bekleniyor...`)
-                await new Promise(r => setTimeout(r, 60000))
-              } else if (isQuotaErr) {
-                console.log(`[BG] ⛔ Kota hatası limiti aşıldı (${MAX_QUOTA_FAILURES}). Mevcut en iyi skorla devam ediliyor.`)
-              }
-              
-              // KRİTİK: Kota hatası gibi geçici hatalarda önceki en yüksek skoru koru!
-              if (bestScore > 0) {
-                currentScore = bestScore
-                notes = bestNotes
-                console.log(`[BG] 🛡️ Geçici hata! En iyi skor korunuyor: %${bestScore}`)
-              }
-              
-              // Hata geçmişine kaydet
-              attemptHistory.push({
-                attempt: vAttempt,
-                score: 0,
-                missingTopics: [],
-                issues: [isQuotaErr ? "Kota hatası — deneme sayılmadı" : "Doğrulama yapılamadı"],
-                suggestions: []
-              })
-              
-              if (vAttempt === 5 && !notes) throw notesErr
+            } // End of quality loop
+
+            // KULLANICI KESİN EMRİ: "Sistem pes etmeyecek! Kalitesiz not kaydedilmeyecek!"
+            // Eğer 15 denemenin sonunda bile hala 85'in altında kaldıysa, KESİNLİKLE sisteme kaydetme.
+            if (currentScore < 85) {
+              console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: ${MAX_RETRIES} deneme yapıldı ama kalite %${currentScore}'da kaldı. Kötü not kaydetmemek için işlem REDDEDİLDİ ve durduruldu!`);
+              throw new Error(`KALİTE BARAJI AŞILAMADI! En iyi skor: %${currentScore}. Kusursuz not istendiği için kirli veri veritabanına kaydedilmedi.`);
             }
-          } // End of quality loop
-          
-          // KULLANICI KESİN EMRİ: "Sistem pes etmeyecek! Kalitesiz not kaydedilmeyecek!"
-          // Eğer 15 denemenin sonunda bile hala 85'in altında kaldıysa, KESİNLİKLE sisteme kaydetme.
-          if (currentScore < 85) {
-            console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: ${MAX_RETRIES} deneme yapıldı ama kalite %${currentScore}'da kaldı. Kötü not kaydetmemek için işlem REDDEDİLDİ ve durduruldu!`);
-            throw new Error(`KALİTE BARAJI AŞILAMADI! En iyi skor: %${currentScore}. Kusursuz not istendiği için kirli veri veritabanına kaydedilmedi.`);
-          }
           } // End of if (!notesAttemptSuccess)
 
           // ==================== DOĞRULANMIŞ NOT ÜZERİNDEN DERS ÖĞELERİNİ ÜRETME ====================
-          
+
           let flashcards: any[] = []
           let questions: any[] = []
           let analysis: any = {}
@@ -759,7 +759,7 @@ async function processInBackground(slug: string, course: any) {
             await new Promise(r => setTimeout(r, 15000))
 
             requiresQuestions = analysis?.requiresQuestions !== false; // Default to true if missing
-            
+
             if (!requiresQuestions) {
               console.log(`[BG] 🧠 COGNITIVE ROUTING: Bu bölüm sadece terim/kısaltma içeriyor. Soru üretimi atlanıyor (requiresQuestions: false).`);
             } else {
@@ -835,6 +835,34 @@ async function processInBackground(slug: string, course: any) {
               }) : null
             }
           })
+
+          // KISALTMALAR Sözlük Çıkarımı (Glossary Extraction)
+          if (finalTitle.toUpperCase().includes("KISALTMALAR") && notes) {
+            console.log(`[BG] 📚 "KISALTMALAR" bölümü algılandı. Sözlük (Glossary) çıkarılıyor...`)
+            const dict: Record<string, string> = {}
+            const lines = notes.split('\n')
+            for (const line of lines) {
+              const cleanLine = line.trim()
+              // Olası formatlar: 
+              // * **ABBR:** Definition
+              // **ABBR:** Definition
+              const match = cleanLine.match(/^(?:\*\s+)?\*\*([^:]+):\*\*\s*(.+)$/)
+              if (match) {
+                dict[match[1].trim()] = match[2].trim()
+              }
+            }
+            if (Object.keys(dict).length > 0) {
+              try {
+                await prisma.course.update({
+                  where: { id: courseId },
+                  data: { glossary: JSON.stringify(dict) }
+                })
+                console.log(`[BG] ✅ ${Object.keys(dict).length} adet kısaltma Course.glossary alanına kaydedildi.`)
+              } catch (e) {
+                console.error(`[BG] ⛔ Glossary kaydetme hatası:`, e)
+              }
+            }
+          }
 
           // FIX #1: Mükerrer flashcard koruması — aynı front metni varsa ekleme
           const existingCards = await prisma.flashcard.findMany({

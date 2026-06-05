@@ -255,6 +255,7 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
     setSelectedAnswer(null)
     setShowResult(false)
     setResult(null)
+    setShowNotesModal(false)
   }
 
   function resetQuiz() {

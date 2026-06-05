@@ -9,6 +9,23 @@ import { toast } from "sonner"
 import { EmptyState, LoadingSkeleton, ConfettiEffect, formatTitle, SplitNotesLayout, CustomSelect } from "./shared"
 import rehypeRaw from "rehype-raw"
 
+// Flashcard cevaplarındaki iç içe (nested) madde işaretlerini düzleştirip okunabilir kılar.
+// AI bazen alt alt listeler üretir — bu fonksiyon onları tek seviye düz listeye çevirir.
+function flattenNestedMarkdown(text: string): string {
+  if (!text) return text;
+  return text
+    // 4+ boşluk girintili alt maddeleri tek seviyeye çek
+    .replace(/^\s{4,}[-•*]\s/gm, '- ')
+    // 2-3 boşluk girintili alt maddeleri de tek seviyeye çek
+    .replace(/^\s{2,3}[-•*]\s/gm, '- ')
+    // Tab girintili alt maddeleri de düzelt
+    .replace(/^\t+[-•*]\s/gm, '- ')
+    // Çift boşluklu numaralı alt listeleri de düzelt
+    .replace(/^\s{2,}(\d+)\.\s/gm, '$1. ')
+    // Ardışık boş satırları tek satıra düşür
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 
 
 
@@ -52,7 +69,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
       const rowsHtml = topicFilteredCards.map((c, i) => `
         <tr style="break-inside: avoid; page-break-inside: avoid;">
           <td class="td-front">${mdToHtml(c.front)}</td>
-          <td class="td-back">${mdToHtml(c.back)}</td>
+          <td class="td-back">${mdToHtml(flattenNestedMarkdown(c.back))}</td>
         </tr>
       `).join('')
 
@@ -132,6 +149,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
     const updated = await getCourseFlashcards(slug)
     setCards(updated)
     setFlipped(false)
+    setShowNotesModal(false)
 
     // Sonraki karta geç
     const nextCards = reviewMode
@@ -288,9 +306,11 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 text-center sticky top-0">
               {flipped ? "CEVAP" : "SORU"}
             </div>
-            <p className={`font-medium leading-relaxed text-center ${flipped ? "text-sm" : "text-lg"}`}>
-              {flipped ? card.back : card.front}
-            </p>
+            <div className={`font-medium leading-relaxed text-left space-y-4 ${flipped ? "text-sm" : "text-lg text-center"}`}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                {flattenNestedMarkdown((flipped ? card.back : card.front).replace(/💡/g, '\n\n💡').replace(/🪤/g, '\n\n🪤'))}
+              </ReactMarkdown>
+            </div>
             {flipped && (
               <div className="mt-8 pt-4 border-t border-emerald-500/20 flex justify-center">
                 <button 
@@ -318,7 +338,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
       {!flipped ? (
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => { setCurrentIndex(Math.max(0, safeIndex - 1)); setFlipped(false) }}
+            onClick={() => { setCurrentIndex(Math.max(0, safeIndex - 1)); setFlipped(false); setShowNotesModal(false); }}
             disabled={safeIndex === 0}
             className="flex-1 py-3 rounded-xl bg-white/5 text-slate-400 font-bold hover:bg-white/10 transition-colors disabled:opacity-30"
           >
@@ -331,7 +351,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
             Cevabı Gör
           </button>
           <button
-            onClick={() => { setCurrentIndex(Math.min(displayCards.length - 1, safeIndex + 1)); setFlipped(false) }}
+            onClick={() => { setCurrentIndex(Math.min(displayCards.length - 1, safeIndex + 1)); setFlipped(false); setShowNotesModal(false); }}
             disabled={safeIndex === displayCards.length - 1}
             className="flex-1 py-3 rounded-xl bg-white/5 text-slate-400 font-bold hover:bg-white/10 transition-colors disabled:opacity-30"
           >

@@ -39,126 +39,8 @@ const PDF_SHARED_CSS = `
   p, div, li, span, tr { orphans: 3 !important; widows: 3 !important; }
 `
 
-const ABBREVIATIONS_DICT: Record<string, string> = {
-  "IP": "Internet Protocol (İnternet Protokolü. İnternete veya yerel bir ağa bağlı cihazların birbirini tanımasını, iletişim kurmasını ve veri paketlerinin doğru adrese yönlendirilmesini sağlayan eşsiz sayısal adresleme sistemidir)",
-  "IT": "Information Technology (Bilgi Teknolojileri. Bilgisayarlar, yazılım, veri depolama, ağlar ve diğer fiziksel altyapıların kullanılarak her türlü elektronik verinin işlenmesi ve yönetilmesi alanıdır. Türkçede BT olarak da bilinir)",
-  "NCC": "Network Coordination Centre (Ağ Koordinasyon Merkezi. Bölgesel internet kayıt kuruluşlarının (RIR) kendi bölgelerindeki IP adres bloklarını, otonom sistem numaralarını (ASN) tahsis eden ve internetin teknik koordinasyonunu sağlayan idari merkezidir)",
-  "iSCSI": "Internet Small Computer System Interface (Depolama cihazlarını standart internet kabloları/ağları üzerinden bilgisayara doğrudan bağlıymış gibi çalıştırma protokolü)",
-  "SHA-256": "Secure Hash Algorithm 256-bit (Verinin değiştirilmediğini kanıtlamak için kullanılan, geriye döndürülemez 256 bitlik son derece güvenli bir şifreleme algoritmasıdır)",
-  "SHA-1": "Secure Hash Algorithm 1 (Eski ve güvenlik zayıflıkları nedeniyle artık pek tercih edilmeyen bir karma şifreleme algoritmasıdır)",
-  "SAN": "Storage Area Network (Depolama Alanı Ağı. Şirketlerdeki devasa depolama ünitelerini ve sunucuları yüksek hızla birbirine bağlayan özel ve bağımsız ağ yapısıdır)",
-  "WAF": "Web Application Firewall (Web Uygulaması Güvenlik Duvarı. Web sitelerine gelen zararlı istekleri filtreleyen, siteleri hacker saldırılarından koruyan özel kalkandır)",
-  "SIEM": "Security Information and Event Management (Güvenlik Bilgileri ve Olay Yönetimi. Tüm sistem loglarını tek bir yerde toplayıp yapay zekayla siber saldırıları tespit eden alarm sistemidir)",
-  "KVKK": "Kişisel Verilerin Korunması Kanunu (Kişisel verilerin işlenmesini disiplin altına alan, kişilerin temel hak ve özgürlüklerini koruyan Türk kanunudur)",
-  "MASAK": "Mali Suçları Araştırma Kurulu (Türkiye'de kara para aklamayı ve terörün finansmanını önlemek amacıyla çalışan T.C. Hazine ve Maliye Bakanlığı'na bağlı resmi kuruluştur)",
-  "SHA": "Secure Hash Algorithm (Güvenli Karma Algoritması. Verilerin bütünlüğünü ve şifrelerin güvenliğini doğrulamak için kullanılan algoritma ailesidir)",
-  "MD5": "Message-Digest Algorithm 5 (Veri bütünlüğünü doğrulamada kullanılan eski bir karma şifreleme fonksiyonu. Güvenlik açıkları nedeniyle artık kritik işlerde kullanılmaz)",
-  "MD4": "Message-Digest Algorithm 4 (MD5'ten de eski, günümüzde tamamen güvensiz kabul edilen bir şifreleme fonksiyonu)",
-  "MD6": "Message-Digest Algorithm 6 (Daha güvenli ve modern bir şifreleme fonksiyonu olmasına rağmen SHA ailesi kadar yaygınlaşmamıştır)",
-  "VPN": "Virtual Private Network (Sanal Özel Ağ. İnternet üzerinde şifreli ve güvenli bir tünel açarak, uzaktaki bir ağa veya internete gizlice ve güvenle bağlanmayı sağlar)",
-  "MFA": "Multi-Factor Authentication (Çok Faktörlü Kimlik Doğrulama. Şifrenin yanına SMS kodu, parmak izi gibi ek bir güvenlik adımı daha ekleyerek hesabı koruma yöntemidir)",
-  "IDS": "Intrusion Detection System (Saldırı Tespit Sistemi. Ağdaki şüpheli hareketleri ve siber saldırı girişimlerini izleyip sadece yöneticiye uyarı veren pasif alarm sistemidir)",
-  "IPS": "Intrusion Prevention System (Saldırı Önleme Sistemi. Ağdaki saldırıları anında tespit edip siber saldırıyı otomatik olarak engelleyen/kesen aktif savunma sistemidir)",
-  "PKI": "Public Key Infrastructure (Açık Anahtar Altyapısı. Sayısal sertifikalar ve anahtarlar kullanarak internet ortamında kimlik doğrulaması ve şifreleme sağlayan sistem bütünüdür)",
-  "DLP": "Data Loss Prevention (Veri Sızıntısı Önleme. Şirket içindeki gizli bilgilerin (kredi kartı, müşteri verisi vb.) dışarıya e-posta veya USB ile sızmasını engelleyen yazılımdır)",
-  "DMZ": "Demilitarized Zone (Arındırılmış Bölge. Dış dünyaya açık web sunucularını, şirketin iç güvenli ağından izole ederek konumlandırdığımız tampon koruma bölgesidir)",
-  "OWASP": "Open Web Application Security Project (Açık Web Güvenliği Projesi. Web uygulamalarındaki en tehlikeli siber güvenlik açıklarını listeleyen ve güvenli kod yazmayı öğreten küresel topluluktur)",
-  "XSS": "Cross-Site Scripting (Siteler Arası Betik Çalıştırma. Hacker'ların güvenli bir web sitesine zararlı JavaScript kodları ekleyerek diğer kullanıcıları hacklemesi zafiyetidir)",
-  "CSRF": "Cross-Site Request Forgery (Siteler Arası İstek Sahteciliği. Kullanıcının tarayıcısındaki aktif oturumu kullanarak, kullanıcının bilgisi dışında bankadan para yollama gibi işlemler yaptırılması saldırısıdır)",
-  "SQLi": "SQL Injection (Veritabanı Enjeksiyonu. Web sitesindeki form alanlarına zararlı SQL kodları yazarak veritabanındaki tüm gizli bilgilere yetkisiz erişme açığıdır)",
-  "DoS": "Denial of Service (Hizmet Engelleme Saldırısı. Tek bir bilgisayardan bir sunucuya aşırı yüklenerek web sitesini veya sistemi erişilemez hale getirme girişimidir)",
-  "DDoS": "Distributed Denial of Service (Dağıtık Hizmet Engelleme. Binlerce virüslü bilgisayar (botnet) aracılığıyla bir sunucuya aynı anda saldırıp sistemi çökertme yöntemidir)",
-  "RTO": "Recovery Time Objective (Kurtarma Süresi Hedefi. Bir sistem çöktükten sonra, işlerin aksamaması için sistemin en geç ne kadar sürede (örn: 2 saat içinde) ayağa kalkması gerektiğidir)",
-  "RPO": "Recovery Point Objective (Kurtarma Noktası Hedefi. Bir felaket anında şirketin en fazla ne kadar sürelik veri kaybını (örn: son 1 saatlik veri) göze alabileceğidir)",
-  "COBIT": "Control Objectives for Information and Related Technologies (IT (Bilgi Teknolojileri) yönetimi ve denetimi için dünyaca kabul görmüş en popüler standart rehberdir)",
-  "ISO": "International Organization for Standardization (Uluslararası Standartlar Teşkilatı. Bilgi güvenliği için en meşhur standardı ISO 27001'dir)",
-  "ITIL": "Information Technology Infrastructure Library (IT Hizmet Yönetimi. Bilgi teknolojileri hizmetlerinin en kaliteli ve verimli şekilde sunulması için hazırlanan en popüler en iyi uygulamalar kütüphanesidir)",
-  "NIST": "National Institute of Standards and Technology (ABD Ulusal Standartlar Enstitüsü. Özellikle siber güvenlik çerçevesi (NIST CSF) ile siber tehditleri önleme standartlarını belirler)",
-  "BYOD": "Bring Your Own Device (Kendi Cihazını Getir. Çalışanların şirkete kendi kişisel telefon veya bilgisayarlarını getirip şirket işlerinde kullanması modelidir)",
-  "CYOD": "Choose Your Own Device (Kendi Cihazını Seç. Şirketin belirlediği onaylı cihaz listesinden çalışanın kendi tercih ettiği cihazı seçip iş için kullanması modelidir)",
-  "COPE": "Corporate-Owned, Personally Enabled (Şirkete ait, ancak çalışanın kişisel kullanımına da izin verilmiş cihaz modeli)",
-  "SSL": "Secure Sockets Layer (Tarayıcı ile web sitesi arasındaki tüm trafiği şifreleyerek kredi kartı ve şifrelerin hackerlar tarafından çalınmasını önleyen eski şifreleme standardı)",
-  "TLS": "Transport Layer Security (SSL'in yerini alan, modern internet sitelerinin şifreli ve güvenli veri iletişimi kurmasını sağlayan en güncel protokoldür (HTTPS))",
-  "AES": "Advanced Encryption Standard (Gelişmiş Şifreleme Standardı. Günümüzde tüm dünyada askeri düzeyde gizli verileri şifrelemek için kullanılan en yaygın simetrik şifreleme yöntemidir)",
-  "DES": "Data Encryption Standard (1970'lerden kalma, günümüz bilgisayarları tarafından dakikalar içinde kırılabilen eski ve artık güvensiz kabul edilen şifreleme standardı)",
-  "3DES": "Triple Data Encryption Standard (DES şifrelemesini ardı ardına 3 kez uygulayarak daha güvenli hale getirilmiş ancak günümüzde yerini AES'e bırakmış eski yöntem)",
-  "WLAN": "Wireless Local Area Network (Kablosuz Yerel Alan Ağı. Evlerdeki ve ofislerdeki Wi-Fi ağlarının genel teknik adıdır)",
-  "WEP": "Wired Equivalent Privacy (İlk kablosuz ağ şifreleme standardı. Çok ciddi açıklar barındırır ve saniyeler içinde kırılabilir, kesinlikle kullanılmamalıdır)",
-  "WPA": "Wi-Fi Protected Access (WEP'in güvenlik açıklarını kapatmak için çıkarılmış kablosuz şifreleme standardı)",
-  "WPA3": "Wi-Fi Protected Access 3 (Kablosuz ağlar için geliştirilmiş en modern, en güncel ve en güvenli kablosuz şifreleme standardıdır)",
-  "SSID": "Service Set Identifier (Kablosuz Ağ Adı. Telefonunuzla Wi-Fi aradığınızda listede gördüğünüz kablosuz ağların ismidir)",
-  "LDAP": "Lightweight Directory Access Protocol (Dizin Hizmetleri Protokolü. Şirketlerdeki kullanıcı adı ve şifrelerin tek bir merkezden yönetilip sorgulanmasını sağlayan protokoldür)",
-  "MAC": "Media Access Control (Fiziksel Cihaz Adresi. Dünyadaki her ağ kartına, modeme veya bilgisayara fabrikada atanan eşsiz ve benzersiz fiziksel kimlik numarasıdır)",
-  "CAN": "Controller Area Network (Denetleyici Alan Ağı. Özellikle otomobillerde ve endüstriyel cihazlarda, kablo kalabalığını önleyip mikrodenetleyicilerin birbiriyle konuşmasını sağlayan ağ standardı)",
-  "BDDK": "Bankacılık Düzenleme ve Denetleme Kurumu (Türkiye'de bankacılık ve finans sektörünü düzenleyen ve denetleyen, finansal istikrarı korumakla görevli resmi otoritedir)",
-  "BSBDL": "Bilgi Sistemleri Bağımsız Denetim Lisansı (Sermaye piyasasında bilgi sistemleri bağımsız denetimi yapacak unvana sahip kişilere SPL tarafından verilen resmi lisans türüdür)",
-  "ISA": "International Standards on Auditing (Uluslararası Denetim Standartları. Finansal tabloların bağımsız denetim kalitesini ve güvenilirliğini küresel düzeyde artırmak amacıyla yayımlanan evrensel denetim kuralları bütünüdür)",
-  "ISACA": "Information Systems Audit and Control Association (Bilgi Sistemleri Denetim ve Kontrol Birliği. Siber güvenlik, BT yönetişimi ve bilgi sistemleri denetimi alanında küresel standartları ve CISA gibi saygın sertifikaları belirleyen uluslararası mesleki kuruluştur)",
-  "ISACF": "Information Systems Audit and Control Foundation (Bilgi Sistemleri Denetim ve Kontrol Vakfı. Bilgi teknolojileri yönetişimi ve denetimi alanında araştırmaları destekleyen, standartların geliştirilmesine katkı sağlayan ISACA bünyesindeki vakıftır)",
-  "LACNIC": "Latin America and Caribbean Network Information Centre (Latin Amerika ve Karayip bölgesi için internet IP numaralandırma kaynaklarını yöneten bölgesel internet kayıt kuruluşudur (RIR))",
-  "RIPE": "Réseaux IP Européens Network Coordination Centre (Avrupa, Orta Doğu ve Orta Asya bölgeleri için internet IP kaynaklarını yöneten bölgesel internet kayıt kuruluşudur (RIR))",
-  "CISA": "Certified Information Systems Auditor (Sertifikalı Bilgi Sistemleri Denetçisi. Uluslararası düzeyde geçerliliği olan, bilgi sistemleri denetçiliği uzmanlık unvanıdır)",
-  "DAC": "Discretionary Access Control (İsteğe Bağlı Erişim Kontrolü. Dosya sahibinin, diğer kullanıcılara kendi isteğine göre okuma, yazma, silme yetkisi verebildiği erişim modeli)",
-  "DDO": "T.C. Cumhurbaşkanlığı Dijital Dönüşüm Ofisi (Devletin dijitalleşme sürecini, siber güvenlik politikalarını ve e-Devlet kapısını yöneten resmi kurumdur)",
-  "ECC": "Elliptic Curve Cryptography (Eliptik Eğri Kriptografisi. Çok daha küçük anahtar boyutlarıyla RSA gibi devasa anahtarlarla aynı düzeyde yüksek güvenlik sunan modern şifreleme yöntemi)",
-  "FDDI": "Fiber Distributed Data Interface (Fiber Dağıtılmış Veri Arayüzü. Fiber optik kablolar üzerinden yüksek hızlı yerel ağ iletişimi sağlayan eski bir ağ teknolojisi)",
-  "IAB": "Internet Architecture Board (İnternet Mimari Kurulu. İnternetin teknik gelişimini, standartlarını ve protokol yapısını denetleyen üst düzey kuruldur)",
-  "ICANN": "Internet Corporation for Assigned Names and Numbers (İnternet Tahsisli Sayılar ve İsimler Kurumu. İnternetteki tüm web sitelerinin alan adlarını (.com, .net vb.) ve IP adreslerini yöneten küresel otoritedir)",
-  "ICMP": "Internet Control Message Protocol (İnternet Kontrol Mesajı Protokolü. Ağdaki hata mesajlarını ileten ve cihazların birbirine ulaşıp ulaşmadığını test eden (ping) protokoldür)",
-  "IEEE": "Institute of Electrical and Electronics Engineers (Elektrik ve Elektronik Mühendisleri Enstitüsü. Wi-Fi (802.11), Ethernet (802.3) gibi dünya çapındaki tüm teknolojik standartları belirleyen kuruluştur)",
-  "IETF": "Internet Engineering Task Force (İnternet Mühendisliği Görev Gücü. İnternet protokollerinin (TCP/IP, HTTP vb.) tasarlanmasını ve geliştirilmesini sağlayan açık küresel topluluktur)",
-  "IGMP": "Internet Group Management Protocol (İnternet Grup Yönetim Protokolü. Ağdaki yönlendiricilerin ve cihazların, tek bir yayını aynı anda birden çok kişiye (multicast) iletmesini yöneten protokoldür)",
-  "ITAF": "Information Technology Assurance Framework (Bilgi Teknolojileri Güvence Çerçevesi. Bilgi sistemleri denetimi yaparken uyulması gereken standartlar ve uygulama esasları rehberidir)",
-  "ITGI": "IT Governance Institute (IT Yönetişim Enstitüsü. Bilgi teknolojilerinin şirket hedefleriyle uyumlu ve güvenli şekilde yönetilmesi için araştırmalar yapan kuruluştur)",
-  "ITU": "International Telecommunication Union (Uluslararası Telekomünikasyon Birliği. Telekomünikasyon ve radyo frekans standartlarını belirleyen Birleşmiş Milletler'e bağlı resmi kuruluştur)",
-  "KGK": "Kamu Gözetimi, Muhasebe ve Denetim Standartları Kurumu (Türkiye'de bağımsız denetim standartlarını belirleyen, denetçileri yetkilendiren resmi düzenleyici kurumdur)",
-  "LAN": "Local Area Network (Yerel Alan Ağı. Ev, okul veya ofis gibi sınırlı bir alandaki bilgisayarları birbirine bağlayan yerel ağ yapısıdır)",
-  "LSO": "Local Security Officer (Yerel Güvenlik Sorumlusu. Belirli bir bölge, bina veya şubedeki bilgi güvenliği önlemlerinin uygulanmasından sorumlu olan yetkilidir)",
-  "MAN": "Metropolitan Area Network (Metropol Alan Ağı. Bir şehir genelindeki birden çok binayı veya yerel ağı birbirine bağlayan geniş şehir ağıdır)",
-  "NOS": "Network Operating System (Ağ İşletim Sistemi. Ağ üzerindeki sunucuları, veri paylaşımını ve kullanıcı yetkilerini yönetmek için tasarlanmış özel işletim sistemleridir)",
-  "NTP": "Network Time Protocol (Ağ Zaman Protokolü. Ağdaki tüm bilgisayar ve sunucuların saatlerini, ortak bir zaman sunucusuyla saniyeden daha hassas şekilde eşitleyen protokoldür)",
-  "OSI": "Open Systems Interconnection (Ağ iletişiminin nasıl gerçekleştiğini açıklayan, 7 katmandan (Fiziksel, Uygulama vb.) oluşan dünyaca kabul görmüş referans modeldir)",
-  "PAN": "Personal Area Network (Kişisel Alan Ağı. Telefon, kulaklık gibi kişisel cihazların bluetooth yardımıyla birbirine bağlandığı çok dar alanlı ağdır)",
-  "PDU": "Protocol Data Unit (Protokol Veri Birimi. Ağ katmanlarında taşınan verinin her bir aşamadaki teknik adıdır (örn: Paket, Segment, Frame))",
-  "PIN": "Personal Identification Number (Kişisel Kimlik Numarası. ATM kartları veya telefonlar için kullanılan gizli güvenlik şifresidir)",
-  "RA": "Registration Authority (Kayıt Makamı. PKI (Açık Anahtar) yapısında, kullanıcının kimliğini doğrulayıp Sertifika Makamına (CA) bildiren ara birimdir)",
-  "SLA": "Service Level Agreement (Hizmet Seviyesi Anlaşması. Hizmet kalitesini, arıza durumunda en geç çözüm sürelerini yasal olarak garanti altına alan sözleşmedir)",
-  "SNA": "Systems Network Architecture (IBM firması tarafından sunucular ve terminaller arasında iletişim kurmak için geliştirilmiş eski bir ağ mimarisi standardı)",
-  "SNIA": "Storage Networking Industry Association (Depolama ağları ve veri depolama teknolojileri standartlarını geliştiren küresel üreticiler birliğidir)",
-  "SPL": "Sermaye Piyasası Lisanslama Sicil ve Eğitim Kuruluşu (Sermaye piyasasında çalışan profesyonellerin lisanslama sınavlarını yapan ve sicillerini tutan resmi kuruluştur)",
-  "SSO": "Single Sign-On (Tekli Oturum Açma. Tek bir kullanıcı adı ve şifreyle sisteme girip, şirketteki diğer tüm yetkili uygulamalara şifre sormadan otomatik bağlanabilme kolaylığıdır)",
-  "SoD": "Segregation of Duties (Görevler Ayrılığı İlkesi. Bir iş sürecinde hata veya dolandırıcılığı önlemek amacıyla, yetki, onay ve kayıt işlemlerinin farklı kişilere dağıtılması kuralıdır)",
-  "TCP": "Transmission Control Protocol (Geçiş Kontrol Protokolü. Ağ üzerinden gönderilen verilerin kayıpsız, eksiksiz ve doğru sırayla karşı tarafa ulaşmasını garanti eden güvenilir iletişim protokolüdür)",
-  "TLD": "Top-Level Domain (Üst Düzey Alan Adı. İnternet adreslerinin sonundaki .com, .org, .net, .gov gibi en üst kategori uzantılardır)",
-  "TOR": "The Onion Router (Soğan Yönlendirici. İnternet trafiğini dünya genelindeki binlerce gönüllü sunucu üzerinden şifreli aktararak kullanıcının kimliğini ve konumunu tamamen gizleyen anonim ağdır)",
-  "TSE": "Türk Standartları Enstitüsü (Türkiye'de her türlü madde, mamul ve hizmet standardını hazırlayan ve belgelendiren resmi ulusal kuruluştur)",
-  "TSPB": "Türkiye Sermaye Piyasaları Birliği (Sermaye piyasasında faaliyet gösteren tüm aracı kurum ve bankaların üye olmak zorunda olduğu mesleki kuruluştur)",
-  "TTK": "Türk Ticaret Kanunu (Şirketlerin kuruluşu, yönetimi, ortaklıkları ve ticari defterlerine ilişkin yasal kuralları belirleyen ana kanundur)",
-  "UDP": "User Datagram Protocol (Kullanıcı Veri Paketi Protokolü. TCP gibi kayıp kontrolü yapmayan, veriyi olabildiğince hızlı gönderen bağlantısız protokoldür. Canlı yayınlarda ve oyunlarda kullanılır)",
-  "UPS": "Uninterruptible Power Supply (Kesintisiz Güç Kaynağı. Elektrik kesildiğinde içindeki batarya sayesinde bilgisayarların kapanmasını önleyip elektrik sağlamaya devam eden cihazdır)",
-  "VoIP": "Voice over IP (IP Üzerinden Ses. Telefon görüşmelerinin klasik telefon hatları yerine internet ve IP protokolleri üzerinden dijital olarak gerçekleştirilmesidir)",
-  "ZT": "Zero Trust (Sıfır Güven Mimarisi. Ağın içindeki veya dışındaki hiç kimseye varsayılan olarak güvenmeyip, her işlemde sürekli kimlik doğrulama ve en az yetki kuralı isteyen modern güvenlik felsefesidir)",
-  "ZTA": "Zero Trust Architecture (Sıfır Güven Mimarisi. Zero Trust felsefesine uygun olarak tasarlanmış olan güvenli siber altyapı ve ağ tasarımıdır)",
-  "WAN": "Wide Area Network (Geniş Alan Ağı. Şehirlerarası veya ülkelerarası gibi çok geniş coğrafi bölgelerdeki bilgisayarları ve yerel ağları birbirine bağlayan devasa ağ yapısıdır (örn: İnternet))",
-  "AFRINIC": "African Network Information Centre (Afrika kıtası için internet IP numaralandırma kaynaklarını yöneten bölgesel internet kayıt kuruluşudur (RIR))",
-  "ANSI": "American National Standards Institute (Amerikan Ulusal Standartlar Enstitüsü. ABD'de endüstriyel ve teknolojik standartları belirleyen resmi kuruluştur)",
-  "APNIC": "Asia-Pacific Network Information Centre (Asya-Pasifik bölgesi için internet IP numaralandırma kaynaklarını yöneten bölgesel internet kayıt kuruluşudur (RIR))",
-  "ARIN": "American Registry for Internet Numbers (Kuzey Amerika bölgesi için internet IP numaralandırma kaynaklarını yöneten bölgesel internet kayıt kuruluşudur (RIR))",
-  "ARPANET": "Advanced Research Projects Agency Network (Modern internetin temeli kabul edilen, 1969 yılında ABD Savunma Bakanlığı bünyesinde kurulan ilk paket anahtarlamalı ağdır)",
-  "ATM": "Asynchronous Transfer Mode (Eşzamansız Aktarım Modu. Ses, veri ve görüntüyü sabit boyutlu hücreler halinde yüksek hızla taşıyan eski bir ağ anahtarlama teknolojisidir)",
-  "APT": "Advanced Persistent Threat (Gelişmiş Kalıcı Tehdit. Devlet destekli veya son derece organize siber korsan grupları tarafından, hedef sisteme gizlice sızıp aylarca/yıllarca veri çalan uzun süreli siber saldırılardır)",
+import { ABBREVIATIONS_DICT } from "@/lib/abbreviations"
 
-  "BSBD": "Bilgi Sistemleri Bağımsız Denetimi (Kurumların bilgi sistemleri altyapılarını, güvenlik kontrollerini ve süreçlerini yasal mevzuatlara ve standartlara uygunluk açısından bağımsız uzmanlarca denetleme sürecidir)",
-  "BSSID": "Basic Service Set Identifier (Kablosuz ağ erişim noktasının (modem/router) fiziksel MAC adresidir. Wi-Fi bağlantılarında cihazların modemi tam olarak tanımasını sağlar)",
-  "BSY": "Bilgi Sistemleri Yönetimi (Bir kurumun bilgi teknolojisi kaynaklarının, altyapısının, insan gücünün ve stratejilerinin şirket hedefleriyle uyumlu şekilde yönetilmesi sürecidir)",
-  "BT": "Bilgi Teknolojileri (Bilgisayar, depolama, ağ ve diğer fiziksel cihazların, her türlü elektronik veriyi oluşturmak, işlemek, depolama ve iletmek için kullanılması disiplinidir)",
-  "CA": "Certification Authority (Sertifika Otoritesi. Dijital sertifikaları (SSL/TLS) üreten, imzalayan, dağıtan ve bunların güvenilirliğini garanti eden PKI yapısındaki resmi kurumdur)",
-  "CER": "Crossover Error Rate (Çapraz Hata Oranı. Biyometrik güvenlik sistemlerinde Yanlış Kabul Oranı (FAR) ile Yanlış Reddetme Oranının (FRR) eşitlendiği, cihazın genel hassasiyetini gösteren denge noktasıdır)",
-  "COBO": "Corporate-Owned, Business-Only (Şirkete ait, sadece iş amaçlı kullanılabilir mobil cihaz modeli. Kişisel uygulamaların yüklenmesi yasaktır)",
-  "CRL": "Certificate Revocation List (Sertifika İptal Listesi. Süresi dolmadan çalınan, sızdırılan veya geçersiz kılınan dijital sertifikaların tutulduğu resmi kara listedir)",
-  "DARPA": "Defense Advanced Research Projects Agency (ABD Savunma Bakanlığı bünyesinde, internet dahil ileri teknoloji askeri araştırma ve geliştirme projeleri yürüten dairedir)",
-  "DCE": "Data Circuit-Terminating Equipment (Veri Devresi Sonlandırıcı Cihaz. Ağ iletişiminde veriyi ileten cihaz (DTE) ile fiziksel iletim hattı arasında bağlantı kuran modem gibi ara birim cihazlarıdır)"
-}
 
 export function extractDynamicAbbreviations(sections: any[]): Record<string, string> {
   const dynamicDict: Record<string, string> = {}
@@ -237,8 +119,12 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
   }, [sections])
 
   const mergedDict = useMemo(() => {
-    return { ...ABBREVIATIONS_DICT, ...dynamicDict }
-  }, [dynamicDict])
+    let dbGlossary = {}
+    try {
+      if (course.glossary) dbGlossary = JSON.parse(course.glossary)
+    } catch(e) {}
+    return { ...ABBREVIATIONS_DICT, ...dynamicDict, ...dbGlossary }
+  }, [dynamicDict, course.glossary])
 
   const renderTooltips = useCallback((children: React.ReactNode): React.ReactNode => {
     return renderTextWithTooltips(children, mergedDict)
@@ -517,12 +403,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
 
       // Notların HTML'ini hazırla
       const notesHtml = noteSections.map((s: any, i: number) => {
-        const colors: Record<string, { border: string; bg: string; text: string; badge: string }> = {
-          High: { border: '#ef4444', bg: '#fef2f2', text: '#991b1b', badge: 'YÜKSEK ÖNEMLİ' },
-          Medium: { border: '#f59e0b', bg: '#fffbeb', text: '#92400e', badge: 'ORTA DÜZEY' },
-          Low: { border: '#22c55e', bg: '#f0fdf4', text: '#166534', badge: 'EK BİLGİ' },
-        }
-        const c = colors[s.importance] || colors.Medium
+        const c = { border: '#3b82f6', bg: '#f8fafc', text: '#0f172a' }
         const noteContent = md2html(s.notes || '')
 
         return `
@@ -532,11 +413,6 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
               <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
                 <span style="font-size:20px;font-weight:800;color:#0f172a;">${formatTitle(s.title, i, s.notes, s.module)}</span>
               </div>
-              ${isAdmin ? `
-              <div style="display:flex;gap:8px;font-size:11px;">
-                <span style="background:#e2e8f0;color:#475569;padding:2px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Sayfa ${s.pageStart}–${s.pageEnd}</span>
-              </div>
-              ` : ''}
             </div>
             <!-- İçerik -->
             <div style="font-size:13px;color:#1e293b;line-height:1.75;">
@@ -549,14 +425,11 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       const tocHtml = noteSections.map((s: any, i: number) => {
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dotted #cbd5e1;">
           <span style="font-size:13px;color:#1e293b;"><strong style="color:#3b82f6;">${i + 1}.</strong> ${formatTitle(s.title, i, s.notes, s.module)}</span>
-          ${isAdmin ? `<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">Sayfa ${s.pageStart}–${s.pageEnd}</span>` : ''}
         </div>`
       }).join('')
 
       // Stats
       const totalChars = noteSections.reduce((sum: number, s: any) => sum + (s.notes?.length || 0), 0)
-      const criticalCount = noteSections.filter((s: any) => s.importance === 'High').length
-      const importantCount = noteSections.filter((s: any) => s.importance === 'Medium').length
 
       // Blob URL ile açarak about:blank sorununu çöz
       const fullHtml = `<!DOCTYPE html>
@@ -662,11 +535,13 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
       break-inside: avoid !important;
       margin: 15px auto !important;
       border-collapse: collapse !important;
+      font-size: 11px !important;
     }
     .print-table td, .print-table th {
       word-break: break-word !important;
       overflow-wrap: break-word !important;
-      max-width: 250px !important;
+      max-width: 200px !important;
+      padding: 5px 8px !important;
     }
 
     table { page-break-inside: auto; }
@@ -676,6 +551,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     .mermaid-wrap {
       display: block !important;
       width: 100% !important;
+      max-width: 520px !important;
       margin: 15px auto !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important; /* Modern standard */
@@ -696,8 +572,8 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     .mermaid-wrap svg {
       display: block !important;
       margin: 0 auto !important;
-      /* Responsive ölçekleme: şema sayfadan taşmaz, otomatik küçülür */
-      width: 100% !important;
+      /* Responsive ölçekleme: şema sayfadan taşmaz, kendi doğal boyutunda kalır */
+      width: max-content !important;
       max-width: 100% !important;
       height: auto !important;
       /* viewBox korunduğu sürece SVG kendi kendini ölçekler */
@@ -812,12 +688,17 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
 </body>
 </html>`
 
+      // 3. İstemci tarafında HTML Blob oluştur ve yeni sekmede aç (Questions ve Flashcards sekmeleriyle aynı mantık)
       const blob = new Blob([fullHtml], { type: 'text/html' })
       const url = URL.createObjectURL(blob)
+      
+      // İndirmek yerine yeni sekmede aç (Tarayıcının kendi yazdır/PDF okuyucusu devreye girer)
       window.open(url, '_blank')
-      // Blob URL'yi temizle (pencere açıldıktan sonra)
-      setTimeout(() => URL.revokeObjectURL(url), 10000)
-      toast.success("PDF penceresi açıldı! 'PDF Olarak Kaydet' butonuna tıkla.")
+      
+      // Bellek sızıntısını önlemek için URL'yi bir süre sonra temizle
+      setTimeout(() => URL.revokeObjectURL(url), 15000)
+
+      toast.success("PDF Şablonu Hazır! Lütfen açılan sekmeden yazdır/kaydet işlemini yapın.", { id: 'pdf-toast' })
     } catch (err: any) {
       console.error('[PDF]', err)
       toast.error("PDF oluşturulurken hata: " + err.message)
@@ -1014,15 +895,6 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                           {section.module === "Modül 1" ? "📘" : "📗"} {section.module}
                         </span>
                       )}
-                      {section.importance && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          section.importance === "High" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                          section.importance === "Medium" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                          "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                        }`}>
-                          {section.importance === "High" ? "🔴 Kritik" : section.importance === "Medium" ? "🟡 Önemli" : "🟢 Ek Bilgi"}
-                        </span>
-                      )}
                       {isAdmin && section.verificationScore != null && (
                         <span 
                           onClick={(e) => {
@@ -1117,7 +989,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                   {section.notes ? (
                     <PremiumMarkdownRenderer 
                       content={cleanMarkdown(section.notes, true)}
-                      renderTooltips={renderTooltips}
+                      renderTooltips={section.title.toUpperCase().includes("KISALTMALAR") ? undefined : renderTooltips}
                       autoScrollKeyword={scrollKeyword}
                     />
                   ) : (
@@ -1311,11 +1183,11 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-8 border-b border-white/10 pb-6 leading-tight tracking-tight">
                       {formatTitle(section.title, i, section.notes, section.module)}
                     </h1>
-                    <div className="text-lg sm:text-xl text-slate-300 leading-loose tracking-wide font-serif markdown-notes focus-mode">
+                    <div className="text-lg sm:text-[21px] text-slate-300 leading-[1.85] tracking-normal font-sans font-medium markdown-notes focus-mode">
                       {section.notes ? (
                         <PremiumMarkdownRenderer 
                           content={cleanMarkdown(section.notes, true)}
-                          renderTooltips={renderTooltips}
+                          renderTooltips={section.title.toUpperCase().includes("KISALTMALAR") ? undefined : renderTooltips}
                           courseId={course.id}
                           sectionId={section.id}
                         />

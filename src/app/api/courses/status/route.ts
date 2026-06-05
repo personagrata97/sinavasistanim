@@ -35,16 +35,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Ders bulunamadı" }, { status: 404 })
     }
 
-    // 🛡️ İşleme kurtarma: 60 dakikadan fazla processing'te kalan dersleri kurtarma
+    // 🛡️ İşleme kurtarma: 15 dakikadan fazla processing'te kalan dersleri kurtarma
     if (course.status === "processing") {
-      const threeHoursAgo = new Date(Date.now() - 180 * 60 * 1000)
-      if (course.updatedAt < threeHoursAgo) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+      if (course.updatedAt < fifteenMinutesAgo) {
         await prisma.course.update({
           where: { slug },
           data: { status: "error" }
         })
         course.status = "error"
-        console.log(`[STATUS] ⚠️ ${slug} 180dk'dan fazla processing'te kaldı — error'a çekildi`)
+        console.log(`[STATUS] ⚠️ ${slug} 15dk'dan fazla processing'te kaldı — error'a çekildi`)
       }
     }
 

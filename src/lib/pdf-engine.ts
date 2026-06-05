@@ -160,7 +160,7 @@ Sadece aşağıdaki JSON array formatında çıktı ver (başka hiçbir şey yaz
   }
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
     body,
     { headers, timeout: 300000 }
   )
@@ -218,7 +218,7 @@ ${tocText}
   }
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
     body,
     { headers, timeout: 60000 }
   )
