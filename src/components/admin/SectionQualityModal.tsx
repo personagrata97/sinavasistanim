@@ -62,7 +62,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
   const kontrolorIssues = allValidationIssues.filter((t: string) => !t.includes("[MÜFETTİŞ"))
   const mufettisIssues = allValidationIssues.filter((t: string) => t.includes("[MÜFETTİŞ"))
 
-  const hasKontrolorIssues = kontrolorMissing.length > 0 || kontrolorIssues.length > 0
+  const hasKontrolorIssues = kontrolorMissing.length > 0 || kontrolorIssues.length > 0 || suggestions.length > 0
   // Müfettiş hatası var mı? (Eski auditResult mantığı veya yeni prefix mantığı)
   const hasMufettisIssues = (mufettisMissing.length > 0 || mufettisIssues.length > 0) || (issuesObj.auditResult?.missingDetails?.length > 0) || (issuesObj.auditResult?.contradictions?.length > 0)
   const hasAnyIssues = hasKontrolorIssues || hasMufettisIssues
@@ -189,7 +189,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
               "bg-amber-500/10 text-amber-400 border-amber-500/20"
             }`}>
               {isSkipped ? "DOĞRULAMA BYPASS EDİLDİ" :
-                hasMufettisPassed ? ( actualAttempt === 1 ? "İLK DENEMEDE BAŞARILI (ÇİFT AŞAMALI ONAY)" : `${actualAttempt}. TURDA ÇİFT AŞAMALI ONAY ALINDI` ) :
+                hasMufettisPassed ? ( actualAttempt === 1 ? "ONAYLANDI (1. TUR)" : `ONAYLANDI (${actualAttempt}. TUR)` ) :
                 hasMufettisIssues ? "ONAYDAN GEÇMEDİ (EKSİKLER VAR)" :
                 isExcellent ? "MÜFETTİŞ (İNSAN) ONAYI BEKLENİYOR" :
                 `${actualAttempt}. KALİTE DÖNGÜSÜ DEVAM EDİYOR`}
@@ -197,15 +197,16 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
           </div>
         </div>
 
-        {/* Kontrolör Bulgu Raporu (Sadece hata varsa göster) */}
         {hasKontrolorIssues && (
-          <div className="w-full mt-5 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2 text-left">
-            <h4 className="text-[10px] font-black tracking-wider text-amber-500 uppercase flex items-center gap-1.5">
+          <div className={`w-full mt-5 p-4 rounded-xl border space-y-2 text-left ${score === 100 ? "bg-emerald-500/5 border-emerald-500/10" : "bg-amber-500/5 border-amber-500/10"}`}>
+            <h4 className={`text-[10px] font-black tracking-wider uppercase flex items-center gap-1.5 ${score === 100 ? "text-emerald-500" : "text-amber-500"}`}>
               <Bot className="w-3.5 h-3.5" />
               KALİTE KONTROLÖRÜ TESPİTLERİ (GENEL KAPSAM VE AKICILIK)
             </h4>
             <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
-              Aşağıdaki eksikler nedeniyle ders notu henüz tam kapasitesine ulaşmadı:
+              {score === 100 
+                ? "Ders notu kusursuz bulundu ancak kaliteyi artırmak için aşağıdaki küçük öneriler not düşüldü:" 
+                : "Aşağıdaki eksikler nedeniyle ders notu henüz tam kapasitesine ulaşmadı:"}
             </p>
             <ul className="list-disc pl-4 text-[11px] text-slate-300 space-y-1">
               {kontrolorMissing.map((t: string, idx: number) => (
@@ -216,6 +217,11 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
               {kontrolorIssues.map((i: string, idx: number) => (
                 <li key={`vi-${idx}`} className="leading-relaxed">
                   <span className="text-red-400 font-bold">Bilgi Çelişkisi:</span> "{i}" bilgisinde uyumsuzluk var.
+                </li>
+              ))}
+              {suggestions.map((s: string, idx: number) => (
+                <li key={`sug-${idx}`} className="leading-relaxed">
+                  <span className="text-emerald-400 font-bold">İyileştirme Önerisi:</span> {s}
                 </li>
               ))}
             </ul>
@@ -343,7 +349,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                                 {h.attempt === 0 ? "İlk Analiz:" : `#${h.attempt}. Tur:`}
                               </span>
                               {isTrulyPerfect ? (
-                                <span className="text-emerald-400 font-bold">Çift Aşamalı Onay Alındı</span>
+                                <span className="text-emerald-400 font-bold">ONAYLANDI</span>
                               ) : h.attempt === 0 ? (
                                 <span className="text-amber-400/90 font-bold">Eksikler / Öneriler Tespit Edildi</span>
                               ) : (
@@ -360,8 +366,16 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                                   <Sparkles className="w-3.5 h-3.5" /> SİSTEM ONAY RAPORU
                                 </div>
                                 <div className="text-[11px] text-emerald-400/80 leading-relaxed font-medium">
-                                  Kalite Kontrolörü ve Müfettiş denetimi başarıyla tamamlandı. Kaynak materyaldeki yasal süreler, kurum adları ve cezalar yüksek doğrulukla aktarıldı.
+                                  Kalite Kontrolörü denetimi başarıyla tamamlandı. Kaynak materyaldeki kavramlar yüksek doğrulukla aktarıldı.
                                 </div>
+                                {hSuggestions.length > 0 && (
+                                  <div className="text-[10px] text-emerald-400/90 mt-2 pt-2 border-t border-emerald-500/10">
+                                    <span className="font-bold text-emerald-500/70">Not Düşülen Öneri:</span>
+                                    <ul className="list-disc pl-3.5 space-y-0.5 mt-0.5">
+                                      {hSuggestions.map((m: string, idx: number) => <li key={idx}>{m}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <>
