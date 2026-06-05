@@ -45,6 +45,7 @@ model User {
   achievements      UserAchievement[]
   studyPlans        StudyPlan[]
   leaderboard       WeeklyLeaderboard[]
+  annotations       UserAnnotation[]
 }
 
 // ================= CORE CONTENT =================
@@ -88,6 +89,7 @@ model Course {
   studyPlans  StudyPlan[]
   mockResults UserMockExamResult[]
   blueprint   ExamBlueprint?
+  annotations UserAnnotation[]
 }
 
 model Section {
@@ -111,6 +113,7 @@ model Section {
   
   questions   Question[]
   flashcards  Flashcard[]
+  annotations UserAnnotation[]
 
   @@index([courseId])
 }
@@ -264,6 +267,27 @@ model UserMockExamResult {
   @@index([userId])
   @@index([courseId])
   @@index([userId, courseId])
+}
+
+model UserAnnotation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionId   String
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  text        String   // Highlighted text
+  note        String?  // Optional user note
+  color       String   @default("yellow") // yellow, green, blue, pink, purple
+  cfi         String?  // Optional: Selector/path or anchor info to locate the highlight
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, sectionId])
+  @@index([courseId])
 }
 
 // ================= GAMIFICATION =================

@@ -189,7 +189,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
               "bg-amber-500/10 text-amber-400 border-amber-500/20"
             }`}>
               {isSkipped ? "DOĞRULAMA BYPASS EDİLDİ" :
-                hasMufettisPassed ? ( actualAttempt === 1 ? "İLK DENEMEDE KUSURSUZ (ÇİFTE ONAY)" : `${actualAttempt}. TURDA ÇİFTE ONAY ALINDI` ) :
+                hasMufettisPassed ? ( actualAttempt === 1 ? "İLK DENEMEDE BAŞARILI (ÇİFT AŞAMALI ONAY)" : `${actualAttempt}. TURDA ÇİFT AŞAMALI ONAY ALINDI` ) :
                 hasMufettisIssues ? "ONAYDAN GEÇMEDİ (EKSİKLER VAR)" :
                 isExcellent ? "MÜFETTİŞ (İNSAN) ONAYI BEKLENİYOR" :
                 `${actualAttempt}. KALİTE DÖNGÜSÜ DEVAM EDİYOR`}
@@ -283,7 +283,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                   "bg-red-400"
                 }`} />
                 {isSkipped ? "Doğrulama Bypass Edildi" :
-                  hasMufettisPassed ? "Kalite Kontrolörü & Müfettiş Çift Onay Damgası" :
+                  hasMufettisPassed ? "Kalite Kontrolörü ve Müfettiş Onay Süreci" :
                   isExcellent ? "Kalite Kontrolörü Kalite Güvence Döngüsü" :
                   "Kalite İyileştirme Süreci Devam Ediyor"}
               </h4>
@@ -291,7 +291,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                 {isSkipped 
                   ? "Bu ders notu, API limitleri veya teknik zorunluluklar sebebiyle çok turlu kalite iyileştirme döngüsüne girmeden tek aşamalı olarak üretilmiştir."
                   : hasMufettisPassed 
-                  ? "Bu ders notu, Kalite Kontrolörü tarafından kaynak dökümandaki tüm yasal süreler ve kavramlar açısından incelenip zenginleştirilmiş, ardından Müfettiş tarafından en ince teknik ve yasal detay seviyesinde denetlenerek çift onay damgası almıştır."
+                  ? "Bu ders notu, Kalite Kontrolörü tarafından kaynak dokümandaki yasal süreler ve kavramlar açısından incelenmiş, ardından Müfettiş tarafından teknik ve yasal detay seviyesinde denetlenerek çift aşamalı onaydan geçmiştir."
                   : isExcellent 
                   ? "Bu ders notu, Kalite Kontrolörü tarafından kaynak dökümandaki yasal süreler ve kavramlar açısından incelenmiş ve üstün kalite standardıyla onaylanmıştır. Müfettiş derin denetim fazı henüz başlatılmamıştır."
                   : "Bu ders notu üzerinde Kalite Kontrolörü incelemesi yapılmış olup, tespit edilen eksiklikler veya bilgi hataları nedeniyle not geliştirilme aşamasındadır. Müfettiş denetimine henüz hazır değildir."}
@@ -300,7 +300,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                 [AI-PROCESS-LOG] {isSkipped 
                   ? "API limitleri ve kota kısıtlamaları nedeniyle çok turlu kalite iyileştirme döngüsü bypass edilerek tek aşamada tamamlandı." 
                   : hasMufettisPassed
-                  ? `Kalite Kontrolörü ve Müfettiş derin analizi başarıyla tamamlandı. Notun müfredatla %100 tutarlı olduğu, sıfır eksik ve sıfır hata barındırdığı çifte onay mühürüyle tescil edildi.`
+                  ? `Kalite Kontrolörü ve Müfettiş analizi başarıyla tamamlandı. Notun müfredat kapsamını eksiksiz karşıladığı, yasal çerçeve ve terimlerin yüksek doğruluk oranıyla aktarıldığı teyit edildi.`
                   : isExcellent  
                   ? "Kalite Kontrolörü derin analiz gerçekleştirerek 5 farklı kalite/kapsam iyileştirme turu tamamlandı. Ders notunun müfredatla %95+ düzeyde tutarlı olduğu doğrulanarak onaylandı." 
                   : `Kalite Kontrolörü incelemesi tamamlandı. Puan: %${score}. Notta ${kontrolorMissing.length} eksik konu ve ${kontrolorIssues.length} bilgi hatası düzeltilmeyi bekliyor.`}
@@ -343,7 +343,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                                 {h.attempt === 0 ? "İlk Analiz:" : `#${h.attempt}. Tur:`}
                               </span>
                               {isTrulyPerfect ? (
-                                <span className="text-emerald-400 font-bold">Çifte Onay Alındı</span>
+                                <span className="text-emerald-400 font-bold">Çift Aşamalı Onay Alındı</span>
                               ) : h.attempt === 0 ? (
                                 <span className="text-amber-400/90 font-bold">Eksikler / Öneriler Tespit Edildi</span>
                               ) : (
@@ -360,7 +360,7 @@ export function SectionQualityModal({ section, onClose, actions }: SectionQualit
                                   <Sparkles className="w-3.5 h-3.5" /> SİSTEM ONAY RAPORU
                                 </div>
                                 <div className="text-[11px] text-emerald-400/80 leading-relaxed font-medium">
-                                  Kalite Kontrolörü ve Müfettiş derin denetimi başarıyla tamamlandı. Kaynak materyaldeki tüm yasal süreler, kurum adları ve cezalar eksiksiz olarak aktarıldı. Sıfır hata ile tescil edilmiştir.
+                                  Kalite Kontrolörü ve Müfettiş denetimi başarıyla tamamlandı. Kaynak materyaldeki yasal süreler, kurum adları ve cezalar yüksek doğrulukla aktarıldı.
                                 </div>
                               </div>
                             ) : (

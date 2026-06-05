@@ -895,7 +895,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                           {section.module === "Modül 1" ? "📘" : "📗"} {section.module}
                         </span>
                       )}
-                      {isAdmin && section.verificationScore != null && (
+                      {isAdmin && section.verificationScore != null && section.processed && section.notes && (
                         <span 
                           onClick={(e) => {
                             e.stopPropagation();
