@@ -9,7 +9,7 @@ import {
   Upload, Brain, ChevronRight, Sparkles, Target,
   AlertTriangle, CheckCircle2, Loader2, X, Play, Pause, RotateCcw, Timer, Search,
   FileText, RefreshCw, Download, ClipboardSignature, BarChart2, Lightbulb,
-  Scale, TrendingUp, Landmark, Globe, CircleDollarSign, ScrollText, ClipboardList, Globe2, Calculator, Receipt, Rocket, CalendarDays, XCircle, CheckCircle, Flame, Coffee, Zap, ArrowRight, Star, Flag, Award, Trophy, Lock
+  Scale, TrendingUp, Landmark, Globe, CircleDollarSign, ScrollText, ClipboardList, Globe2, Calculator, Receipt, Rocket, CalendarDays, XCircle, CheckCircle, Flame, Coffee, Zap, ArrowRight, Star, Flag, Award, Trophy, Lock, Layers
 } from "lucide-react"
 import { getCourseBySlug, updateExamDate, getMockExamResults, saveMockExamResult, getUserStats, updateUserExamDate } from "@/lib/actions"
 import { getDaysUntilExam, getUrgencyLevel } from "@/lib/schedule-engine"
@@ -618,7 +618,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
                       if (label.includes("Notları Çıkarılıyor")) return <Brain className="w-4 h-4 animate-pulse text-purple-400" />;
                       if (label.includes("Kontrolör")) return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
                       if (label.includes("Müfettiş")) return <Search className="w-4 h-4 text-amber-400" />;
-                      if (label.includes("Flashcard")) return <Sparkles className="w-4 h-4 text-pink-400" />;
+                      if (label.includes("Flashcard")) return <Layers className="w-4 h-4 text-pink-400" />;
                       if (label.includes("Rotalama")) return <RefreshCw className="w-4 h-4 text-sky-400 animate-spin" />;
                       if (label.includes("Soru Havuzu")) return <HelpCircle className="w-4 h-4 text-indigo-400" />;
                       return <Loader2 className="w-4 h-4 animate-spin text-blue-400" />;
