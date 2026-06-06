@@ -739,6 +739,20 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     <h2 style="font-size:24px;color:#0f172a;font-weight:800;">Başarılar!</h2>
     <div style="margin-top:40px;font-size:11px;color:#94a3b8;">Sınav Asistanım · ${new Date().getFullYear()}</div>
   </div>
+
+  <script>
+    // PDF formatı okuma/çıktı amaçlı olduğu için gizli cevapları (details) otomatik açıyoruz
+    document.querySelectorAll('details').forEach(d => {
+      d.setAttribute('open', 'true');
+      const summary = d.querySelector('summary');
+      if (summary) {
+        summary.innerHTML = "<strong>Cevap:</strong>";
+        summary.style.pointerEvents = "none";
+        summary.style.color = "#1e40af";
+        summary.style.marginTop = "10px";
+      }
+    });
+  </script>
 </body>
 </html>`
 

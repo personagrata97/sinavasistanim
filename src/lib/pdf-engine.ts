@@ -4,6 +4,18 @@ import axios from "axios"
 // pdf2json ile metin çıkarma - pdfjs-dist'ten çok daha güvenilir
 // PDF'teki her sayfanın metnini ayrı ayrı çıkarır
 
+function fixMathChars(text: string): string {
+  return text
+    .replace(/³/g, "^3")
+    .replace(/²/g, "^2")
+    .replace(/∑/g, "Sigma ")
+    .replace(/≥/g, ">=")
+    .replace(/≤/g, "<=")
+    .replace(/≠/g, "!=")
+    .replace(/α/g, "Alpha")
+    .replace(/β/g, "Beta");
+}
+
 export async function getPdfPageCount(buffer: Buffer): Promise<number> {
   return new Promise((resolve, reject) => {
     const parser = new PDFParser()
@@ -13,6 +25,11 @@ export async function getPdfPageCount(buffer: Buffer): Promise<number> {
     })
 
     parser.on("pdfParser_dataError", (err: any) => {
+      const errMsg = String(err?.parserError || err || "")
+      if (errMsg.toLowerCase().includes("password") || errMsg.toLowerCase().includes("encrypted")) {
+        reject(new Error("Şifreli (Parola Korumalı) PDF dosyaları desteklenmemektedir."))
+        return
+      }
       console.error("[PDF_ENGINE] Page count error:", err)
       resolve(1)
     })
@@ -61,7 +78,8 @@ export async function extractAllText(buffer: Buffer): Promise<string[]> {
           .replace(/\n{3,}/g, "\n\n")
           .trim()
 
-        texts.push(fullText)
+        const fixedText = fixMathChars(fullText)
+        texts.push(fixedText)
       }
 
       const totalChars = texts.reduce((sum, t) => sum + t.length, 0)
@@ -86,7 +104,7 @@ export async function extractAllText(buffer: Buffer): Promise<string[]> {
       // ŞİFRELİ PDF ALGILAMA
       if (errMsg.toLowerCase().includes("password") || errMsg.toLowerCase().includes("encrypted")) {
         console.error(`[PDF_ENGINE] 🔒 ŞİFRELİ PDF! Bu PDF parola korumalıdır ve işlenemez.`)
-        resolve([]) // Boş dizi dön — upstream'de algılanacak
+        resolve(["__ENCRYPTED__"]) // Upstream'de algılanacak
         return
       }
 

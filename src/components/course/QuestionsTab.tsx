@@ -431,8 +431,8 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
               onClick={async () => {
                 setGeneratingMore(true)
                 try {
-                  const { generateMoreQuestionsAction } = await import("@/lib/actions")
-                  const result = await generateMoreQuestionsAction(slug, undefined, 20)
+                  const { generateMoreContentAction } = await import("@/lib/actions")
+                  const result = await generateMoreContentAction(slug, "QUESTIONS", undefined, 20)
                   if (result.success) {
                     toast.success(result.message)
                     const { getCourseQuestions } = await import("@/lib/actions")

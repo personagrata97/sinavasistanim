@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { COURSE_PAGE_OVERRIDES } from "@/lib/course-configs"
+
 import { extractAllText, detectSectionsMultimodal, detectSectionsTextAI, checkPdfQuality, extractSectionsRegex } from "@/lib/pdf-engine"
 import { analyzeSectionContent, generateCourseNotes, generateFlashcards, generateQuestions, setFileUrisMap, auditNotesAgainstSourceSpecific } from "@/lib/ai-service"
 import { generateStudySchedule } from "@/lib/schedule-engine"
@@ -287,12 +289,15 @@ export async function POST(req: NextRequest) {
                 break;
               }
             }
-            sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
-          } else {
-            sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
-          }
-          // 3. İçeriği (content) doğru sayfalara göre yeniden kes
-          sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
+            for (let i = 0; i < sections.length; i++) {
+              if (i < sections.length - 1) {
+                sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
+              } else {
+                sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
+              }
+              // 3. İçeriği (content) doğru sayfalara göre yeniden kes
+              sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
+            }
         }
         console.log(`[PROCESS] 🛡️ Global Zırh İşlemi Tamamlandı.`)
       }
@@ -368,8 +373,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true, message: "İşleme başlatıldı" })
 } catch (error: any) {
-  console.error("[PROCESS_FATAL]", error)
-  return NextResponse.json({ error: error.message }, { status: 500 })
+  console.error("[PROCESS_FATAL]", error); require("fs").writeFileSync("/Users/selimkaya/.gemini/antigravity/scratch/spl-study-assistant/scratch/fatal.log", error.stack);
+  return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
 }
 }
 
@@ -886,7 +891,7 @@ async function processInBackground(slug: string, course: any) {
               try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
               for (let qAttempt = 1; qAttempt <= 3; qAttempt++) {
                 try {
-                  questions = await generateQuestions(fullContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+                  questions = await generateQuestions(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
                   console.log(`[BG] ✅ Questions: ${questions.length}`)
                   break
                 } catch (e: any) {

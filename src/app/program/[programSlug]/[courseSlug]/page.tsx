@@ -22,7 +22,7 @@ import QuestionsTab from "@/components/course/QuestionsTab"
 import CoverageTab from "@/components/course/CoverageTab"
 import DailyGoalsTab from "@/components/course/DailyGoalsTab"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
-import { Modal, EmptyState, LoadingSkeleton, COURSE_TABS } from "@/components/course/shared"
+import { Modal, EmptyState, LoadingSkeleton, COURSE_TABS, formatTitle } from "@/components/course/shared"
 import { Tabs } from "@/components/ui/shared"
 import { DatePicker } from "@/components/ui/DatePicker"
 import { toast } from "sonner"
@@ -82,84 +82,6 @@ function Badge({ children, variant = "default", className = "" }: BadgeProps) {
     </span>
   )
 }
-
-const formatTitle = (title: string, index?: number, notes?: string, moduleName?: string) => {
-  const isGeneric = (str: string) => {
-    if (!str) return true;
-    const lower = str.toLocaleLowerCase('tr-TR');
-    return lower.includes('bölüm içeriği') || lower.includes('bu bölüm ne anlatıyor') || lower.includes('kaynak metin');
-  }
-
-  const toTitleCase = (str: string) => {
-    let lower = str.toLocaleLowerCase('tr-TR');
-    let title = lower.replace(/(?:^|[\s\[\(\-])([a-zçğıöşü])/g, (match) => match.toLocaleUpperCase('tr-TR'));
-    
-    const conjunctions = ['ve', 'ile', 'veya', 'de', 'da', 'ki'];
-    conjunctions.forEach(c => {
-       title = title.replace(new RegExp(`\\s${c}\\s`, 'gi'), ` ${c} `);
-    });
-
-    const acronyms = ["MASAK", "CMK", "SPK", "AB", "BDDK", "TCMB", "MKK", "AŞ", "PDF", "KVHS", "SPL", "ŞİB", "FATF"];
-    acronyms.forEach(ac => {
-       const lowerAc = ac.toLocaleLowerCase("tr-TR");
-       const titleAc = lowerAc.replace(/^[a-zçğıöşü]/g, m => m.toLocaleUpperCase("tr-TR"));
-       
-       const escapedLower = lowerAc.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-       const escapedTitle = titleAc.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-       const escapedAc = ac.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-       
-       title = title.replace(new RegExp(`(^|[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ])(${escapedLower}|${escapedTitle}|${escapedAc})([^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]|$)`, 'g'), `$1${ac}$3`);
-    });
-    return title;
-  };
-
-  let formatted = "";
-
-  // 1. If title has custom tag like [Modül 1]
-  if (title && title.includes('[') && title.includes(']')) {
-    formatted = toTitleCase(title.replace(/^\d+[\.\-\)]\s*/, ''))
-  }
-  // 2. Prioritize meaningful database section title first
-  else if (title && !/^\d+[\.\-\s]/.test(title) && title.length > 3 && title.length < 150 && !isGeneric(title)) {
-    formatted = toTitleCase(title)
-  }
-  // 3. Fallback to notes markdown headings if DB title is generic or missing
-  else if (notes) {
-    let found = false;
-    const headings = [...notes.matchAll(/^#+\s+(.+)/gm)]
-    for (const match of headings) {
-      let heading = match[1].replace(/[📌🔑📊⚖️🏛️💡🔍📋✅❌📝🎯]/gu, '').trim()
-      heading = heading.replace(/^\d+[\.\-\)]\s*/, '') // Baştaki 1., 2- gibi listeleme numaralarını sil
-      // Skip generic AI prompt echoes
-      if (heading.length > 3 && heading.length < 120 && !isGeneric(heading)) {
-        formatted = toTitleCase(heading);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      formatted = index !== undefined ? `Ünite ${index + 1}` : "Ders Notu";
-    }
-  }
-  // 4. Fallback to index or default
-  else {
-    formatted = index !== undefined ? `Ünite ${index + 1}` : "Ders Notu";
-  }
-
-  // Append module name inside parentheses
-  if (moduleName) {
-    const suffix = moduleName === "Modül 1"
-      ? " (Modül 1: Hukuki Çerçeve)"
-      : moduleName === "Modül 2"
-        ? " (Modül 2: Uyum Yönetimi)"
-        : ` (${moduleName})`;
-    if (!formatted.endsWith(suffix)) {
-      formatted += suffix;
-    }
-  }
-
-  return formatted;
-};
 
 // Markdown içeriğindeki yapay emoji ve formatları temizler
 const cleanMarkdown = (md: string, removeFirstHeader = false) => {

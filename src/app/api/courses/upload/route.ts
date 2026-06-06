@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sadece PDF dosyaları kabul edilir." }, { status: 400 })
     }
 
-    // Güvenlik: Dosya boyutu kontrolü (maks 100MB)
-    const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+    // Güvenlik: Dosya boyutu kontrolü (maks 150MB - Sadece Admin)
+    const MAX_FILE_SIZE = 150 * 1024 * 1024 // 150MB
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ error: `Dosya boyutu çok büyük. Maksimum ${MAX_FILE_SIZE / 1024 / 1024}MB desteklenmektedir.` }, { status: 400 })
     }
@@ -47,6 +47,11 @@ export async function POST(req: NextRequest) {
     // PDF'i kaydet
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+
+    // Magic Bytes Kontrolü
+    if (buffer.length < 4 || buffer.toString("utf8", 0, 4) !== "%PDF") {
+      return NextResponse.json({ error: "Geçersiz PDF formatı (Magic Bytes eşleşmiyor)." }, { status: 400 })
+    }
 
     const uploadsDir = path.join(process.cwd(), "uploads")
     await mkdir(uploadsDir, { recursive: true })
@@ -87,7 +92,7 @@ export async function POST(req: NextRequest) {
       geminiFileUri = uriMap["0"] || null
       console.log(`[UPLOAD] 📊 ${Object.keys(uriMap).length} key'e başarıyla yüklendi`)
     } catch (gErr) {
-      console.error("[UPLOAD] Gemini yükleme hatası:", gErr)
+      console.warn("[UPLOAD] ⚠️ Gemini File API yüklemesi başarısız oldu. İşlem metin tabanlı olarak devam edecek:", gErr)
     }
 
     // Dersi güncelle

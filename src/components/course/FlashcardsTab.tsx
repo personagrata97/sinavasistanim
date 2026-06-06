@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Brain, ChevronRight, RotateCcw, RefreshCw, CheckCircle2, X, Zap, Flame, BookOpen, Loader2, Download } from "lucide-react"
+import { Brain, ChevronRight, RotateCcw, RefreshCw, CheckCircle2, X, Zap, Flame, BookOpen, Loader2, Download, Sparkles } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { toast } from "sonner"
@@ -38,6 +38,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
   const [reviewMode, setReviewMode] = useState(false) // true = sadece tekrar zamanı gelen kartlar
   const [topicFilter, setTopicFilter] = useState<string>("all")
   const [exporting, setExporting] = useState(false)
+  const [generatingMore, setGeneratingMore] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [autoScrollKeyword, setAutoScrollKeyword] = useState("")
 
@@ -282,6 +283,39 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
             </>
           )}
         </button>
+        <button
+          onClick={async () => {
+            setGeneratingMore(true)
+            try {
+              const { generateMoreContentAction, getCourseFlashcards } = await import("@/lib/actions")
+              const result = await generateMoreContentAction(slug, "FLASHCARDS", undefined, 20)
+              if (result.success) {
+                toast.success(result.message)
+                const fresh = await getCourseFlashcards(slug)
+                setCards(fresh)
+              } else {
+                toast.error(result.message)
+              }
+            } catch (err: any) {
+              toast.error("Kart üretme hatası: " + err.message)
+            } finally {
+              setGeneratingMore(false)
+            }
+          }}
+          disabled={generatingMore}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30 transition-all disabled:opacity-50 whitespace-nowrap"
+        >
+          {generatingMore ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Üretiliyor...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 inline-block" /> Kart Çoğalt
+            </>
+          )}
+        </button>
       </div>
 
       <div className="max-w-lg mx-auto">
@@ -303,7 +337,7 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
           flipped ? "bg-emerald-500/5 border-emerald-500/20" : "bg-blue-500/5 border-blue-500/20"
         }`}>
           <div className="w-full">
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 text-center sticky top-0">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 text-center">
               {flipped ? "CEVAP" : "SORU"}
             </div>
             <div className={`font-medium leading-relaxed text-left space-y-4 ${flipped ? "text-sm" : "text-lg text-center"}`}>

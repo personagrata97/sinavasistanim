@@ -1453,9 +1453,8 @@ function anonymizeName(name: string): string {
 
 // ==================== SORU ÇOĞALTMA ====================
 
-export async function generateMoreQuestionsAction(courseSlug: string, sectionId?: string, count: number = 20) {
+export async function generateMoreContentAction(courseSlug: string, contentType: "QUESTIONS" | "FLASHCARDS", sectionId?: string, count: number = 20) {
   try {
-    // E-13: Admin yetkilendirmesi
     const auth = await requireAdmin()
     if (!auth.authorized) return { success: false, message: auth.error || "Bu işlem için yetkiniz yok." }
 
@@ -1465,9 +1464,8 @@ export async function generateMoreQuestionsAction(courseSlug: string, sectionId?
     })
     if (!course) throw new Error("Ders bulunamadı")
     
-    const { generateQuestions } = await import("./ai-service")
+    const { generateQuestions, generateFlashcards } = await import("./ai-service")
     
-    // Hangi bölümlerden soru üretilecek?
     const targetSections = sectionId 
       ? course.sections.filter(s => s.id === sectionId)
       : course.sections.filter(s => s.rawContent && s.rawContent.length > 100)
@@ -1477,55 +1475,56 @@ export async function generateMoreQuestionsAction(courseSlug: string, sectionId?
     let totalGenerated = 0
     const aiMode = course.program?.aiMode || "general"
 
-    // E-5: Aynı ders için mevcut tüm soruları çekip hızlı duplikat kontrolü sağla (startsWith yerine tam eşleşme)
-    const existingQuestions = await prisma.question.findMany({
-      where: { courseId: course.id },
-      select: { text: true }
-    })
-    const existingTexts = new Set(existingQuestions.map(eq => eq.text.trim().toLowerCase()))
-    
-    for (const section of targetSections) {
-      if (totalGenerated >= count) break
+    if (contentType === "QUESTIONS") {
+      const existingItems = await prisma.question.findMany({ where: { courseId: course.id }, select: { text: true } })
+      const existingTexts = new Set(existingItems.map(eq => eq.text.trim().toLowerCase()))
       
-      const remaining = count - totalGenerated
-      const questions = await generateQuestions(
-        section.rawContent, 
-        section.title, 
-        course.name, 
-        course.userLevel, 
-        aiMode, 
-        course.geminiFileUri || undefined, 
-        section.pageStart, 
-        section.pageEnd,
-        section.importance || undefined
-      )
+      for (const section of targetSections) {
+        if (totalGenerated >= count) break
+        const remaining = count - totalGenerated
+        const questions = await generateQuestions(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+        
+        for (const q of questions.slice(0, remaining)) {
+          try {
+            const textLower = q.text.trim().toLowerCase()
+            if (!existingTexts.has(textLower)) {
+              await prisma.question.create({
+                data: { courseId: course.id, sectionId: section.id, text: q.text, options: JSON.stringify(q.options), correct: q.correct, explanation: q.explanation, difficulty: q.difficulty || "medium" }
+              })
+              existingTexts.add(textLower)
+              totalGenerated++
+            }
+          } catch {}
+        }
+      }
+    } else {
+      const existingItems = await prisma.flashcard.findMany({ where: { courseId: course.id }, select: { front: true } })
+      const existingTexts = new Set(existingItems.map(eq => eq.front.trim().toLowerCase()))
       
-      for (const q of questions.slice(0, remaining)) {
-        try {
-          const textLower = q.text.trim().toLowerCase()
-          if (!existingTexts.has(textLower)) {
-            await prisma.question.create({
-              data: { 
-                courseId: course.id, 
-                sectionId: section.id, 
-                text: q.text, 
-                options: JSON.stringify(q.options), 
-                correct: q.correct, 
-                explanation: q.explanation, 
-                difficulty: q.difficulty || "medium" 
-              }
-            })
-            existingTexts.add(textLower)
-            totalGenerated++
-          }
-        } catch {}
+      for (const section of targetSections) {
+        if (totalGenerated >= count) break
+        const remaining = count - totalGenerated
+        const cards = await generateFlashcards(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+        
+        for (const c of cards.slice(0, remaining)) {
+          try {
+            const textLower = c.front.trim().toLowerCase()
+            if (!existingTexts.has(textLower)) {
+              await prisma.flashcard.create({
+                data: { courseId: course.id, sectionId: section.id, front: c.front, back: c.back, difficulty: c.difficulty || "medium" }
+              })
+              existingTexts.add(textLower)
+              totalGenerated++
+            }
+          } catch {}
+        }
       }
     }
     
-    return { success: true, message: `${totalGenerated} yeni soru üretildi!`, count: totalGenerated }
+    return { success: true, message: `${totalGenerated} yeni ${contentType === 'QUESTIONS' ? 'soru' : 'kart'} üretildi!`, count: totalGenerated }
   } catch (error: any) {
-    console.error("[generateMoreQuestions]", error)
-    return { success: false, message: error.message || "Soru üretme başarısız." }
+    console.error("[generateMoreContentAction]", error)
+    return { success: false, message: error.message || "Üretim başarısız." }
   }
 }
 

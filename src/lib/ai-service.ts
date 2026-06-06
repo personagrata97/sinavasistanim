@@ -105,7 +105,8 @@ ${modeSpecificRules}
 ⚠️⚠️⚠️ MUTLAK KURAL - DOĞRULUK GARANTİSİ:
 1. SADECE aşağıda verilen kaynak metinde bulunan bilgileri kullan.
 2. Kaynak metinde OLMAYAN hiçbir bilgi, terim, rakam, tarih, oran veya kural ÜRETME.
-3. ⚠️ KESİN KURAL: Asla ama asla "Harika bir görev", "İşte notlar", "İşte cilalanmış versiyon", "Bu bölüm ... içermektedir", "Referans niteliğindedir" gibi sohbet, metayı özetleyen giriş veya kapanış cümleleri yazma! "Cilaladım", "düzenledim" gibi raporlamalar veya bölümün ne hakkında olduğuna dair yapay önsözler KESİNLİKLE YASAKTIR. Doğrudan Markdown içeriği ile başla (örn: '## 📌 Başlık'). Sadece saf ders notu çıktısı ver.
+3. ⚠️ KESİN KURAL: GEREKSİZ GİRİŞ/ÇIKIŞ CÜMLELERİ KESİNLİKLE YASAKTIR: "İşte notlarınız", "Başarılar dilerim", "Önemli noktalar şunlardır" gibi yapay zeka gevezelikleri KESİNLİKLE YAPMAYIN. Doğrudan bilgiye girin.
+- META KELİMELER YASAKTIR: Cümlelerinizde "Kaynak metinde...", "Bu PDF'te...", "Orijinal dokümana göre...", "Sunulan metin...", "Ders notunda..." gibi dışarıdan okunduğunda yapay duran kalıpları KESİNLİKLE KULLANMAYIN. Sanki o kitabı doğrudan siz yazmışsınız gibi birinci ağızdan otoriter ve net olun.
 4. Bir formül veya rakam kaynak metinde yoksa, onu soru/not/karta KOYMA.
 5. "Kesin çıkar", "muhakkak sorulur" gibi doğrulanamayan ifadeler KULLANMA.
 6. Günlük hayattan verilecek örnekler ve hikayeler (senaryolar) mantıksal kurallara, finansal ve hukuki gerçekliğe %100 uygun olmalıdır. Örnekler hem akılda kalıcı hem de mantıken/hukuken kusursuz olmalıdır.
@@ -137,7 +138,10 @@ export function getDisciplineExamples(isSecurity: boolean, isMasak: boolean) {
       akrostiş: `Örn: "BGA → Bütünlük, Gizlilik, Erişilebilirlik (Bilgi güvenliğinin 3 temel sacayağı CIA)"`,
       quiz: `
   🧪 Kendini Test Et: Yetkilendirme modellerinden hangisinde nesnelere erişim hakları sadece merkezi bir idari otorite tarafından belirlenir ve kullanıcılar bunu devredemez?
-  > 💡 Cevap: MAC (Mandatory Access Control - Zorunlu Erişim Kontrolü)
+  <details>
+  <summary>💡 Cevabı Göster</summary>
+  Cevap: MAC (Mandatory Access Control - Zorunlu Erişim Kontrolü)
+  </details>
       `,
       labelExample: `(Örn: "## Ağ Güvenliği Altyapısı [Güvenlik Mimarisi]" veya "## ISO/IEC 27001 Standartları [Bilgi Güvenliği Yönetimi]")`
     };
@@ -152,12 +156,15 @@ export function getDisciplineExamples(isSecurity: boolean, isMasak: boolean) {
       stories: `
   Örn: "Bir banka müşterisi şubeye 50.000 TL nakit yatırdı → Gişe görevlisinin şüphesi → ŞİB kontrolü → Uyum Görevlisine raporlama."
   Örn: "Bir müşteri kuyumcudan 80.000 TL'lik altın aldı → Kuyumcu kimlik sorar mı? → EVET çünkü 75.000 TL sınırını aştı → Kimlik tespiti ve teyidi yapıldı."
-  Örn: "Mehmet Bey offshore şirket kurdu, parayı 3 ülkeden dolaştırdı → Ayrıştırma aşaması → MASAK tespit etti → Sonuç: 2-5 yıl hapis."
+  Örn: "Alfa İthalat AŞ offshore şirket kurdu, parayı 3 ülkeden dolaştırdı → Ayrıştırma aşaması → MASAK tespit etti → Sonuç: Ağır ceza yaptırımı."
       `,
       akrostiş: `Örn: "YAB → Yerleştirme, Ayrıştırma, Bütünleştirme (Kara para aklamanın 3 aşaması)"`,
       quiz: `
   🧪 Kendini Test Et: Kimlik tespiti yapılmadan işlem yapılabilecek istisna durum hangisidir?
-  > 💡 Cevap: Hayat sigortası poliçelerinde yıllık prim tutarı belirlenen limiti aşamadığında
+  <details>
+  <summary>💡 Cevabı Göster</summary>
+  Cevap: Hayat sigortası poliçelerinde yıllık prim tutarı belirlenen limiti aşamadığında
+  </details>
       `,
       labelExample: `(Örn: "## Şüpheli İşlem Bildirimi [Uyum Yönetimi]" veya "## 5549 Sayılı Kanun [Hukuki Çerçeve]")`
     };
@@ -170,13 +177,16 @@ export function getDisciplineExamples(isSecurity: boolean, isMasak: boolean) {
   * Portföy Çeşitlendirmesi için: "Tüm yumurtaları aynı sepete koymamak; riski dağıtmak için farklı enstrümanlara yatırım yapmak."
       `,
       stories: `
-  Örn: "Ahmet Bey parasını hisse senetleri arasında paylaştırdı → Risk dağılımı → Bir hisse düşerken diğeri yükseldi → Portföy değeri korundu."
-  Örn: "Ayşe Hanım borsada vadeli işlem kontratı satın aldı → Hedge (korunma) amaçlı → Fiyat dalgalanmalarından etkilenmedi."
+  Örn: "Gama Portföy AŞ fon yöneticisi parayı hisse senetleri arasında paylaştırdı → Risk dağılımı → Bir hisse düşerken diğeri yükseldi → Portföy değeri korundu."
+  Örn: "Beta İhracat AŞ borsada vadeli işlem kontratı satın aldı → Hedge (korunma) amaçlı → Kur dalgalanmalarından etkilenmedi."
       `,
       akrostiş: `Örn: "FDR → Fiyat, Değer, Risk (Yatırım kararlarının 3 ana unsuru)"`,
       quiz: `
   🧪 Kendini Test Et: Bir yatırımcının mevcut fiyat riskinden korunmak amacıyla ters yönde pozisyon almasına ne ad verilir?
-  > 💡 Cevap: Hedge (Riskten Korunma)
+  <details>
+  <summary>💡 Cevabı Göster</summary>
+  Cevap: Hedge (Riskten Korunma)
+  </details>
       `,
       labelExample: `(Örn: "## Portföy Yönetimi [Yatırım Stratejileri]" veya "## Sermaye Piyasası Kanunu [Yasal Mevzuat]")`
     };
@@ -269,17 +279,19 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
     }
 
     // MODEL MİMARİSİ: Şelale (Cascade) Yöntemi
-    // 🔥 USER EXPLICIT OVERRIDE: KESİNLİKLE GEMINI-3.5-FLASH KULLANILACAK! ASLA 2.5'E DÖNÜLMEYECEK!
+    const MODEL_GENERATION = "gemini-3.5-flash"
+    const MODEL_VERIFICATION = "gemini-2.5-flash"
+
     // ⚠️ priority="high" (not üretimi): gemini-3.5-flash | 65K token
     // ⚠️ priority="normal" (flashcard/soru): gemini-3.5-flash | 32K token
-    // verification (Maker-Checker): Yalnızca gemini-3.5-flash ile denetim yapılır.
+    // verification (Maker-Checker): Yalnızca gemini-2.5-flash ile denetim yapılır.
     const modelChain = mode === "verification"
       ? [
-        { id: "gemini-3.5-flash", tokens: 16384 }
+        { id: MODEL_VERIFICATION, tokens: 16384 }
       ]
       : priority === "high"
-        ? [{ id: "gemini-3.5-flash", tokens: 65536 }]
-        : [{ id: "gemini-3.5-flash", tokens: 32768 }]
+        ? [{ id: MODEL_GENERATION, tokens: 65536 }]
+        : [{ id: MODEL_GENERATION, tokens: 32768 }]
 
     // Tüm key'leri dene (her key için model chain)
     const startKeyIndex = currentKeyIndex
@@ -296,8 +308,8 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
       for (const model of modelChain) {
         try {
           const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model.id.includes("3.5") ? "gemini-flash-lite-latest" : model.id}:generateContent`,
-            geminiBody(prompt, model.tokens, undefined), { headers: geminiHeaders, timeout: 60000 }
+            `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent`,
+            geminiBody(prompt, model.tokens, keyFileUri), { headers: geminiHeaders, timeout: 60000 }
           )
           const parts = response.data?.candidates?.[0]?.content?.parts || []
           // Thinking model (3.5-flash, 2.5-flash): thought=true olan part'ları ATLA
@@ -641,8 +653,9 @@ export async function generateCourseNotes(
 🎨 GÖRSEL HÜKÜMLER (TERİMLER SÖZLÜĞÜ İÇİN):
 - BU BÖLÜM BİR KISALTMALAR VE TERİMLER SÖZLÜĞÜ BÖLÜMÜDÜR.
 - KESİNLİKLE ama KESİNLİKLE hiçbir Mermaid.js diyagramı, akış şeması, zihin haritası veya kavram haritası ÇİZMEYİNİZ. Sıfır diyagram kuralına uyunuz.
-- KESİNLİKLE hiçbir tablo (Markdown table), karşılaştırma tablosu veya kategorizasyon tablosu OLUŞTURMAYINIZ. Sıfır tablo kuralına uyunuz.
-- Terimleri veya kısaltmaları gruplamak için tablolar yerine temiz Markdown alt başlıkları (örn. #### 1. Yasal ve Düzenleyici Terimler) kullanınız.
+- Kısaltmaları veya terimleri KESİNLİKLE düz liste veya başlıklar halinde DEĞİL, şık ve okunaklı bir Markdown Tablosu (Markdown Table) içinde veriniz.
+- Tablonun sütunları: | Kısaltma / Terim | Açıklama |
+- Açıklama sütununun içine resmi tanımı, akılda kalıcı ufak bir benzetmeyi (💡) ve varsa çok kısa bir örneği (🎬) birlikte yazınız.
 `
   }
 
@@ -650,6 +663,8 @@ export async function generateCourseNotes(
 ${getExamIntelligence(aiMode, courseName || sectionTitle)}
 
 ${glossaryInstruction}
+
+${aiMode === "international" || aiMode === "international_audit" ? "⚠️ ÇOK ÖNEMLİ KURAL: Kaynak metin İNGİLİZCE olsa dahi, üreteceğin tüm ders notları, sözlükler, açıklamalar ve örnekler KESİNLİKLE TÜRKÇE olacaktır. Orijinal İngilizce terimleri parantez içinde belirtebilirsin." : ""}
 
 Sen alanında efsaneleşmiş, otoriter ama öğrencilerin dinlemeye doyamadığı KARİZMATİK BİR MENTORSUN.
 Amacın, sıkıcı ve ağır kanun maddelerini veya teknik kavramları, öğrencilerin asla unutamayacağı kadar akıcı, sürükleyici ve hikayeleştirerek anlatmak.
@@ -750,7 +765,7 @@ ${isGlossary ? `
 ## 📌 \${sectionTitle}
 
 ### 🎯 Bu Bölüm Ne Anlatıyor?
-Bu bölüm, derste karşımıza çıkacak tüm kritik kısaltmaların ve teknik terimlerin derlendiği basit ve net bir sözlüktür. Metindeki tüm kısaltmaların listesini aşağıda bulabilirsiniz.
+Bu bölümde, ${courseName} dersinde yer alan teknik kısaltmalar ve terimler listelenmektedir.
 
 Metindeki her bir kısaltma veya terim için aşağıdaki sade şablona %100 uyarak detaylı bilgi ver:
 
@@ -927,7 +942,7 @@ export async function generateFlashcards(
     }
 
     const instructionLimit = isGlossary
-      ? `🚨 ÖZEL TALİMAT: Bu bölüm bir "${sectionTitle}" (Sözlük/Kısaltmalar) bölümüdür.\nBurada yer alan yüzlerce kısaltma/terim içinden SADECE Sermaye Piyasası Lisanslama (SPL) sınavlarında doğrudan sorulma potansiyeli yüksek olan, sektörel ve teknik öneme sahip kritik terimleri seç. "USB, SMS, PC" gibi aşırı basit terimleri KESİNLİKLE ATLA. Sadece 'Sınav Kalitesinde' olanları seç. Maksimum kart limiti yoktur.`
+      ? `🚨 ÖZEL TALİMAT: Bu bölüm bir "${sectionTitle}" (Sözlük/Kısaltmalar) bölümüdür.\nBurada yer alan yüzlerce kısaltma/terim içinden SADECE ${courseName || "bu sınav"} müfredatında doğrudan sorulma potansiyeli yüksek olan, sektörel ve teknik öneme sahip kritik terimleri seç. "USB, SMS, PC" gibi aşırı basit terimleri KESİNLİKLE ATLA. Sadece 'Sınav Kalitesinde' olanları seç. Maksimum kart limiti yoktur.`
       : `DİNAMİK ÜRETİM: Bu metin ana "${sectionTitle}" bölümünün bir PARÇASIDIR. Lütfen bu metnin BİLGİ YOĞUNLUĞUNU analiz et. Eğer metin kurallar, cezalar, oranlar ve tanımlarla doluysa EN AZ 4-6 adet flashcard oluştur. Eğer metin sadece giriş, önsöz veya yüzeysel bilgilerden ibaretse sadece 1-2 adet temel flashcard oluştur. Kaliteden taviz verme.`
 
     const cardTypesInstruction = isGlossary
@@ -985,7 +1000,7 @@ ${cardTypesInstruction}
     let raw = await callAI(prompt, 2, fileUri)
 
     let attempt = 1
-    const maxAttempts = 3
+    const maxAttempts = 2
     let chunkFlashcardsList: any[] = []
 
     while (attempt <= maxAttempts) {
@@ -1047,6 +1062,14 @@ ${cardTypesInstruction}
       console.log(`[FLASHCARD_GEN] ⏱️ Key ve limit koruması: Diğer parçaya geçmeden önce 5 saniye bekleniyor...`)
       await new Promise(r => setTimeout(r, 5000))
     }
+  }
+
+  // Karakter taşıması / UI bozma koruması (Back trim)
+  for (const card of allFlashcards) {
+     if (card.back && card.back.length > 800) {
+         console.warn(`[FLASHCARD_TRIM] Çok uzun flashcard cevabı kesildi: ${card.back.substring(0, 50)}...`);
+         card.back = card.back.substring(0, 797) + "...";
+     }
   }
 
   return allFlashcards
@@ -1159,8 +1182,8 @@ ZORUNLU FORMAT (bu formata %100 uy):
 
 ⛔ YAPMA: Sadece "Doğru cevap A çünkü..." yazıp B, C, D, E'yi açıklamamak KABUL EDİLMEZ.
 ⛔ YAPMA: "Mevzuatta/Metinde/Kaynakta şöyle denmektedir:" gibi atıflar KESİNLİKLE KABUL EDİLMEZ. Doğrudan bilgiyi ver.
-⛔ YAPMA: Tek kelimelik açıklamalar ("Yanlış", "Geçersiz") KABUL EDİLMEZ. Her şık için en az 1 cümle yaz.
-✅ YAP: Her açıklama EN AZ 150 kelime olsun. Öğrenci her şıkkı okuyunca "neden yanlış" diye öğrensin.
+⛔ YAPMA: Tek kelimelik açıklamalar ("Yanlış", "Geçersiz") KABUL EDİLMEZ. Her şık için en az 1-2 cümle yaz.
+✅ YAP: Açıklamalar net ve doyurucu (ortalama 30-50 kelime) olsun. Öğrenci her şıkkı okuyunca "neden yanlış" diye öğrensin ama gereksiz laf kalabalığı YAPMA.
 
 KAYNAK METİN PARÇASI: "${chunkContent.replace(/"/g, "'")}"
 
@@ -1179,7 +1202,7 @@ Sadece JSON array döndür:
     let raw = await callAI(prompt, 2, fileUri)
 
     let attempt = 1
-    const maxAttempts = 3
+    const maxAttempts = 2
     let chunkQuestionsList: any[] = []
 
     while (attempt <= maxAttempts) {
@@ -1313,9 +1336,41 @@ Sadece JSON array döndür:
         crossCheckFixed++
       }
     }
+
+    // 5 ŞIK KURALI (Normalizasyon)
+    if (q.options && Array.isArray(q.options)) {
+      while (q.options.length < 5) {
+        q.options.push(`E) Diğer (Belirtilmemiş)`);
+      }
+      if (q.options.length > 5) {
+        q.options = q.options.slice(0, 5);
+      }
+      
+      const prefixes = ["A) ", "B) ", "C) ", "D) ", "E) "];
+      q.options = q.options.map((opt: string, i: number) => {
+        let clean = opt.replace(/^[A-Ea-e][):.]\s*/, '').trim();
+        return `${prefixes[i]}${clean}`;
+      });
+    }
   }
   if (crossCheckFixed > 0) {
     console.log(`[CROSS_CHECK] 🔧 ${crossCheckFixed} soruda doğru cevap tutarsızlığı düzeltildi.`)
+  }
+
+  // A ŞIKKI KONTROLÜ (Hepsi A ise uyar/karıştır)
+  const answerCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  for (const q of allQuestions) {
+    if (q.correct && answerCounts[q.correct] !== undefined) {
+      answerCounts[q.correct]++;
+    }
+  }
+  
+  if (allQuestions.length > 0) {
+    const aRatio = answerCounts["A"] / allQuestions.length;
+    if (aRatio > 0.4) {
+       console.warn(`[QUESTION_AUDIT] ⚠️ Cevapların %${(aRatio * 100).toFixed(0)}'si A şıkkı! Model tembellik yapıyor olabilir.`);
+       // Soru cevapları dağılımını düzeltmek için frontend tarafında veya burada shuffle edilebilir.
+    }
   }
 
   return allQuestions
@@ -1361,32 +1416,36 @@ Eğer içerik yoğunluğu DÜŞÜK ise:
 
 Bu kural SADECE yukarıdaki düşük içerikli bölümler için geçerlidir. Gerçek ders anlatımı, kavram tanımı, formül veya mevzuat detayı içeren bölümlerde HER ZAMANKİ GİBİ ACIMADAN DENETLE.
 
-PUAN KIRAN DURUMLAR (bunlar ciddi sorun):
-- Kaynak metinde DETAYLI OLARAK AÇIKLANMIŞ bir KONU/KAVRAM ders notunda hiç ele alınmamış (tamamen atlanmış)
-- Rakam, oran, süre, tarih, limit YANLIŞ yazılmış (örn: 5 yıl yerine 3 yıl)
-- Mevzuat adı veya madde numarası YANLIŞ
-- Tablo veya liste YARIDA kesilmiş
-- Ceza miktarı veya yaptırım türü HATALI
+PUAN KIRAN DURUMLAR VE ASİMETRİK CEZA MATEMATİĞİ (KESİN KURAL):
+- Kaynak metinde DETAYLI OLARAK AÇIKLANMIŞ bir KONU/KAVRAM ders notunda hiç ele alınmamışsa (tamamen atlanmış): Her atlanan konu için net -15 PUAN.
+- Rakam, oran, süre, tarih, limit YANLIŞ yazılmış (örn: 5 yıl yerine 3 yıl): Her yanlış rakam/süre için net -20 PUAN.
+- Mevzuat adı veya madde numarası YANLIŞ: -10 PUAN.
+- Tablo veya liste YARIDA kesilmiş: -10 PUAN.
+- Ceza miktarı veya yaptırım türü HATALI: -20 PUAN.
+- Mermaid diyagramlarında düğümlerin tırnak içinde OLUP OLMADIĞINI (Örn: A["metin"]) KESİNLİKLE denetle. Eğer tırnak kullanılmamışsa sözdizimi hatası vardır, derhal "issues" alanına yaz ve -20 puan kır.
 
 PUAN KIRMAYAN DURUMLAR (bunlar sorun DEĞİL):
-- Tanımın kendi cümleleriyle basitleştirilerek anlatılması ✅
+- Tanımın kendi cümleleriyle basitleştirilerek veya eşanlamlı kelimelerle anlatılması (Birebir kelime ezberi arama!) ✅
 - Eğlenceli örnekler, hikayeler, benzetmeler eklenmesi ✅
 - İçeriğin farklı sırayla organize edilmesi ✅
 - Emoji, görsel zenginlik, mermaid diyagram kullanılması ✅
 - Kaynak metindeki dolgu cümlelerinin atlanması ✅
 - İçindekiler, önsöz veya kaynakça gibi düşük içerikli bölümlerde başlıkların detaylandırılmamış olması ✅
 
-PUANLAMA KURALLARI (TAVİZSİZ VE KESİN):
-- 100 PUAN: Eğer metinde hiçbir eksik konu (missingTopics) ve hiçbir bilgi hatası (issues) YOKSA tam 100 puan verilir. İyileştirme önerileri (suggestions) bulunması 100 puan vermene ENGEL DEĞİLDİR. Asıl olan bilginin doğruluğudur.
-- 95-99 PUAN: Çok küçük, göz ardı edilebilir bir detay eksikse.
-- 85-94 PUAN: 1-2 küçük konu eksik ama ana konular tamam.
-- 70-84 PUAN: Birden fazla önemli konu atlanmış
-- 50-69 PUAN: Ciddi eksiklikler var
+5 BOYUTLU RUBRİK PUANLAMA KURALLARI (TAVİZSİZ VE KESİN):
+Başlangıç puanı 100'dür. Bulduğun her eksiklik için yukarıdaki ceza matematiğini uygulayarak puanı düşür.
+- 100 PUAN: Eğer metinde hiçbir eksik konu (missingTopics) ve hiçbir bilgi hatası (issues) YOKSA tam 100 puan verilir. "Öneri varsa 100 kalır" mantığını UNUT, eksik varsa KESİNLİKLE puan kıracaksın.
+- 85-99 PUAN: Kapsam ve doğruluk yeterli, yayınlanabilir kalitede.
+- 70-84 PUAN: Birden fazla önemli konu atlanmış.
+- 50-69 PUAN: Ciddi eksiklikler, halüsinasyon veya rakam hataları var.
+
+🎯 ÇAPRAZ DOĞRULAMA (Kendini Test Et Kuralı):
+Ders notunun içindeki "Kendini Test Et" sorularının cevaplarını kaynak metne bakarak çapraz doğrula. Eğer cevabı kaynak metinde YOKSA veya YANLIŞSA -25 PUAN ver.
 
 ⚠️ MUTLAK DOĞRULUK VE ÖNERİ KURALI: 
-1. Sadece ve sadece kaynak metinde (source) yer alıp da notta eksik kalan detayları "öneri" (suggestions) olarak yazabilirsin.
-2. Kaynak metinde bulunmayan hiçbir dış konuyu, yasal maddeyi veya ek bilgiyi kesinlikle "öneri" (suggestions) olarak yazamazsın! Kaynak metin dışı öneriler KESİNLİKLE YASAKTIR.
-3. Sadece eksik konu (missingTopics) veya bilgi hatası (issues) varsa puanı 100'ün altına düşür. Sadece öneri (suggestions) varsa puan 100 olarak kalmalıdır.
+1. Eksikleri doğrudan "missingTopics" veya "issues" alanına aktarmak zorundasın.
+2. Kaynak metinde bulunmayan hiçbir dış konuyu "öneri" (suggestions) olarak yazamazsın!
+3. Eksik varsa Puan KESİNLİKLE 100'ün altında olmalıdır.
 
 Sadece JSON döndür:
 {
@@ -1433,10 +1492,10 @@ BÖLÜM BAŞLIĞI: "${sectionTitle}"
 ${topicsToAudit.map((topic, i) => `${i + 1}. ${topic}`).join("\n")}
 
 KAYNAK METİN:
-${sourceContent.substring(0, 100000).replace(/"/g, "'")}
+${sourceContent.replace(/"/g, "'")}
 
 ÜRETİLEN DERS NOTLARINDA BU KONULARA AİT BULUNAN KISIMLAR:
-${generatedNotes.substring(0, Math.max(30000, generatedNotes.length)).replace(/"/g, "'")}
+${generatedNotes.replace(/"/g, "'")}
 
 🎯 DENETİM TALİMATLARI:
 Sadece ve sadece yukarıda listelenen 3 spesifik konuya odaklan. Kaynak metindeki bu 3 konu ile üretilen notlardaki ilgili paragrafları karşılaştır.
@@ -1501,10 +1560,10 @@ Sen bir sınav hazırlık soru denetim uzmanısın (Soru Müfettişi). Görevin,
 BÖLÜM BAŞLIĞI: "${sectionTitle}"
 
 KAYNAK METİN:
-${sourceContent.substring(0, 100000).replace(/"/g, "'")}
+${sourceContent.replace(/"/g, "'")}
 
 ÜRETİLEN SORULAR VE AÇIKLAMALAR:
-${JSON.stringify(questions, null, 2).substring(0, 30000)}
+${JSON.stringify(questions, null, 2)}
 
 🎯 MÜFETTİŞ DENETİM TALİMATLARI:
 Aşağıdaki kurallara göre her soruyu tek tek ve titizlikle incele:

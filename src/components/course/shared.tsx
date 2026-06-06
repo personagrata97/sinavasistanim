@@ -190,8 +190,9 @@ export const formatTitle = (title: string, index?: number, notes?: string, modul
     formatted = toTitleCase(title.replace(/^\d+[\.\-\)]\s*/, ''))
   }
   // 2. Prioritize meaningful database section title first
-  else if (title && !/^\d+[\.\-\s]/.test(title) && title.length > 3 && title.length < 150 && !isGeneric(title)) {
-    formatted = toTitleCase(title)
+  else if (title && title.length > 3 && title.length < 150 && !isGeneric(title)) {
+    // Strip leading numbers like "1. " or "2-" before applying title case
+    formatted = toTitleCase(title.replace(/^\d+[\.\-\)]\s*/, ''))
   }
   // 3. Fallback to notes markdown headings if DB title is generic or missing
   else if (notes) {
@@ -271,6 +272,14 @@ export const cleanMarkdown = (md: string, removeFirstHeader = false) => {
 
   // "Sözlüğü [Konu Adı]" vb. bozuk bükümleri "Konu Adı Sözlüğü" olarak düzelt
   clean = clean.replace(/(Sözlüğü|Özeti|Notları|Kılavuzu|Rehberi|Analizi)\s*\[(.*?)\]/g, "$2 $1");
+
+  // Kendini Test Et! kısmındaki çoktan seçmeli şıkları (A) B) C) vb.) alt alta düzgünce sırala
+  clean = clean.replace(/\s+([A-E]\))/g, '\n\n**$1** ');
+
+  // Soru başlıklarını belirginleştir (Soru 1:, Soru 2: vb.) ve aralarını aç
+  // Eğer yapay zeka zaten bold yapmışsa (**Soru 1:**), onu iki kere bold yapmamak için önce yıldızları temizle
+  clean = clean.replace(/\*\*(Soru \d+:)\*\*/g, '$1');
+  clean = clean.replace(/(Soru \d+:)/g, '\n\n**$1** ');
 
   return clean.trim();
 };
