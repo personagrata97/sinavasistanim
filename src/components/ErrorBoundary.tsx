@@ -26,7 +26,10 @@ function translateErrorMessage(msg: string): string {
   if (lower.includes("is not a function")) {
     return "Sistemde çağrılmaya çalışılan fonksiyon mevcut değil. Lütfen geliştiriciye bildirin."
   }
-  return msg || "Beklenmeyen bir hata oluştu."
+  if (lower.includes("rendered fewer hooks")) {
+    return "Sayfa bileşenleri yüklenirken bir arayüz hatası oluştu. Lütfen sayfayı yenileyin."
+  }
+  return "Sistemde beklenmeyen teknik bir arıza meydana geldi. Lütfen sayfayı yenileyerek tekrar deneyin."
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {

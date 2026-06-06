@@ -813,6 +813,12 @@ export async function answerQuestion(id: string, answer: string) {
     if (!session?.user?.id) return { error: "Oturum açmadınız" }
     const userId = session.user.id
 
+    // Check if user exists to prevent foreign key violation
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return { error: "Kullanıcı hesabınız bulunamadı (oturum süresi dolmuş veya hesap silinmiş olabilir). Lütfen çıkış yapıp tekrar giriş yapın." }
+    }
+
     const question = await prisma.question.findUnique({ where: { id } })
     if (!question) return { error: "Question not found" }
 

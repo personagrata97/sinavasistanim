@@ -398,17 +398,20 @@ export function ConfettiEffect() {
   )
 }
 
+export function formatQuestionText(text: string) {
+  if (!text) return text;
+  let formatted = text
+    .replace(/(?<=^|\s)(I|II|III|IV|V|VI)\.\s/g, '\n$1. ')
+    .replace(/(?<=^|\s)(Yukarıdakilerden|Buna göre|Aşağıdakilerden|Verilenlerden)/g, '\n$1');
+  return formatted.split('\n').filter(line => line.trim().length > 0).map((line, i) => (
+    <div key={i} className={i > 0 ? "mt-3" : ""}>{line.trim()}</div>
+  ));
+}
+
 // Helper to remove references to 'kaynak metin' or 'yapay zeka' and format cleanly for students
 export function cleanExplanationText(text: string): string {
   if (!text) return text
   return text
-    // "Ders notu" veya "Kaynak metin" gibi meta atıfları resmi "Mevzuat" terimlerine çevirir
-    .replace(/kaynak metindeki/g, "mevzuattaki")
-    .replace(/Kaynak metindeki/g, "Mevzuattaki")
-    .replace(/ders notlarındaki/g, "mevzuattaki")
-    .replace(/Ders notlarındaki/g, "Mevzuattaki")
-    .replace(/Ders Notlarındaki/g, "Mevzuattaki")
-
     .replace(/kaynak metne/g, "mevzuata")
     .replace(/Kaynak metne/g, "Mevzuata")
     .replace(/ders notlarına/g, "mevzuata")
@@ -481,6 +484,15 @@ export function SplitNotesLayout({
   useEffect(() => {
     setActiveMatch(0)
   }, [searchTerm])
+
+  // Layout kapandığında arama kutusunu temizle
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm("")
+      setMatchCount(0)
+      setActiveMatch(0)
+    }
+  }, [isOpen])
 
   const renderNotes = () => (
     <PremiumMarkdownRenderer 

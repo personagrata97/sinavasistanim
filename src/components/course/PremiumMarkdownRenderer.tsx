@@ -80,27 +80,42 @@ export function PremiumMarkdownRenderer({
     // 2. Eğer "İlgili Konuya Git" (autoScrollKeyword) çalıştırıldıysa:
     if (autoScrollKeyword && !searchTerm) {
       // Ana metinlere odaklan, blockquote (hikaye/örnek) kısımlarını aramadan dışla
-      const elements = containerRef.current.querySelectorAll('h1, h2, h3, h4, p, li');
+      const elements = containerRef.current.querySelectorAll('h1, h2, h3, h4, p, li, td, th');
       
       let bestMatch: HTMLElement | null = null;
       let maxScore = 0;
 
       // Arama kelimelerini küçük harfe çevir ve kelimelere ayır
-      const keywordTokens = autoScrollKeyword.toLowerCase().split(/[\s,.'"-]+/).filter(Boolean);
+      const stopWords = ['aşağıdakilerden', 'hangisi', 'yanlıştır', 'doğrudur', 'kaynak', 'metne', 'metin', 'metinde', 'metinden', 'göre', 'hangisidir', 'hangileri', 'ilgili', 'nedir', 'değildir', 'olamaz', 'olabilir', 'hakkında'];
+      const keywordTokens = autoScrollKeyword.toLowerCase().split(/[\s,.'"-]+/).filter(w => w.length >= 3 && !stopWords.includes(w) && w !== 'ile' && w !== 'ise' && w !== 'ama');
 
       // Tüm elemanlarda en iyi eşleşmeyi bul
       for (let i = 0; i < elements.length; i++) {
         const el = elements[i] as HTMLElement;
         const text = (el.textContent || '').toLowerCase();
         let score = 0;
+        const cleanElText = text.trim();
+        
+        // ✨ TABLO VE BAŞLIKLAR İÇİN MÜKEMMEL EŞLEŞME BONUSU ✨
+        if ((el.tagName === 'TD' || el.tagName === 'TH' || el.tagName.match(/^H[1-6]$/)) && cleanElText.length >= 3) {
+            // Sadece tam kelime eşleşmesi (kelime sınırları ile)
+            const escapedCleanEl = cleanElText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const exactMatchRegex = new RegExp(`\\b${escapedCleanEl}\\b`, 'i');
+            if (exactMatchRegex.test(autoScrollKeyword)) {
+                score += 1000 + (cleanElText.length * 10); 
+            }
+        }
         
         // Daha agresif bulanık arama (Fuzzy Match)
         keywordTokens.forEach(token => {
-           // Sonek eklerini görmezden gelmek için kelimenin köküne (ilk 5 harf) bak
+           if (token.length < 3 && !text.includes(token)) return; // Kısa kelimeleri (bağlaçları) atla
            const root = token.length > 5 ? token.substring(0, 5) : token;
            if (text.includes(root)) {
-             // Uzun kelimeler eşleşirse daha çok puan ver (spesifik kelimelerdir)
              score += token.length;
+             // Tablo hücrelerine ve başlıklara devasa bonus ver ki düz paragrafların önüne geçsinler
+             if (el.tagName === 'TD' || el.tagName === 'TH' || el.tagName.match(/^H[1-6]$/)) {
+               score += token.length * 2; // Çarpanı düşürdüm ki alakasız kelimeler devleşmesin
+             }
            }
         });
         
@@ -159,12 +174,12 @@ export function PremiumMarkdownRenderer({
            elementToHighlight.style.transition = 'background-color 0.5s ease';
            elementToHighlight.style.backgroundColor = 'rgba(245, 158, 11, 0.4)'; // Biraz daha yumuşak sarı
            elementToHighlight.style.borderRadius = '4px';
+           // Fade to a permanent light yellow instead of disappearing completely
            setTimeout(() => {
-              elementToHighlight.style.backgroundColor = originalBg;
-              setTimeout(() => {
-                 elementToHighlight.style.transition = originalTransition;
-                 elementToHighlight.style.borderRadius = '';
-              }, 500);
+              elementToHighlight.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'; 
+              elementToHighlight.style.borderLeft = '4px solid rgba(245, 158, 11, 0.6)';
+              elementToHighlight.style.paddingLeft = '8px';
+              // Don't reset transition so it stays highlighted
            }, 3500);
          }, 500);
       }

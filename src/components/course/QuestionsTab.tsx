@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import { toast } from "sonner"
-import { EmptyState, LoadingSkeleton, Badge, ConfettiEffect, formatTitle, Modal, cleanExplanationText, SplitNotesLayout, CustomSelect } from "./shared"
+import { EmptyState, LoadingSkeleton, Badge, ConfettiEffect, formatTitle, Modal, cleanExplanationText, formatQuestionText, SplitNotesLayout, CustomSelect } from "./shared"
 import { Tooltip } from "@/components/ui/shared"
 
 export default
@@ -238,6 +238,11 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
     setSelectedAnswer(answer)
     const { answerQuestion } = await import("@/lib/actions")
     const res = await answerQuestion(q.id, answer)
+    if (res.error) {
+      toast.error("Cevap kaydedilemedi: " + res.error)
+      setSelectedAnswer(null)
+      return
+    }
     setResult(res)
     setShowResult(true)
     setScore(prev => ({
@@ -473,19 +478,20 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
             </button>
           </Tooltip>
         </div>
-        <h3 className="text-xl font-medium leading-relaxed mb-10 text-slate-100">{q.text}</h3>
+        <div className="text-xl font-medium leading-relaxed mb-10 text-slate-100">{formatQuestionText(q.text)}</div>
         <div className="space-y-3">
-          {q.options.map((opt: string, i: number) => {
+          {q.options.slice(0, 5).map((opt: string, i: number) => {
             const letter = String.fromCharCode(65 + i)
             const isSelected = selectedAnswer === letter
             const isCorrect = showResult && result?.correctAnswer === letter
             const isWrong = showResult && isSelected && !result?.correct
             let colorClass = isCorrect ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : isWrong ? "border-red-500 bg-red-500/10 text-red-400" : isSelected ? "border-blue-500 bg-blue-500/10" : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05]"
             if (showResult && !isCorrect && !isWrong) colorClass += " opacity-40"
+            const cleanOpt = opt.replace(/^[A-J][).]\s*/, '')
             return (
               <button key={i} disabled={showResult} onClick={() => handleAnswer(letter)} className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center gap-4 ${colorClass}`}>
                 <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-slate-500"}`}>{letter}</span>
-                <span className="text-sm font-medium">{opt}</span>
+                <span className="text-sm font-medium">{cleanOpt}</span>
               </button>
             )
           })}

@@ -25,7 +25,7 @@ const PDF_SHARED_CSS = `
   .print-bar span { color: white; font-size: 14px; font-weight: 600; }
   .print-btn { background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border: none; padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
   body { padding-top: 56px; }
-  @media print { .print-bar { display: none; } body { padding-top: 0; } }
+  @media print { .print-bar { display: none; } body { padding-top: 0; max-width: 100% !important; margin: 0 !important; } table { width: 100%; table-layout: auto; } }
   h2 { font-size: 22px; color: #1e3a5f; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 3px solid #3b82f6; font-weight: 800; }
   h3 { font-size: 15px; color: #1e3a5f; margin: 18px 0 8px; font-weight: 700; }
   p, li { font-size: 13px; line-height: 1.8; color: #334155; }
@@ -178,7 +178,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
   useEffect(() => {
     if (initialSectionId) {
       setExpandedIds(new Set([initialSectionId]))
-      if (initialScrollKeyword) setScrollKeyword(initialScrollKeyword);
+      setScrollKeyword(initialScrollKeyword || "");
       setTimeout(() => {
         const el = document.getElementById(`section-card-${initialSectionId}`)
         if (el) {
@@ -760,16 +760,6 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
     setExporting(false)
   }
 
-  if (sections.length === 0) {
-    return (
-      <EmptyState
-        tabId="notes"
-        title="İçerik Hazırlanıyor"
-        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
-      />
-    )
-  }
-
   const noteSections = useMemo(() => {
     let contentCounter = 1;
     return sections
@@ -781,6 +771,16 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
         return { ...s, displayTitle, rawTitle };
       });
   }, [sections]);
+
+  if (sections.length === 0) {
+    return (
+      <EmptyState
+        tabId="notes"
+        title="İçerik Hazırlanıyor"
+        description="Bu dersin materyalleri yapay zeka asistanımız tarafından arka planda sizin için hazırlanıyor. Lütfen daha sonra tekrar kontrol edin."
+      />
+    )
+  }
 
   const toggleExpand = (id: string) => {
     const next = new Set(expandedIds)
@@ -959,7 +959,7 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
                           {section.module === "Modül 1" ? "📘" : "📗"} {section.module}
                         </span>
                       )}
-                      {isAdmin && section.verificationScore != null && section.processed && section.notes && (
+                      {isAdmin && section.verificationScore != null && section.notes && (
                         <span 
                           onClick={(e) => {
                             e.stopPropagation();

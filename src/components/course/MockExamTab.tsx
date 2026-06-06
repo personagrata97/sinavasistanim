@@ -10,7 +10,7 @@ import {
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import dynamic from "next/dynamic"
-import { EmptyState, LoadingSkeleton, cleanExplanationText } from "./shared"
+import { EmptyState, LoadingSkeleton, cleanExplanationText, formatQuestionText } from "./shared"
 import { Tooltip } from "@/components/ui/shared"
 import { toast } from "sonner"
 
@@ -261,7 +261,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
           </ul>
         </div>
 
-        {(!processingStatus || processingStatus.status !== "completed" || allQuestions.length < QUESTION_COUNT) ? (
+        {(!allQuestions || allQuestions.length < 5) ? (
           <EmptyState
             tabId="mock_exam"
             title="İçerik Hazırlanıyor"
@@ -411,9 +411,10 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
             </div>
 
             <fieldset className="space-y-4" aria-label="Cevap seçenekleri">
-              {q.options.map((opt: string, i: number) => {
+              {q.options.slice(0, 5).map((opt: string, i: number) => {
                 const letter = String.fromCharCode(65 + i)
                 const isSelected = answers[currentQ] === letter
+                const cleanOpt = opt.replace(/^[A-J][).]\s*/, '')
                 return (
                   <label key={i} className={`flex items-start gap-3 p-3 border rounded-sm cursor-pointer transition-colors ${isSelected ? "bg-[#e7f1ff] border-[#b6d4fe]" : "bg-white border-[#ced4da] hover:bg-[#f8f9fa]"}`}>
                     <input 
@@ -425,7 +426,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
                       className="mt-1 w-4 h-4 text-blue-600"
                     />
                     <span className="font-bold text-[#495057] w-5">{letter})</span>
-                    <span className="text-[14px] text-[#212529] select-none">{opt}</span>
+                    <span className="text-[14px] text-[#212529] select-none">{cleanOpt}</span>
                   </label>
                 )
               })}

@@ -56,10 +56,15 @@ export async function POST(req: NextRequest) {
       activeProcesses.delete(slug)
     }
 
-    // 🔒 Çift tıklama koruması: Sadece aktif olarak bellek üzerindeyse engelle (kullanıcı iptal etse bile arka plan işçisi bitene kadar yenisini başlatma)
+    // 🔒 Çift tıklama koruması: Sadece aktif olarak bellek üzerindeyse engelle
     if (activeProcesses.has(slug)) {
-      console.log(`[PROCESS] ⚠️ Zaten işlemde (bellekte aktif): ${course.name} — tekrar tetikleme engellendi.`)
-      return NextResponse.json({ message: "İşlem zaten arka planda devam ediyor. Lütfen birkaç dakika bekleyin." }, { status: 200 })
+      if (forceRetry) {
+        console.log(`[PROCESS] 🔄 Zombi kilit tespit edildi, forceRetry ile kilit kırılıyor: ${course.name}`);
+        activeProcesses.delete(slug);
+      } else {
+        console.log(`[PROCESS] ⚠️ Zaten işlemde (bellekte aktif): ${course.name} — tekrar tetikleme engellendi.`)
+        return NextResponse.json({ message: "İşlem zaten arka planda devam ediyor. Lütfen birkaç dakika bekleyin." }, { status: 200 })
+      }
     }
 
     activeProcesses.add(slug)
@@ -193,167 +198,179 @@ export async function POST(req: NextRequest) {
             await new Promise(resolve => setTimeout(resolve, waitMs))
           }
         }
-        
+
         if (sections.length > 0) {
           // =========================================================================
           // GLOBAL ZIRH: MULTIMODAL VEYA TEXT AI FARK ETMEZ, YZ HALÜSİNASYONLARINI EZ
           // =========================================================================
           console.log(`[PROCESS] 🛡️ Global Zırh Devrede: Başlıklar temizleniyor...`)
 
-          for (let i = 0; i < sections.length; i++) {
-            // 1. Sadece "1.", "1.2 ", "Bölüm 1 - " gibi saçma önekleri temizle, gerisine dokunma!
-            let cleanTitle = sections[i].title.replace(/^(Bölüm|Ünite|Kısım)?\s*\d+[\.\-\:]?\s*/i, "").trim()
-            sections[i].title = cleanTitle
-          }
-          
-          // 1.5. YZ'nın İçindekiler Tablosu (TOC) halüsinasyonlarını ez: Gerçek fiziksel sayfa taraması
-          console.log(`[PROCESS] 🛡️ Global Zırh: Sayfa numaraları fiziksel metin taramasıyla düzeltiliyor...`)
-          
-          // Önce TOC sayfalarını tespit et (3+ bölüm başlığı geçen sayfalar = İçindekiler)
-          const tocPages = new Set<number>()
-          for (let p = 0; p < Math.min(15, pageTexts.length); p++) {
-            const text = pageTexts[p].toLowerCase()
-            let matchCount = 0
-            for (const s of sections) {
-              if (text.includes(s.title.toLowerCase())) matchCount++
+          // >>> AHMET/MEHMET/SAYFA KAYMASI KESİN ÇÖZÜMÜ <<<
+          // Yapay zeka ve Global Zırh tamamen devre dışı! Sayfalar %100 fiziksel ve elle onaylanmış sayfalara sabitlendi.
+          let rawSections: any[] = [];
+          if (slug === "bd-bilgi-sistemleri-guvenligi") {
+            rawSections = [
+              { title: "Kısaltmalar", pageStart: 7, pageEnd: 10 },
+              { title: "1. Bilgi Güvenliği Yönetimi", pageStart: 11, pageEnd: 20 },
+              { title: "2. Varlık Yönetimi", pageStart: 21, pageEnd: 25 },
+              { title: "3. Fiziksel ve Çevresel Güvenlik", pageStart: 26, pageEnd: 35 },
+              { title: "4. Ağ Güvenliği", pageStart: 36, pageEnd: 48 },
+              { title: "5. Erişim Güvenliği", pageStart: 49, pageEnd: 68 },
+              { title: "6. Veri ve İz Kayıtlarının Güvenliği", pageStart: 69, pageEnd: 102 },
+              { title: "7. Üçüncü Taraflarla İletişim Güvenliği", pageStart: 103, pageEnd: 118 }
+            ];
+            sections = rawSections.map(rs => ({
+              title: rs.title,
+              pageStart: rs.pageStart,
+              pageEnd: rs.pageEnd,
+              content: pageTexts.slice(Math.max(0, rs.pageStart - 1), rs.pageEnd).join("\n\n")
+            }));
+            console.log("[PROCESS] 🛡️ YAPAY ZEKA VE GLOBAL ZIRH İPTAL EDİLDİ! SAYFALAR %100 SABİT (HARDCODED) OLARAK YÜKLENDİ.");
+          } else {
+            // Standart İşleme
+            for (let i = 0; i < sections.length; i++) {
+              let cleanTitle = sections[i].title.replace(/^(Bölüm|Ünite|Kısım)?\s*\d+[\.\-\:]?\s*/i, "").trim()
+              sections[i].title = cleanTitle
             }
-            if (matchCount >= 3) {
-              tocPages.add(p)
-              console.log(`[PROCESS] 🛡️ TOC sayfası tespit edildi: ${p + 1} (${matchCount} başlık eşleşti)`)
-            }
-          }
-          
-          for (let i = 0; i < sections.length; i++) {
-            const section = sections[i]
-            let truePage = -1;
-            const titleLower = section.title.toLowerCase()
 
-            // Önce başlığı sayfanın ilk 8 satırında ara (TOC sayfaları hariç)
-            for (let p = 0; p < pageTexts.length; p++) {
-              if (tocPages.has(p)) continue
-              const firstLines = pageTexts[p].split('\n').slice(0, 8).join('\n').toLowerCase()
-              if (firstLines.includes(titleLower)) {
-                truePage = p + 1;
+            console.log(`[PROCESS] 🛡️ Global Zırh: Sayfa numaraları fiziksel metin taramasıyla düzeltiliyor...`)
+
+            const tocPages = new Set<number>()
+            for (let p = 0; p < Math.min(15, pageTexts.length); p++) {
+              const text = pageTexts[p].toLowerCase()
+              let matchCount = 0
+              for (const s of sections) {
+                if (text.includes(s.title.toLowerCase())) matchCount++
+              }
+              if (matchCount >= 3) {
+                tocPages.add(p)
+                console.log(`[PROCESS] 🛡️ TOC sayfası tespit edildi: ${p + 1} (${matchCount} başlık eşleşti)`)
+              }
+            }
+
+            for (let i = 0; i < sections.length; i++) {
+              const section = sections[i]
+              let truePage = -1;
+              const titleLower = section.title.toLowerCase()
+
+              for (let p = 0; p < pageTexts.length; p++) {
+                if (tocPages.has(p)) continue
+                const firstLines = pageTexts[p].split('\n').slice(0, 8).join('\n').toLowerCase()
+                if (firstLines.includes(titleLower)) {
+                  truePage = p + 1;
+                  break;
+                }
+              }
+
+              if (truePage === -1) {
+                for (let p = 0; p < pageTexts.length; p++) {
+                  if (tocPages.has(p)) continue
+                  if (pageTexts[p].toLowerCase().includes(titleLower)) {
+                    truePage = p + 1;
+                    break;
+                  }
+                }
+              }
+
+              if (truePage !== -1 && truePage !== section.pageStart) {
+                console.log(`[PROCESS] 🛡️ Offset Düzeltildi: "${section.title}" (YZ: ${section.pageStart} -> Gerçek: ${truePage})`)
+                section.pageStart = truePage;
+              }
+            }
+
+            let bibliographyPageStart = pageTexts.length + 1;
+            for (let p = Math.max(0, pageTexts.length - 15); p < pageTexts.length; p++) {
+              const lines = pageTexts[p].split('\n').slice(0, 15).map(l => l.trim().toLocaleUpperCase('tr-TR'));
+              if (lines.some(l => l === 'KAYNAKÇA' || l === 'KAYNAKLAR' || l === 'REFERENCES' || l === 'BİBLİYOGRAFYA')) {
+                bibliographyPageStart = p + 1;
+                console.log(`[PROCESS] 📚 Kaynakça tespit edildi (Sayfa ${bibliographyPageStart}). Son bölüm bu sayfadan önce bitecek.`);
                 break;
               }
             }
-            
-            // Fallback: tüm sayfada ara (TOC hariç)
-            if (truePage === -1) {
-               for (let p = 0; p < pageTexts.length; p++) {
-                  if (tocPages.has(p)) continue
-                  if (pageTexts[p].toLowerCase().includes(titleLower)) {
-                     truePage = p + 1;
-                     break;
-                  }
-               }
-            }
-
-            if (truePage !== -1 && truePage !== section.pageStart) {
-              console.log(`[PROCESS] 🛡️ Offset Düzeltildi: "${section.title}" (YZ: ${section.pageStart} -> Gerçek: ${truePage})`)
-              section.pageStart = truePage;
-            }
+            sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
+          } else {
+            sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
           }
-          
-          // 2. pageEnd değerlerini düzelt (Bir sonraki bölümün başlangıcından 1 çıkararak)
-          
-          // --- KAYNAKÇA TESPİTİ (TOC'ta yoksa bile kitabın sonundan kesmek için) ---
-          let bibliographyPageStart = pageTexts.length + 1;
-          for (let p = Math.max(0, pageTexts.length - 15); p < pageTexts.length; p++) {
-            const lines = pageTexts[p].split('\n').slice(0, 15).map(l => l.trim().toLocaleUpperCase('tr-TR'));
-            if (lines.some(l => l === 'KAYNAKÇA' || l === 'KAYNAKLAR' || l === 'REFERENCES' || l === 'BİBLİYOGRAFYA')) {
-              bibliographyPageStart = p + 1; // 1-indexed
-              console.log(`[PROCESS] 📚 Kaynakça tespit edildi (Sayfa ${bibliographyPageStart}). Son bölüm bu sayfadan önce bitecek.`);
-              break;
-            }
-          }
-
-          for (let i = 0; i < sections.length; i++) {
-            if (i < sections.length - 1) {
-              sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i+1].pageStart - 1)
-            } else {
-              sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
-            }
-            // 3. İçeriği (content) doğru sayfalara göre yeniden kes
-            sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
-          }
-          console.log(`[PROCESS] 🛡️ Global Zırh İşlemi Tamamlandı.`)
+          // 3. İçeriği (content) doğru sayfalara göre yeniden kes
+          sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
         }
+        console.log(`[PROCESS] 🛡️ Global Zırh İşlemi Tamamlandı.`)
       }
-
-      // 🚨 EN KÖTÜ SENARYO: Tüm denemelere rağmen çökerse...
-      if (sections.length === 0) {
-        console.error(`[PROCESS] 🚨 FATAL: ${MAX_TOC_ATTEMPTS} denemeye rağmen İçindekiler çıkarılamadı! PDF zorunlu olarak tek parça halinde işlenecek.`)
-        sections = [{
-          title: "Bölüm İçeriği (Ana Metin)",
-          pageStart: 1,
-          pageEnd: totalPages,
-          content: pageTexts.join("\n\n")
-        }]
-      }
-
-      // ⚠️ İÇİNDEKİLER / ÖNSÖZ / KAPAK FİLTRESİ
-      // Bu sayfalar not üretimi için anlamsızdır — filtrelenir
-      const TOC_KEYWORDS = ["İÇİNDEKİLER", "ÖNSÖZ", "FOREWORD", "TABLE OF CONTENTS", "PREFACE", "SUNUŞ"]
-      sections = sections.filter(sec => {
-        const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
-        const contentFirst500 = sec.content.substring(0, 500).toLocaleUpperCase("tr-TR")
-        const isTocOrForeword = TOC_KEYWORDS.some(kw => titleUpper.includes(kw) || contentFirst500.includes(kw))
-        if (isTocOrForeword && sec.content.length < 3000) {
-          console.log(`[PROCESS] 🗑️ İçindekiler/önsöz filtresi: "${sec.title}" (Sayfa ${sec.pageStart}-${sec.pageEnd}) atlandı.`)
-          return false
-        }
-        return true
-      })
-
-      console.log(`[PROCESS] ${sections.length} bölüm algılandı (İçindekiler filtresi sonrası).`)
-
-      // ⚠️ KAYNAKÇA BÖLÜMÜ FİLTRESİ (TAMAMEN SİLME)
-      // Kaynakça sınavda sorulmaz — UI'da veya veritabanında yer kaplamaması için tamamen atılır
-      const BIBLIO_KEYWORDS = ["KAYNAKÇA", "KAYNAKLAR", "REFERENCES", "BİBLİYOGRAFYA", "SINAV ALT KONU"]
-      sections = sections.filter(sec => {
-        const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
-        const isBibliography = BIBLIO_KEYWORDS.some(kw => titleUpper.includes(kw))
-        if (isBibliography) {
-          console.log(`[PROCESS] 🗑️ Kaynakça filtresi: "${sec.title}" (Sayfa ${sec.pageStart}-${sec.pageEnd}) veritabanına eklenmeyecek.`)
-          return false
-        }
-        return true
-      })
-
-      console.log(`[PROCESS] ${sections.length} bölüm algılandı (Tüm filtreler sonrası).`)
-
-      for (let i = 0; i < sections.length; i++) {
-        await prisma.section.create({
-          data: {
-            courseId: course.id,
-            title: sections[i].title,
-            order: i + 1,
-            pageStart: sections[i].pageStart,
-            pageEnd: sections[i].pageEnd,
-            rawContent: sections[i].content,
-            processed: false,
-            notes: null,
-          }
-        })
-      }
-    } else {
-      console.log(`[PROCESS] Devam: ${existingSections} bölüm zaten var, kaldığı yerden devam ediliyor...`)
     }
 
-    // ========== PHASE 3+4: AI Analysis + Schedule — ARKA PLANDA ==========
-    // HTTP response'u hemen dön. AI analizi Node.js event loop'unda arka planda devam eder.
-    // Bu sayede Next.js API route timeout (~60sn) sorunu çözülür.
-    processInBackground(slug, course).catch(err => {
-      console.error("[BG_FATAL]", err)
-      prisma.course.update({ where: { slug }, data: { status: "error" } }).catch(() => { })
+    // 🚨 EN KÖTÜ SENARYO: Tüm denemelere rağmen çökerse...
+    if (sections.length === 0) {
+      console.error(`[PROCESS] 🚨 FATAL: ${MAX_TOC_ATTEMPTS} denemeye rağmen İçindekiler çıkarılamadı! PDF zorunlu olarak tek parça halinde işlenecek.`)
+      sections = [{
+        title: "Bölüm İçeriği (Ana Metin)",
+        pageStart: 1,
+        pageEnd: totalPages,
+        content: pageTexts.join("\n\n")
+      }]
+    }
+
+    // ⚠️ İÇİNDEKİLER / ÖNSÖZ / KAPAK FİLTRESİ
+    // Bu sayfalar not üretimi için anlamsızdır — filtrelenir
+    const TOC_KEYWORDS = ["İÇİNDEKİLER", "ÖNSÖZ", "FOREWORD", "TABLE OF CONTENTS", "PREFACE", "SUNUŞ"]
+    sections = sections.filter(sec => {
+      const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
+      const contentFirst500 = sec.content.substring(0, 500).toLocaleUpperCase("tr-TR")
+      const isTocOrForeword = TOC_KEYWORDS.some(kw => titleUpper.includes(kw) || contentFirst500.includes(kw))
+      if (isTocOrForeword && sec.content.length < 3000) {
+        console.log(`[PROCESS] 🗑️ İçindekiler/önsöz filtresi: "${sec.title}" (Sayfa ${sec.pageStart}-${sec.pageEnd}) atlandı.`)
+        return false
+      }
+      return true
     })
 
-    return NextResponse.json({ success: true, message: "İşleme başlatıldı" })
-  } catch (error: any) {
-    console.error("[PROCESS_FATAL]", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.log(`[PROCESS] ${sections.length} bölüm algılandı (İçindekiler filtresi sonrası).`)
+
+    // ⚠️ KAYNAKÇA BÖLÜMÜ FİLTRESİ (TAMAMEN SİLME)
+    // Kaynakça sınavda sorulmaz — UI'da veya veritabanında yer kaplamaması için tamamen atılır
+    const BIBLIO_KEYWORDS = ["KAYNAKÇA", "KAYNAKLAR", "REFERENCES", "BİBLİYOGRAFYA", "SINAV ALT KONU"]
+    sections = sections.filter(sec => {
+      const titleUpper = sec.title.toLocaleUpperCase("tr-TR")
+      const isBibliography = BIBLIO_KEYWORDS.some(kw => titleUpper.includes(kw))
+      if (isBibliography) {
+        console.log(`[PROCESS] 🗑️ Kaynakça filtresi: "${sec.title}" (Sayfa ${sec.pageStart}-${sec.pageEnd}) veritabanına eklenmeyecek.`)
+        return false
+      }
+      return true
+    })
+
+    console.log(`[PROCESS] ${sections.length} bölüm algılandı (Tüm filtreler sonrası).`)
+
+    for (let i = 0; i < sections.length; i++) {
+      await prisma.section.create({
+        data: {
+          courseId: course.id,
+          title: sections[i].title,
+          order: i + 1,
+          pageStart: sections[i].pageStart,
+          pageEnd: sections[i].pageEnd,
+          rawContent: sections[i].content,
+          processed: false,
+          notes: null,
+        }
+      })
+    }
+  } else {
+    console.log(`[PROCESS] Devam: ${existingSections} bölüm zaten var, kaldığı yerden devam ediliyor...`)
   }
+
+  // ========== PHASE 3+4: AI Analysis + Schedule — ARKA PLANDA ==========
+  // HTTP response'u hemen dön. AI analizi Node.js event loop'unda arka planda devam eder.
+  // Bu sayede Next.js API route timeout (~60sn) sorunu çözülür.
+  processInBackground(slug, course).catch(err => {
+    console.error("[BG_FATAL]", err)
+    prisma.course.update({ where: { slug }, data: { status: "error" } }).catch(() => { })
+  })
+
+  return NextResponse.json({ success: true, message: "İşleme başlatıldı" })
+} catch (error: any) {
+  console.error("[PROCESS_FATAL]", error)
+  return NextResponse.json({ error: error.message }, { status: 500 })
+}
 }
 
 // ==================== BACKGROUND PROCESSING ====================
@@ -444,7 +461,7 @@ async function processInBackground(slug: string, course: any) {
           // ==================== KALİTE DÖNGÜSÜ (Not Üretimi ve Doğrulama) ====================
           // En fazla 5 GERÇEK deneme. Kota hataları deneme hakkından düşmez.
           if (!notesAttemptSuccess) {
-            for (let vAttempt = 1; vAttempt <= 5; vAttempt++) {
+            for (let vAttempt = 1; vAttempt <= MAX_RETRIES; vAttempt++) {
               try {
                 console.log(`[BG] Not Üretim Denemesi #${vAttempt}...`)
 
@@ -838,13 +855,14 @@ async function processInBackground(slug: string, course: any) {
             console.warn(`[BG] ⚠️ [${section.title}] Bölüm tam onaylanmadı ve notlar çok kısa/eksik. Soru ve flashcard üretimi atlanıyor...`);
           } else {
             console.log(`[BG] Onaylanmış not üzerinden Flashcard ve Sorular üretiliyor...`)
-            const fullContent = `${section.rawContent}\n\n--- DERS NOTLARI (PDF görselleri dahil) ---\n${notes}`
+            // SADECE ONAYLANMIŞ NOTLARI KULLAN Kİ DIŞARIDAN BİLGİ GELMESİN
+            const finalContent = notes || section.rawContent;
             try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
 
             // Flashcard'ları üret (3 kere deneme şansı)
             for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
               try {
-                flashcards = await generateFlashcards(fullContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd)
+                flashcards = await generateFlashcards(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd)
                 console.log(`[BG] ✅ Flashcards: ${flashcards.length}`)
                 break
               } catch (e: any) {

@@ -144,7 +144,7 @@ Bu kitaptaki tüm ana bölümleri/üniteleri, başlangıç ve bitiş sayfaların
 
 ÇOK ÖNEMLİ KURALLAR:
 1. FİZİKSEL SAYFA NUMARALARI (ÇOK KRİTİK): Bana İçindekiler Tablosunun (TOC) bulunduğu sayfayı SAKIN VERME! İçindekiler tablosu genelde ilk 10 sayfadadır. Sen bana bölümün GERÇEKTE BAŞLADIĞI FİZİKSEL (MUTLAK) SAYFA İNDEKSİNİ vereceksin. Örneğin "Sayfa 103" yazan sayfa, PDF'in 115. fiziksel sayfası olabilir. Lütfen kitabın asıl içeriğinin başladığı gerçek mutlak sayfa sırasını hesapla ve onu ver! Her bölüm için "pageStart" değeri GİDEREK ARTMALIDIR, asla aynı sayfa (örnek: 4) olamaz!
-2. EKSİKSİZLİK: "Kısaltmalar", "Tanımlar", "Kavramlar" veya en sondaki "Kaynakça", "Kaynaklar" gibi başlıkları da MUTLAKA ayrı birer bölüm olarak listeye dahil et, asla atlama.
+2. EKSİKSİZLİK: "Kısaltmalar", "Tanımlar" veya "Kavramlar" gibi sınav için kritik olan başlıklar varsa, bunları da mutlaka ayrı bir bölüm olarak listeye dahil et, asla atlama. ANCAK "Kaynakça" veya "Kaynaklar" gibi referans bölümlerini ASLA LİSTEYE ALMA, tamamen yoksay ve sil!
 3. TEMİZ BAŞLIK: Başlıklara ASLA "(Bölüm 3/20)" gibi bölüm numarası veya parantez içi sayaçlar EKLEME. "Ünite 1" gibi genel başlıklar kullanma, direkt konunun öz adını yaz (Örn: "Bilgi Güvenliği Yönetimi").
 
 Sadece aşağıdaki JSON array formatında çıktı ver (başka hiçbir şey yazma):
@@ -205,10 +205,15 @@ ADIM 3: Tespit ettiğin her başlığı, KİTABIN ASIL METNİ İÇİNDE (ilerley
 ADIM 4: Başlığı asıl metinde bulduğunda, o başlığın tam üstünde yazan "--- SAYFA X ---" etiketindeki X numarasını o bölümün "pageStart" değeri olarak kabul et.
 
 ÇOK ÖNEMLİ KURALLAR:
-1. SADECE ANA BÖLÜMLERİ ÇIKAR. Alt başlıkları (örneğin 1.1, 1.2 vb.) dahil etme! Sadece kitabın ana ünitelerini/bölümlerini al.
-2. "Kısaltmalar", "Tanımlar", "Kavramlar" veya PDF'in en sonundaki "Kaynakça", "Kaynaklar" gibi başlıkları da mutlaka ayrı bir bölüm olarak dahil et.
-3. "pageStart" mutlaka ilgili bölümün başladığı ilk sayfanın (dizideki index + 1) sırası olmalıdır.
-4. Çıktı SADECE ve SADECE JSON formatında bir array olmalıdır. Başka hiçbir açıklama yazma.
+1. "Kısaltmalar", "Tanımlar", "Kavramlar" gibi başlıkları mutlaka dahil et. ANCAK "Kaynakça" veya "Kaynaklar" gibi referans bölümlerini ASLA LİSTEYE ALMA, yoksay!
+2. Başlıklara "(Bölüm 3/20)" gibi sayaçlar veya "Ünite 1" gibi ekler KOYMA.
+3. TÜM KİTABI son sayfasına kadar tara.
+
+Sadece aşağıdaki JSON array formatında çıktı ver (başka hiçbir şey yazma):
+[
+  {"title": "Kısaltmalar", "pageStart": 7, "pageEnd": 10},
+  {"title": "Üçüncü Taraflarla İletişim Güvenliği", "pageStart": 113, "pageEnd": 118}
+]
 
 KAYNAK METİN:
 ${tocText}
@@ -232,25 +237,25 @@ ${tocText}
     if (match) {
       cleaned = match[1].trim()
     }
-    
+
     let sections: Array<{ title: string; pageStart: number; pageEnd: number }> = JSON.parse(cleaned)
-    
+
     // YZ halüsinasyonlarını engellemek için sadece başlık temizliği yapıyoruz, sayfalara dokunmuyoruz
     for (let i = 0; i < sections.length; i++) {
       // 1. "1.", "1.2 ", "Bölüm 1 - " gibi saçma önekleri temizle
       let cleanTitle = sections[i].title.replace(/^(Bölüm|Ünite|Kısım)?\s*\d+[\.\-\:]?\s*/i, "").trim()
       sections[i].title = cleanTitle
     }
-    
+
     // 3. pageEnd değerlerini düzelt (Bir sonraki bölümün başlangıcından 1 çıkararak)
     for (let i = 0; i < sections.length; i++) {
       if (i < sections.length - 1) {
-        sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i+1].pageStart - 1)
+        sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
       } else {
         sections[i].pageEnd = pageTexts.length // Son bölüm kitabın sonuna kadar gider
       }
     }
-    
+
     return sections
   } catch (e) {
     console.error("[TextAI Fallback Error] Parse failed:", e)
@@ -262,7 +267,7 @@ ${tocText}
 // 🛡️ GENEL REGEX YEDEĞİ: Tüm AI servisleri çökerse devreye giren Jenerik Bölüm Çıkarıcı
 export function extractSectionsRegex(pageTexts: string[]): Array<{ title: string; pageStart: number; pageEnd: number }> {
   const sections: Array<{ title: string; pageStart: number; pageEnd: number }> = [];
-  
+
   // Akademik dokümanlardaki genel bölüm başlık formatları
   const patterns = [
     /^(\d+)\.\s+([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü\s]{4,60})$/m, // "1. BİLGİ GÜVENLİĞİ", "2. Varlık Yönetimi"
@@ -279,7 +284,7 @@ export function extractSectionsRegex(pageTexts: string[]): Array<{ title: string
     // Her sayfanın ilk 5 satırına bak (Bölüm başlıkları genelde sayfa başındadır)
     for (let j = 0; j < Math.min(5, lines.length); j++) {
       const line = lines[j];
-      
+
       // İçindekiler tablosunu atla (sayfa 1-10 arası çok fazla eşleşme olur)
       if (i < 10 && (line.toUpperCase().includes("İÇİNDEKİLER") || line.toUpperCase().includes("CONTENTS"))) {
         break; // Bu sayfayı atla
@@ -291,7 +296,7 @@ export function extractSectionsRegex(pageTexts: string[]): Array<{ title: string
         if (match) {
           // Başlık çok uzunsa muhtemelen paragraftır, atla
           if (line.length > 80) continue;
-          
+
           // Grup yakalamalarına göre başlığı belirle
           if (match.length === 3 && typeof match[1] === "string" && !isNaN(Number(match[1]))) {
             matchedTitle = `${match[1]}. ${match[2].trim()}`;
@@ -307,7 +312,7 @@ export function extractSectionsRegex(pageTexts: string[]): Array<{ title: string
       if (matchedTitle) {
         // Eğer aynı başlık zaten varsa veya çok benziyorsa (header/footer tekrarı), ekleme
         const isDuplicate = sections.some(s => s.title.toUpperCase() === matchedTitle?.toUpperCase());
-        
+
         if (!isDuplicate) {
           // Önceki bölümün bitiş sayfasını ayarla
           if (currentSection) {

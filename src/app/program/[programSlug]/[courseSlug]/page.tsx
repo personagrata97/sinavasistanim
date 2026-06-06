@@ -866,7 +866,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
         <Tabs 
           tabs={COURSE_TABS} 
           activeTab={activeTab} 
-          onChange={setActiveTab} 
+          onChange={(t) => { setActiveTab(t); setSelectedScrollKeyword(undefined); setSelectedSectionId(undefined); }} 
           className="mb-8" 
         />
 
@@ -1412,7 +1412,7 @@ function OverviewTab({
 
         return (
           <motion.div
-            onClick={() => onNavigateToSection?.(chosenHap.sectionId, chosenHap.content)}
+            onClick={() => onNavigateToSection?.(chosenHap.sectionId, chosenHap.title)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}

@@ -317,9 +317,11 @@ function FlashcardsTab({ slug, courseName }: { slug: string, courseName: string 
                   onClick={(e) => {
                     e.stopPropagation(); // prevent flipping the card back
                     if (card.section?.notes) {
-                       const semanticTarget = card.back + " " + card.front;
-                       setAutoScrollKeyword(semanticTarget);
-                       setShowNotesModal(true);
+                        // Sadece kartın ön yüzünü (Kavram adını veya soruyu) gönderiyoruz ki
+                        // gereksiz uzun arka yüz açıklamaları yüzünden alakasız paragraflar eşleşmesin!
+                        const semanticTarget = card.front;
+                        setAutoScrollKeyword(semanticTarget);
+                        setShowNotesModal(true);
                     }
                   }}
                   disabled={!card.section?.notes}
