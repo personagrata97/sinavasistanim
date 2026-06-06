@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { COURSE_PAGE_OVERRIDES } from "@/lib/course-configs"
 
 import { extractAllText, detectSectionsMultimodal, detectSectionsTextAI, checkPdfQuality, extractSectionsRegex } from "@/lib/pdf-engine"
-import { analyzeSectionContent, generateCourseNotes, generateFlashcards, generateQuestions, setFileUrisMap, auditNotesAgainstSourceSpecific } from "@/lib/ai-service"
+import { analyzeSectionContent, generateCourseNotes, generateFlashcards, generateQuestions, setFileUrisMap, auditNotesAgainstSourceSpecific, validateQuestionsWithSolver, validateFlashcardsWithSolver } from "@/lib/ai-service"
 import { generateStudySchedule } from "@/lib/schedule-engine"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -940,6 +940,12 @@ async function processInBackground(slug: string, course: any) {
             for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
               try {
                 flashcards = await generateFlashcards(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd)
+                
+                // SOLVER AI: Flashcard Sağlaması
+                if (flashcards.length > 0) {
+                  flashcards = await validateFlashcardsWithSolver(finalContent, flashcards);
+                }
+                
                 console.log(`[BG] ✅ Flashcards: ${flashcards.length}`)
                 break
               } catch (e: any) {
@@ -993,6 +999,11 @@ async function processInBackground(slug: string, course: any) {
                     if (maxAns / totalQ > 0.8) {
                       console.warn(`[BG] ⚠️ Soru dağılımı şüpheli (bir şıkkı çok fazla kullanmış):`, dist);
                     }
+                  }
+
+                  // SOLVER AI: Soru Sağlaması (Question Validator)
+                  if (questions.length > 0) {
+                    questions = await validateQuestionsWithSolver(finalContent, questions);
                   }
 
                   break

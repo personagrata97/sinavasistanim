@@ -1829,3 +1829,124 @@ GÖREV:
     return { status: "rejected", aiComment: "Sistem hatası nedeniyle denetim yapılamadı." };
   }
 }
+
+// ==================== SOLVER AI (SORU VE FLASHCARD SAĞLAMASI) ====================
+
+export async function validateQuestionsWithSolver(
+  notesContent: string,
+  questions: any[]
+): Promise<any[]> {
+  console.log(`[SOLVER_AI] 🕵️‍♂️ ${questions.length} adet soru için Çözüm Denetleyicisi çalışıyor...`);
+  
+  if (!questions || questions.length === 0) return questions;
+
+  const prompt = `
+Sen bir ders notuna çalışarak test çözen, son derece titiz bir öğrencisin.
+DERS NOTLARI:
+${notesContent}
+
+SORULAR (JSON Formatında):
+${JSON.stringify(questions.map((q, i) => ({ index: i, text: q.text, options: q.options })))}
+
+GÖREV:
+Yukarıdaki soruları SADECE ve SADECE verilen ders notlarına bakarak çöz.
+Her bir soru için şu analizi yap:
+1. Ders notuna göre doğru şıkkı bul.
+2. Soru ders notundaki bilgilerle GÜVENİLİR bir şekilde çözülebiliyor mu? (is_solvable)
+3. Sorunun birden fazla doğru şıkkı var mı veya çelişkili mi? (has_multiple_correct)
+
+Sadece şu formatta JSON döndür:
+[
+  {
+    "index": 0,
+    "chosen_answer": "A",
+    "is_solvable": true,
+    "has_multiple_correct": false
+  }
+]
+`;
+
+  try {
+    const raw = await callAI(prompt, 1, undefined, "verification");
+    const solverResults = extractCleanJson(raw) as any[];
+    
+    const validQuestions = questions.filter((q, i) => {
+      const s = solverResults.find((res: any) => res.index === i);
+      if (!s) return false;
+      
+      const intendedAnswer = q.correctAnswer?.substring(0, 1).toUpperCase();
+      const chosenAnswer = s.chosen_answer?.substring(0, 1).toUpperCase();
+      
+      const isCorrect = intendedAnswer === chosenAnswer;
+      const isSolvable = s.is_solvable === true;
+      const noMultiple = s.has_multiple_correct === false;
+      
+      if (!isSolvable || !noMultiple || !isCorrect) {
+        console.log(`[SOLVER_AI] ⚠️ Soru elendi (Index ${i}): Solvable=${isSolvable}, NoMultiple=${noMultiple}, AnswerMatched=${isCorrect} (${intendedAnswer} vs ${chosenAnswer})`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`[SOLVER_AI] ✅ ${questions.length} sorudan ${validQuestions.length} tanesi denetimden geçti.`);
+    return validQuestions;
+  } catch (error) {
+    console.error("[SOLVER_AI] Soru denetimi başarısız oldu, orijinal sorular korunuyor:", error);
+    return questions; // Fallback to original if solver fails
+  }
+}
+
+export async function validateFlashcardsWithSolver(
+  notesContent: string,
+  flashcards: any[]
+): Promise<any[]> {
+  console.log(`[SOLVER_AI] 🕵️‍♂️ ${flashcards.length} adet Flashcard için Mantık Denetleyicisi çalışıyor...`);
+  
+  if (!flashcards || flashcards.length === 0) return flashcards;
+
+  const prompt = `
+Sen titiz bir kalite kontrol uzmanısın.
+DERS NOTLARI:
+${notesContent}
+
+FLASHCARDLAR (JSON Formatında):
+${JSON.stringify(flashcards.map((f, i) => ({ index: i, front: f.front, back: f.back })))}
+
+GÖREV:
+Her bir flashcard'ı incele:
+1. "front" (ön yüz) kısmında cevabın kendisi geçiyor mu? (Spolier içeriyor mu?)
+2. "back" (arka yüz) kısmındaki bilgi ders notlarıyla tamamen tutarlı mı?
+
+Sadece şu formatta JSON döndür:
+[
+  {
+    "index": 0,
+    "is_valid": true,
+    "reason": "Geçerli"
+  }
+]
+Eğer spoiler varsa veya bilgi yanlışsa "is_valid": false yap.
+`;
+
+  try {
+    const raw = await callAI(prompt, 1, undefined, "verification");
+    const solverResults = extractCleanJson(raw) as any[];
+    
+    const validFlashcards = flashcards.filter((f, i) => {
+      const s = solverResults.find((res: any) => res.index === i);
+      if (!s) return false;
+      
+      if (s.is_valid !== true) {
+        console.log(`[SOLVER_AI] ⚠️ Flashcard elendi (Index ${i}): ${s.reason}`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`[SOLVER_AI] ✅ ${flashcards.length} karttan ${validFlashcards.length} tanesi denetimden geçti.`);
+    return validFlashcards;
+  } catch (error) {
+    console.error("[SOLVER_AI] Flashcard denetimi başarısız oldu, orijinal kartlar korunuyor:", error);
+    return flashcards; // Fallback
+  }
+}
