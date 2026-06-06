@@ -28,7 +28,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
             clusterBkg: "#0f172a",
             edgeLabelBackground: "#1e293b",
           },
-          flowchart: { curve: "basis", padding: 15, htmlLabels: true },
+          flowchart: { curve: "basis", padding: 15, htmlLabels: false },
           securityLevel: "loose",
         })
 
@@ -56,6 +56,10 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
           .replace(/^\s*style\s+[^\n]+/gm, '')
           .replace(/^\s*classDef\s+[^\n]+/gm, '')
           .replace(/^\s*class\s+[^\n]+/gm, '');
+
+        // Dikey şemaları yataya çevir (PDF'de sosis gibi uzamaması için)
+        cleanedChart = cleanedChart.replace(/graph\s+(TD|TB)/gi, 'graph LR');
+        cleanedChart = cleanedChart.replace(/flowchart\s+(TD|TB)/gi, 'flowchart LR');
 
         const processedChart = cleanedChart.replace(/([a-zA-Z0-9_-]+)({\s*"([^"]+)"\s*}|{\s*([^{}]+)\s*}|\[\s*"([^"]+)"\s*\]|\[\s*([^\[\]]+)\s*\]|\(\s*"([^"]+)"\s*\)|\(\s*([^\(\)]+)\s*\))/g, (m, nodeId, shapes, g1, g2, g3, g4, g5, g6) => {
           const rawText = g1 || g2 || g3 || g4 || g5 || g6 || '';
@@ -129,7 +133,8 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
           .mermaid-diagram-wrapper svg {
             display: block !important;
             margin: 0 auto !important;
-            /* Do NOT override max-width or width here */
+            max-width: 100% !important;
+            max-height: 400px !important;
             height: auto !important;
           }
           .mermaid-diagram-wrapper svg rect,

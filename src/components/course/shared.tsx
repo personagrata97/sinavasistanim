@@ -276,6 +276,10 @@ export const cleanMarkdown = (md: string, removeFirstHeader = false) => {
   // Kendini Test Et! kısmındaki çoktan seçmeli şıkları (A) B) C) vb.) alt alta düzgünce sırala
   clean = clean.replace(/\s+([A-E]\))/g, '\n\n**$1** ');
 
+  // Sorulardaki I. II. veya 1. 2. gibi öncülleri (maddeleri) markdown alıntı kutusuna dönüştür
+  // Böylece PremiumMarkdownRenderer onları şık bir kutu ve çizgi ile gösterir
+  clean = clean.replace(/^(I|II|III|IV|V|VI|[1-9])\.\s+(.*?)$/gm, '> **$1.** $2');
+
   // Soru başlıklarını belirginleştir (Soru 1:, Soru 2: vb.) ve aralarını aç
   // Eğer yapay zeka zaten bold yapmışsa (**Soru 1:**), onu iki kere bold yapmamak için önce yıldızları temizle
   clean = clean.replace(/\*\*(Soru \d+:)\*\*/g, '$1');
@@ -411,10 +415,53 @@ export function formatQuestionText(text: string) {
   if (!text) return text;
   let formatted = text
     .replace(/(?<=^|\s)(I|II|III|IV|V|VI)\.\s/g, '\n$1. ')
-    .replace(/(?<=^|\s)(Yukarıdakilerden|Buna göre|Aşağıdakilerden|Verilenlerden)/g, '\n$1');
-  return formatted.split('\n').filter(line => line.trim().length > 0).map((line, i) => (
-    <div key={i} className={i > 0 ? "mt-3" : ""}>{line.trim()}</div>
-  ));
+    .replace(/(?<=^|\s)([1-9])\.\s/g, '\n$1. ')
+    .replace(/(?<=^|\s)(Yukarıdakilerden|Buna göre|Aşağıdakilerden|Verilenlerden|Hangisi|Hangileri|Buna)/g, '\n$1');
+    
+  return formatted.split('\n').filter(line => line.trim().length > 0).map((line, i) => {
+    const trimmed = line.trim();
+    const isListItem = /^(I|II|III|IV|V|VI|[1-9])\.\s/.test(trimmed);
+    
+    if (isListItem) {
+      const dotIndex = trimmed.indexOf('.');
+      const num = trimmed.substring(0, dotIndex + 1);
+      const content = trimmed.substring(dotIndex + 1).trim();
+      return (
+        <div key={i} className="mt-2 ml-2 md:ml-4 py-2 px-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200/90 text-sm font-medium leading-relaxed">
+          <span className="font-bold text-blue-400 mr-2">{num}</span>
+          {content}
+        </div>
+      )
+    }
+    
+    return (
+      <div key={i} className={i > 0 ? "mt-4 text-base" : "text-base"}>
+        {trimmed}
+      </div>
+    )
+  });
+}
+
+export function formatMockExamQuestionText(text: string) {
+  if (!text) return text;
+  let formatted = text
+    .replace(/(?<=^|\s)(I|II|III|IV|V|VI)\.\s/g, '\n$1. ')
+    .replace(/(?<=^|\s)([1-9])\.\s/g, '\n$1. ')
+    .replace(/(?<=^|\s)(Yukarıdakilerden|Buna göre|Aşağıdakilerden|Verilenlerden|Hangisi|Hangileri|Buna)/g, '\n$1');
+    
+  return formatted.split('\n').filter(line => line.trim().length > 0).map((line, i) => {
+    const trimmed = line.trim();
+    const isListItem = /^(I|II|III|IV|V|VI|[1-9])\.\s/.test(trimmed);
+    
+    if (isListItem) {
+      return (
+        <div key={i} className="mt-2 ml-4">
+          {trimmed}
+        </div>
+      )
+    }
+    return <span key={i} className={i > 0 ? "block mt-3" : ""}>{trimmed} </span>;
+  })
 }
 
 // Helper to remove references to 'kaynak metin' or 'yapay zeka' and format cleanly for students

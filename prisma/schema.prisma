@@ -110,6 +110,7 @@ model Section {
   module      String?  // Hangi sınav modülüne ait (örn: "Modül 1", "Modül 2")
   processed   Boolean  @default(false)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
   
   questions   Question[]
   flashcards  Flashcard[]

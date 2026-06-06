@@ -78,10 +78,29 @@ export async function GET(req: NextRequest) {
         const currentSection = await prisma.section.findFirst({
           where: { courseId: course.id, processed: false },
           orderBy: { order: "asc" },
-          select: { verificationIssues: true }
+          select: { id: true, verificationIssues: true }
         });
         
-        if (currentSection?.verificationIssues) {
+        if (currentSection) {
+          // ZOMBİ SÜREÇ (TIMEOUT) DEDEKTÖRÜ: Tamamen güvenli Date parsing
+          const rawSection: any[] = await prisma.$queryRaw`SELECT updatedAt FROM Section WHERE id = ${currentSection.id}`;
+          if (rawSection.length > 0 && rawSection[0].updatedAt) {
+            const now = Date.now();
+            let dateStr = rawSection[0].updatedAt;
+            if (typeof dateStr === "string" && !dateStr.endsWith("Z")) {
+              dateStr += "Z";
+            }
+            const lastUpdate = new Date(dateStr).getTime();
+          
+            // Timeout 15 dakikadan 45 dakikaya çıkarıldı çünkü Flashcard/Soru üretimi ve API Kota Beklemeleri 30-40 dakika sürebiliyor.
+            if (now - lastUpdate > 45 * 60 * 1000) {
+              console.log(`[STATUS] 🧟‍♂️ Zombi süreç tespit edildi! (${course.name}) 45 dakikadır hareket yok. Otomatik duraklatılıyor.`);
+              await prisma.course.update({ where: { id: course.id }, data: { status: "paused" } });
+              course.status = "paused";
+            }
+          }
+
+          if (currentSection.verificationIssues) {
           try {
             const issues = typeof currentSection.verificationIssues === "string" 
               ? JSON.parse(currentSection.verificationIssues) 
@@ -91,6 +110,7 @@ export async function GET(req: NextRequest) {
             }
           } catch (e) { }
         }
+      }
       } else {
         phase = "finalizing"
         phaseLabel = "Sistem İşlemi: Tamamlanıyor..."

@@ -10,7 +10,7 @@ import {
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import dynamic from "next/dynamic"
-import { EmptyState, LoadingSkeleton, cleanExplanationText, formatQuestionText } from "./shared"
+import { EmptyState, LoadingSkeleton, cleanExplanationText, formatMockExamQuestionText } from "./shared"
 import { Tooltip } from "@/components/ui/shared"
 import { toast } from "sonner"
 
@@ -407,7 +407,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
             </div>
 
             <div className="text-[15px] leading-relaxed text-[#212529] mb-8 select-none">
-              {q.text}
+              {formatMockExamQuestionText(q.text)}
             </div>
 
             <fieldset className="space-y-4" aria-label="Cevap seçenekleri">
@@ -623,7 +623,7 @@ export default function MockExamTab({ slug, programSlug, courseName, pastExamRes
                   <span className="text-xs font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Soru {wq.index}</span>
                   {wq.section?.title && <span className="text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded">{wq.section.title}</span>}
                 </div>
-                <p className="text-sm mb-3">{wq.text}</p>
+                <div className="text-sm mb-3">{formatMockExamQuestionText(wq.text)}</div>
                 <div className="flex items-center gap-4 text-xs mb-2">
                   <span className="text-red-400">Senin cevabın: <b>{wq.userAnswer}</b></span>
                   <span className="text-emerald-400">Doğru cevap: <b>{wq.correct}</b></span>

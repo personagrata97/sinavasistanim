@@ -210,8 +210,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
   const [processLock, setProcessLock] = useState(false)
 
   // 🔒 MERKEZİ PROCESS FONKSİYONU — Tüm process çağrıları BURADAN geçer
-  async function triggerProcess() {
-    if (processLockRef.current) {
+  async function triggerProcess(forceRetry: boolean = false) {
+    if (processLockRef.current && !forceRetry) {
       console.log("[FRONTEND] ⚠️ Process zaten tetiklendi — çift tıklama engellendi!")
       toast.info("İşlem zaten devam ediyor...")
       return false
@@ -222,10 +222,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
       const res = await fetch("/api/courses/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ slug, forceRetry }),
       })
       if (res.ok) {
-        toast.success("İşlem başlatıldı!")
+        toast.success(forceRetry ? "Sistem kilidi kırıldı, işlem zorla başlatıldı!" : "İşlem başlatıldı!")
         setTimeout(loadCourse, 1500)
         return true
       } else {
@@ -603,7 +603,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
                   <XCircle className="w-5 h-5 text-red-400 mb-2" />
                   <div className="text-sm font-bold text-red-400">İşlem Başarısız</div>
                   <div className="text-[11px] text-red-400/80 mt-1 mb-3">Yapay zeka limitine takıldı.</div>
-                  <div className="flex gap-2 w-full justify-center mt-1">
+                  <div className="flex flex-wrap gap-2 w-full justify-center mt-1">
                     <button
                       onClick={async (e) => {
                         e.stopPropagation()
@@ -618,6 +618,21 @@ export default function CourseDetailPage({ params }: { params: Promise<{ program
                       }`}
                     >
                       <Play className="w-2.5 h-2.5 fill-current" /> Devam Et
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        setConfirmAction({
+                          title: "Zorla Devam Ettir",
+                          message: "Eğer işlemin donduğundan eminseniz bu butonu kullanın. Eski notlarınız veya başarıyla tamamlanmış bölümleriniz KESİNLİKLE silinmez. Sadece takılı kalan işlem kaldığı yerden zorla yeniden başlatılır.",
+                          onConfirm: async () => {
+                            triggerProcess(true)
+                          }
+                        })
+                      }}
+                      className="py-1 px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 rounded-md text-[10px] font-bold transition-all no-print flex items-center gap-1 shadow-sm"
+                    >
+                      <AlertTriangle className="w-2.5 h-2.5" /> Zorla Devam Ettir
                     </button>
                     <button
                       onClick={(e) => {

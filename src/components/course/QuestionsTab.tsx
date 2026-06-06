@@ -478,7 +478,7 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
             </button>
           </Tooltip>
         </div>
-        <div className="text-xl font-medium leading-relaxed mb-10 text-slate-100">{formatQuestionText(q.text)}</div>
+        <div className="text-lg font-medium leading-relaxed mb-6 text-slate-100">{formatQuestionText(q.text)}</div>
         <div className="space-y-3">
           {q.options.slice(0, 5).map((opt: string, i: number) => {
             const letter = String.fromCharCode(65 + i)
@@ -489,8 +489,8 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
             if (showResult && !isCorrect && !isWrong) colorClass += " opacity-40"
             const cleanOpt = opt.replace(/^[A-J][).]\s*/, '')
             return (
-              <button key={i} disabled={showResult} onClick={() => handleAnswer(letter)} className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center gap-4 ${colorClass}`}>
-                <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-slate-500"}`}>{letter}</span>
+              <button key={i} disabled={showResult} onClick={() => handleAnswer(letter)} className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${colorClass}`}>
+                <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-slate-500"}`}>{letter}</span>
                 <span className="text-sm font-medium">{cleanOpt}</span>
               </button>
             )

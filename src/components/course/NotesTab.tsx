@@ -30,10 +30,12 @@ const PDF_SHARED_CSS = `
   h3 { font-size: 15px; color: #1e3a5f; margin: 18px 0 8px; font-weight: 700; }
   p, li { font-size: 13px; line-height: 1.8; color: #334155; }
   ul { list-style: disc; padding-left: 24px; }
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
-  th { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; font-weight: 700; }
-  td { border: 1px solid #e2e8f0; padding: 8px 12px; }
+  table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse; margin: 16px 0; font-size: 12px; word-wrap: break-word; }
+  th { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; font-weight: 700; color: #1e3a5f; }
+  td { border: 1px solid #e2e8f0; padding: 10px 12px; vertical-align: top; }
   strong { color: #0f172a; }
+  .mermaid-diagram-wrapper svg { max-height: 450px !important; width: auto !important; max-width: 100% !important; }
+  .overflow-x-auto { overflow: visible !important; width: 100% !important; }
   .print-section-block { page-break-inside: auto !important; break-inside: auto !important; }
   h1, h2, h3, h4 { page-break-after: avoid !important; break-after: avoid !important; break-after: avoid-page !important; }
   p, div, li, span, tr { orphans: 3 !important; widows: 3 !important; }
@@ -469,8 +471,8 @@ export default function NotesTab({ course, slug, isAdmin, onReloadCourse, initia
               </div>
             </div>
             <!-- İçerik -->
-            <div style="font-size:13px;color:#1e293b;line-height:1.75;">
-              <p style="margin:6px 0;">${noteContent}</p>
+            <div style="font-size:13px;color:#1e293b;line-height:1.75;width:100%;display:block;">
+              <div style="margin:6px 0;width:100%;">${noteContent}</div>
             </div>
           </div>`
       }).join('\n')
