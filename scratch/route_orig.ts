@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { COURSE_PAGE_OVERRIDES } from "@/lib/course-configs"
-
 import { extractAllText, detectSectionsMultimodal, detectSectionsTextAI, checkPdfQuality, extractSectionsRegex } from "@/lib/pdf-engine"
 import { analyzeSectionContent, generateCourseNotes, generateFlashcards, generateQuestions, setFileUrisMap, auditNotesAgainstSourceSpecific } from "@/lib/ai-service"
 import { generateStudySchedule } from "@/lib/schedule-engine"
@@ -35,11 +33,11 @@ const MAX_CHUNK_CHARS = 12000 // ~5 sayfa = daha detaylı, eksik konu riski dü�
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      console.warn("[PROCESS] 🔴 Yetkisiz tetikleme engellendi.")
-      return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 })
-    }
+    // const session = await getServerSession(authOptions)
+    // if (!session?.user?.email) {
+    //   console.warn("[PROCESS] 🔴 Yetkisiz tetikleme engellendi.")
+    //   return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 })
+    // }
 
     const { slug, forceRetry = false } = await req.json()
     if (!slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 })
@@ -48,8 +46,8 @@ export async function POST(req: NextRequest) {
       where: { slug },
       include: { program: true }
     })
-    if (!course) {
-      return NextResponse.json({ error: "Ders bulunamadı." }, { status: 404 })
+    if (!course || !course.pdfPath) {
+      return NextResponse.json({ error: "Ders dosyası bulunamadı." }, { status: 404 })
     }
 
     // Zombi işlemi önleme: Eğer önceden iptal edildiyse listeden çıkar
@@ -60,9 +58,8 @@ export async function POST(req: NextRequest) {
 
     // 🔒 Çift tıklama koruması: Sadece aktif olarak bellek üzerindeyse engelle
     if (activeProcesses.has(slug)) {
-      // KALICI DÜZELTME: Eğer veritabanında 'paused' veya 'error' durumuna düşmüşse, bellek kilidini kesinlikle kır!
-      if (forceRetry || course.status === "paused" || course.status === "error") {
-        console.log(`[PROCESS] 🔄 Zombi kilit tespit edildi (DB Durumu: ${course.status}), kilit zorla kırılıyor: ${course.name}`);
+      if (forceRetry) {
+        console.log(`[PROCESS] 🔄 Zombi kilit tespit edildi, forceRetry ile kilit kırılıyor: ${course.name}`);
         activeProcesses.delete(slug);
       } else {
         console.log(`[PROCESS] ⚠️ Zaten işlemde (bellekte aktif): ${course.name} — tekrar tetikleme engellendi.`)
@@ -118,7 +115,7 @@ export async function POST(req: NextRequest) {
       const geminiKeys = (process.env.GEMINI_API_KEYS || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "").split(",").filter(k => k.trim())
 
       let tocAttempts = 0;
-      const MAX_TOC_ATTEMPTS = 3; // 3 * 60s = 3 dakika boyunca dener
+      const MAX_TOC_ATTEMPTS = 50; // 50 * 60s = 50 dakika boyunca dener
 
       while (sections.length === 0 && tocAttempts < MAX_TOC_ATTEMPTS && geminiKeys.length > 0) {
         tocAttempts++;
@@ -290,15 +287,12 @@ export async function POST(req: NextRequest) {
                 break;
               }
             }
-            for (let i = 0; i < sections.length; i++) {
-              if (i < sections.length - 1) {
-                sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
-              } else {
-                sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
-              }
-              // 3. İçeriği (content) doğru sayfalara göre yeniden kes
-              sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
-            }
+            sections[i].pageEnd = Math.max(sections[i].pageStart, sections[i + 1].pageStart - 1)
+          } else {
+            sections[i].pageEnd = Math.max(sections[i].pageStart, bibliographyPageStart - 1)
+          }
+          // 3. İçeriği (content) doğru sayfalara göre yeniden kes
+          sections[i].content = pageTexts.slice(Math.max(0, sections[i].pageStart - 1), sections[i].pageEnd).join("\n\n")
         }
         console.log(`[PROCESS] 🛡️ Global Zırh İşlemi Tamamlandı.`)
       }
@@ -374,8 +368,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true, message: "İşleme başlatıldı" })
 } catch (error: any) {
-  console.error("[PROCESS_FATAL]", error); require("fs").writeFileSync("/Users/selimkaya/.gemini/antigravity/scratch/spl-study-assistant/scratch/fatal.log", error.stack);
-  return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
+  console.error("[PROCESS_FATAL]", error)
+  return NextResponse.json({ error: error.message }, { status: 500 })
 }
 }
 
@@ -419,7 +413,7 @@ async function processInBackground(slug: string, course: any) {
 
     // KULLANICI KESİN TALİMATI: "Kaliteden taviz yok, pes etmeyecek, zaman önemli değil!"
     // Limit 3'ten 15'e çıkarıldı.
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 15
     const aiMode = course.program?.aiMode || "general"
     let hasCriticalError = false
     let isPausedForApproval = false
@@ -446,7 +440,7 @@ async function processInBackground(slug: string, course: any) {
         try {
           console.log(`[BG] [${sIdx + 1 + alreadyDone}/${totalSections}] ${section.title} - İŞLEME BAŞLADI (Deneme #${sectionRetries + 1}/${maxSectionRetries})`)
 
-          try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Notları Çıkarılıyor (Deneme #${sectionRetries + 1})` }) } }) } catch { }
+          try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Notları Çıkarılıyor (Deneme #${sectionRetries + 1})` }) } }) } catch { }
 
           let notes = section.notes || ""
           let currentScore = section.verificationScore || 0
@@ -462,14 +456,6 @@ async function processInBackground(slug: string, course: any) {
           if (notes && notes.length > 500 && currentScore >= 98) {
             console.log(`[BG] 🌟 [${section.title}] Zaten kusursuz (%${currentScore}) notlara sahip. Not üretimi atlanıyor, doğrudan eksik materyaller (soru/flashcard) üretilecek.`)
             notesAttemptSuccess = true
-            
-            // Zombi dedektörünün haksız yere tetiklenmemesi için veritabanını boş bir veriyle güncelleyip updatedAt süresini sıfırlıyoruz.
-            try {
-              await prisma.section.update({
-                where: { id: section.id },
-                data: { verificationIssues: JSON.stringify({ currentMicroPhase: "Hazırlık: Flashcard üretimine geçiliyor..." }) }
-              })
-            } catch (e) { }
           }
 
           // ==================== KALİTE DÖNGÜSÜ (Not Üretimi ve Doğrulama) ====================
@@ -478,7 +464,6 @@ async function processInBackground(slug: string, course: any) {
             for (let vAttempt = 1; vAttempt <= MAX_RETRIES; vAttempt++) {
               try {
                 console.log(`[BG] Not Üretim Denemesi #${vAttempt}...`)
-                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Notları Çıkarılıyor (Deneme #${vAttempt})` }) } }) } catch { }
 
                 // ==================== SMART INJECT (TARGETED REFINEMENT) KONTROLÜ ====================
                 let isSmartInject = false;
@@ -587,7 +572,7 @@ async function processInBackground(slug: string, course: any) {
                 // Doğrulama yap - KÖKLÜ VE TUTARLI ÇÖZÜM: Sayfa çakışmalarını ve mükerrerlikleri tamamen engellemek için,
                 // not doğrulama aşamasında PDF dosyasını (fileUri) pas geçerek SADECE veritabanındaki izole rawContent kullanılır!
                 console.log(`[BG] Not Doğrulanıyor (Deneme #${vAttempt})...`)
-                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Kalite Kontrolörü Tarafından Denetleniyor (Tur #${vAttempt})` }) } }) } catch { }
+                try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Kalite Kontrolörü Tarafından Denetleniyor (Tur #${vAttempt})` }) } }) } catch { }
                 const { verifyNotesAgainstSource } = await import("@/lib/ai-service")
                 const verification = await verifyNotesAgainstSource(
                   section.rawContent, notes, section.title,
@@ -614,27 +599,6 @@ async function processInBackground(slug: string, course: any) {
                   currentScore = Math.max(50, 100 - rawPenalty);
                   verification.score = currentScore;
                   console.log(`[BG] ⚠️ KONTROLÖR ÇELİŞKİSİ: Model 100 verdi ama ${penaltyCount} hata/eksik buldu. Dürüst puan: %${currentScore}`);
-                }
-
-                // TERS ÇELİŞKİ DENETÇİSİ (Reverse Consistency)
-                if (currentScore <= 70 && !hasCriticalFeedback) {
-                  console.log(`[BG] ⚠️ TERS ÇELİŞKİ: Model düşük puan (%${currentScore}) verdi ama hiç eksik/hata bulamadı. Güvenilmez puan reddediliyor.`);
-                  verification.issues.push("Puan 70 veya altı olmasına rağmen missingTopics boş dönmüş. Puanlama güvenirliği ihlali.");
-                  currentScore = Math.min(85, currentScore + 15); // Kısmen telafi et ama 100 verme
-                  verification.score = currentScore;
-                }
-
-                // SUGGESTIONS KAÇAK KAPISI KONTROLÜ
-                const suspiciousRegex = /(eksik|anlatılmamış|bahsedilmemiş|değinilmemiş|yer almıyor|yoktur|bulunmamaktadır)/i;
-                const suspiciousSuggestions = verification.suggestions.filter((s: string) => suspiciousRegex.test(s));
-                if (suspiciousSuggestions.length > 0) {
-                  console.log(`[BG] 🚨 KAÇAK KAPI TESPİTİ: Suggestions alanında ${suspiciousSuggestions.length} adet eksik içerik beyanı bulundu. Bunlar zorla missingTopics'e taşınıyor.`);
-                  verification.missingTopics.push(...suspiciousSuggestions);
-                  verification.suggestions = verification.suggestions.filter((s: string) => !suspiciousRegex.test(s));
-                  
-                  const rawPenalty = suspiciousSuggestions.length * 15;
-                  currentScore = Math.max(50, currentScore - rawPenalty);
-                  verification.score = currentScore;
                 }
 
                 // Kontrolörün yapısal skor değerini kaydet (SmartInject routing kararı için)
@@ -684,7 +648,7 @@ async function processInBackground(slug: string, course: any) {
                 // Eğer skor tam 100 ise Müfettiş Derin Denetimine geç
                 if (verification.score === 100) {
                   console.log(`[BG] 🎉 KONTROLÖR ONAYI (%100) — 4. Katman: Müfettiş Derin Denetimi (Deep Audit) Başlıyor...`)
-                  try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüme 3'lü Paketler Halinde Müfettiş Çapraz Denetimi Yapılıyor...` }) } }) } catch { }
+                  try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüme 3'lü Paketler Halinde Müfettiş Çapraz Denetimi Yapılıyor...` }) } }) } catch { }
 
                   // 1. Tüm konuları çıkar
                   const analysisForAudit = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
@@ -819,22 +783,6 @@ async function processInBackground(slug: string, course: any) {
                   if (verification.score === 100) {
                     console.log(`[BG] 🎉 KALİTE ONAYLANDI (%100) — Hem Kontrolör Hem Müfettiş Kusursuz Onay Verdi!`)
                     notesAttemptSuccess = true
-                    
-                    // MİMARİ HATA ÇÖZÜMÜ: %100 alan notu anında veritabanına betonla!
-                    // Böylece Flashcard veya Soru üretimi sırasında sunucu çökerse API limitleri boşa gitmez.
-                    try {
-                      await prisma.section.update({
-                        where: { id: section.id },
-                        data: {
-                          notes: notes,
-                          verificationScore: 100
-                        }
-                      })
-                      console.log(`[BG] 💾 %100 Kusursuz Not Anında Veritabanına Kazındı!`)
-                    } catch (saveErr) {
-                      console.error(`[BG] ❌ Not anlık kaydetme hatası:`, saveErr)
-                    }
-                    
                     break
                   }
                 }
@@ -887,36 +835,11 @@ async function processInBackground(slug: string, course: any) {
               }
             } // End of quality loop
 
-            // SIKI KALİTE KONTROLÜ: Not üretiminin tamamlanması için Kontrolör ve Müfettiş'ten tam 100 puan alınması zorunludur.
-            // 5 denemenin sonunda 100 puan barajı aşılamazsa, sistem ÇÖKMEYECEK ancak not "paused" durumunda beklemeye alınacak.
-            if (currentScore < 100) {
-              console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: ${MAX_RETRIES} deneme yapıldı ancak tam 100 puana ulaşılamadı. (Son skor: %${currentScore}) İşlem kalite standartları gereği insan onayı için duraklatıldı.`);
-              
-              if (bestNotes && bestNotes.length > 500) {
-                await prisma.section.update({
-                  where: { id: section.id },
-                  data: {
-                    notes: bestNotes,
-                    verificationScore: bestScore,
-                    processed: false,
-                    verificationIssues: JSON.stringify({
-                      message: "100 puan alınamadığı için admin onayı bekleniyor",
-                      lastScore: currentScore,
-                      bestScore: bestScore,
-                      missingTopics: lastVerification?.missingTopics || [],
-                      issues: lastVerification?.issues || []
-                    })
-                  }
-                });
-              }
-              
-              await prisma.course.update({
-                where: { id: course.id },
-                data: { status: "paused" }
-              });
-              
-              // Döngüden çık, rotayı kır
-              break;
+            // KULLANICI KESİN EMRİ: "Sistem pes etmeyecek! Kalitesiz not kaydedilmeyecek!"
+            // Eğer 15 denemenin sonunda bile hala 85'in altında kaldıysa, KESİNLİKLE sisteme kaydetme.
+            if (currentScore < 85) {
+              console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: ${MAX_RETRIES} deneme yapıldı ama kalite %${currentScore}'da kaldı. Kötü not kaydetmemek için işlem REDDEDİLDİ ve durduruldu!`);
+              throw new Error(`KALİTE BARAJI AŞILAMADI! En iyi skor: %${currentScore}. Kusursuz not istendiği için kirli veri veritabanına kaydedilmedi.`);
             }
           } // End of if (!notesAttemptSuccess)
 
@@ -928,13 +851,13 @@ async function processInBackground(slug: string, course: any) {
           let finalTitle = section.title
           let requiresQuestions = true
 
-          if (!notesAttemptSuccess || currentScore < 100) {
-            console.warn(`[BG] ⚠️ [${section.title}] Bölüm %100 onaylanmadı! Soru ve flashcard üretimi KESİNLİKLE atlanıyor...`);
+          if (!notesAttemptSuccess && (!notes || notes.length < 500)) {
+            console.warn(`[BG] ⚠️ [${section.title}] Bölüm tam onaylanmadı ve notlar çok kısa/eksik. Soru ve flashcard üretimi atlanıyor...`);
           } else {
-            console.log(`[BG] Onaylanmış not (%100) üzerinden Flashcard ve Sorular üretiliyor...`)
+            console.log(`[BG] Onaylanmış not üzerinden Flashcard ve Sorular üretiliyor...`)
             // SADECE ONAYLANMIŞ NOTLARI KULLAN Kİ DIŞARIDAN BİLGİ GELMESİN
             const finalContent = notes || section.rawContent;
-            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
+            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
 
             // Flashcard'ları üret (3 kere deneme şansı)
             for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
@@ -951,7 +874,7 @@ async function processInBackground(slug: string, course: any) {
             await new Promise(r => setTimeout(r, 15000))
 
             // Bölüm analizi yap
-            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Soru Üretimi İçin Bilişsel Rotalama Yapılıyor...` }) } }) } catch { }
+            try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Soru Üretimi İçin Bilişsel Rotalama Yapılıyor...` }) } }) } catch { }
             analysis = await analyzeSectionContent(section.rawContent, section.title, aiMode, undefined)
             await new Promise(r => setTimeout(r, 15000))
 
@@ -960,41 +883,11 @@ async function processInBackground(slug: string, course: any) {
             if (!requiresQuestions) {
               console.log(`[BG] 🧠 COGNITIVE ROUTING: Bu bölüm sadece terim/kısaltma içeriyor. Soru üretimi atlanıyor (requiresQuestions: false).`);
             } else {
-              try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
+              try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
               for (let qAttempt = 1; qAttempt <= 3; qAttempt++) {
                 try {
-                  questions = await generateQuestions(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
-                  
-                  // NORMALİZASYON: Şıkları 'A) ', 'B) ' formatına zorla
-                  questions = questions.map((q: any) => {
-                    if (q.options && Array.isArray(q.options)) {
-                      q.options = q.options.map((opt: string) => {
-                        return opt.replace(/^[A-Ea-e][.)]\s*/, "").trim();
-                      }).map((opt: string, index: number) => {
-                        const letter = String.fromCharCode(65 + index); // 0->A, 1->B...
-                        return `${letter}) ${opt}`;
-                      });
-                    }
-                    return q;
-                  });
-
-                  // DAĞILIM KONTROLÜ
-                  const dist: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-                  questions.forEach((q: any) => {
-                    const ans = q.correctAnswer?.substring(0, 1).toUpperCase();
-                    if (dist[ans] !== undefined) dist[ans]++;
-                  });
-                  console.log(`[BG] ✅ Questions: ${questions.length} | Dağılım:`, dist);
-                  
-                  // Eğer %80'den fazlası aynı şıksa uyarı ver (pedagojik hata)
-                  const totalQ = questions.length;
-                  if (totalQ > 3) {
-                    const maxAns = Math.max(...Object.values(dist));
-                    if (maxAns / totalQ > 0.8) {
-                      console.warn(`[BG] ⚠️ Soru dağılımı şüpheli (bir şıkkı çok fazla kullanmış):`, dist);
-                    }
-                  }
-
+                  questions = await generateQuestions(fullContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+                  console.log(`[BG] ✅ Questions: ${questions.length}`)
                   break
                 } catch (e: any) {
                   console.error(`[BG] ⚠️ Soru üretimi ${qAttempt}. denemede başarısız:`, e.message)
@@ -1091,17 +984,12 @@ async function processInBackground(slug: string, course: any) {
             }
           }
 
-          // FIX #6: Zombi süreçlerden kalan eski (başarısız) soru ve flashcardları temizle
-          try {
-            await prisma.flashcard.deleteMany({ where: { sectionId: section.id } });
-            await prisma.question.deleteMany({ where: { sectionId: section.id } });
-            console.log(`[BG] 🧹 Eski (yarım kalmış) soru ve flashcardlar temizlendi.`);
-          } catch (delErr) {
-            console.error(`[BG] 🧹 Temizlik hatası:`, delErr);
-          }
-
-          // Kendi içinde (current run) mükerrer flashcard koruması
-          const existingFronts = new Set<string>()
+          // FIX #1: Mükerrer flashcard koruması — aynı front metni varsa ekleme
+          const existingCards = await prisma.flashcard.findMany({
+            where: { sectionId: section.id },
+            select: { front: true }
+          })
+          const existingFronts = new Set(existingCards.map(c => c.front.trim().toLowerCase()))
           let dedupSkipped = 0
           for (const card of flashcards) {
             const normalizedFront = card.front.trim().toLowerCase()
@@ -1113,11 +1001,15 @@ async function processInBackground(slug: string, course: any) {
             try { await prisma.flashcard.create({ data: { courseId: course.id, sectionId: section.id, front: card.front, back: card.back, difficulty: card.difficulty || "medium" } }) } catch { }
           }
           if (dedupSkipped > 0) {
-            console.log(`[BG] 🔄 ${dedupSkipped} mükerrer flashcard atlandı (kendi içinde dedup).`)
+            console.log(`[BG] 🔄 ${dedupSkipped} mükerrer flashcard atlandı (dedup koruması).`)
           }
 
-          // Kendi içinde (current run) mükerrer soru koruması
-          const existingTexts = new Set<string>()
+          // Mükerrer soru koruması — aynı soru metni varsa ekleme
+          const existingQuestions = await prisma.question.findMany({
+            where: { sectionId: section.id },
+            select: { text: true }
+          })
+          const existingTexts = new Set(existingQuestions.map(q => q.text.trim().toLowerCase()))
           for (const q of questions) {
             const normalizedText = q.text.trim().toLowerCase()
             if (existingTexts.has(normalizedText)) continue
