@@ -397,3 +397,12 @@ body {
     color: black !important;
   }
 }
+
+/* MERMAID ERROR HIDING (BOMBS) */
+div[id^="dmermaid"], 
+svg[id^="dmermaid"],
+.error-icon {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

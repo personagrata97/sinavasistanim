@@ -30,12 +30,13 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
           },
           flowchart: { curve: "basis", padding: 15, htmlLabels: false },
           securityLevel: "loose",
+          suppressErrorRendering: false,
         })
 
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`
         
         function wrapLongText(str: string, maxLineLength = 15): string {
-          if (str.includes('<br>') || str.includes('<br/>') || str.toLowerCase().includes('<br')) return str;
+          if (str.includes('<br>') || str.includes('<br/>') || str.toLowerCase().includes('<br') || str.includes('\n')) return str;
           if (str.length <= maxLineLength || !str.includes(' ')) return str;
           const words = str.split(' ');
           const lines: string[] = [];
@@ -49,7 +50,8 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
             }
           });
           if (currentLine) lines.push(currentLine);
-          return lines.join('<br>');
+          // Mermaid v10 handles <br/> natively even with htmlLabels: false
+          return lines.join('<br/>');
         }
 
         let cleanedChart = chart
@@ -60,6 +62,19 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
         // Dikey şemaları yataya çevir (PDF'de sosis gibi uzamaması için)
         cleanedChart = cleanedChart.replace(/graph\s+(TD|TB)/gi, 'graph LR');
         cleanedChart = cleanedChart.replace(/flowchart\s+(TD|TB)/gi, 'flowchart LR');
+
+        // YZ sentaks hatalarını otomatik düzelt (Auto-Corrector)
+        // 1. subgraph yanındaki boşluklu isimleri tırnak içine al (subgraph Bölge 1 -> subgraph "Bölge 1")
+        cleanedChart = cleanedChart.replace(/subgraph\s+([^\n"\[\]]+)/gi, (m, p1) => {
+          if (p1.trim().includes(' ') && !p1.includes('[')) {
+            return `subgraph "${p1.trim()}"`;
+          }
+          return m;
+        });
+        // 2. Düğüm sonuna yapışan 'end' anahtar kelimesini alt satıra al (A["Test"]end -> A["Test"]\nend)
+        cleanedChart = cleanedChart.replace(/([\]\)\}])\s*end\b/gi, '$1\nend');
+        // 3. 'end' kelimesinden önce ve sonra boşluk/yeni satır garantile (genel)
+        cleanedChart = cleanedChart.replace(/([A-Za-z0-9"'])\s*end\b/gi, '$1\nend');
 
         const processedChart = cleanedChart.replace(/([a-zA-Z0-9_-]+)({\s*"([^"]+)"\s*}|{\s*([^{}]+)\s*}|\[\s*"([^"]+)"\s*\]|\[\s*([^\[\]]+)\s*\]|\(\s*"([^"]+)"\s*\)|\(\s*([^\(\)]+)\s*\))/g, (m, nodeId, shapes, g1, g2, g3, g4, g5, g6) => {
           const rawText = g1 || g2 || g3 || g4 || g5 || g6 || '';
@@ -109,8 +124,21 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
   }
 
   return (
-    <div className="mermaid-diagram-wrapper my-4 p-4 bg-slate-900/60 rounded-xl border border-sky-500/10 overflow-x-auto">
+    <div className="mermaid-diagram-wrapper my-4 p-4 bg-slate-900/60 rounded-xl border border-sky-500/10 overflow-x-auto relative">
       <style>{`
+        /* Olası kaçak Mermaid hata SVG'lerini gizle */
+        body > svg[id^="mermaid-"] { 
+          visibility: hidden !important; 
+          position: absolute !important; 
+          top: -9999px !important; 
+          z-index: -1 !important;
+        }
+        .mermaid-diagram-wrapper svg {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block;
+          margin: 0 auto;
+        }
         @media print {
           .mermaid-diagram-wrapper {
             display: block !important;
@@ -184,7 +212,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
       </div>
       <div 
         dangerouslySetInnerHTML={{ __html: svg }} 
-        className="flex justify-center [&_svg]:max-w-full [&_svg]:h-auto"
+        className="w-full flex justify-center py-2"
       />
     </div>
   )
