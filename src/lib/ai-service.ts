@@ -1503,6 +1503,8 @@ PUAN KIRAN DURUMLAR VE ASİMETRİK CEZA MATEMATİĞİ (KESİN KURAL):
 - Tablo veya liste YARIDA kesilmiş: -10 PUAN.
 - Ceza miktarı veya yaptırım türü HATALI: -20 PUAN.
 - Mermaid diyagramlarında düğümlerin tırnak içinde OLUP OLMADIĞINI (Örn: A["metin"]) KESİNLİKLE denetle. Eğer tırnak kullanılmamışsa sözdizimi hatası vardır, derhal "issues" alanına yaz ve -20 puan kır.
+- 🚨 KISMİ ANLATIM KURALI (ÖNEMLİ): Kaynak metinde bir kavramın, kanunun veya sürecin ALT MADDELERİ (örn: 5 alt bent, 4 özellik) varsa ve üretilen notta bu maddelerin SADECE BAZILARI (örn: 3 tanesi) yer alıp diğerleri EKSİK BIRAKILMIŞSA, bu kabul edilemez! "Ana başlık var" diyerek konuyu tam sayma. Atlanan her alt maddeyi "missingTopics" listesine KESİNLİKLE detaylıca yaz ve kısmi anlatım için -15 PUAN KIR.
+
 
 PUAN KIRMAYAN DURUMLAR (bunlar sorun DEĞİL):
 - Tanımın kendi cümleleriyle basitleştirilerek veya eşanlamlı kelimelerle anlatılması (Birebir kelime ezberi arama!) ✅

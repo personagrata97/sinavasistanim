@@ -1022,8 +1022,8 @@ async function processInBackground(slug: string, course: any) {
                   // DAĞILIM KONTROLÜ
                   const dist: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, E: 0 };
                   questions.forEach((q: any) => {
-                    const ans = q.correctAnswer?.substring(0, 1).toUpperCase();
-                    if (dist[ans] !== undefined) dist[ans]++;
+                    const ans = (q.correct || q.correctOption || q.correctAnswer)?.substring(0, 1).toUpperCase();
+                    if (ans && dist[ans] !== undefined) dist[ans]++;
                   });
                   console.log(`[BG] ✅ Questions: ${questions.length} | Dağılım:`, dist);
                   

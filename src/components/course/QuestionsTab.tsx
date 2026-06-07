@@ -357,7 +357,7 @@ function QuestionsTab({ slug, courseName }: { slug: string, courseName: string }
           <div className="text-[10px] text-red-500/60 uppercase font-bold">Yanlış</div>
         </div>
         <button 
-          onClick={() => setQuickReview(!quickReview)}
+          onClick={() => { setQuickReview(!quickReview); setCurrentQ(0); }}
           className={`p-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1 ${
             quickReview ? "bg-amber-500/20 border-amber-500/30 text-amber-400" : "bg-white/[0.03] border-white/[0.06] text-slate-400 hover:bg-white/[0.06]"
           }`}

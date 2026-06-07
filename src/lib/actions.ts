@@ -1464,7 +1464,7 @@ export async function generateMoreContentAction(courseSlug: string, contentType:
     })
     if (!course) throw new Error("Ders bulunamadı")
     
-    const { generateQuestions, generateFlashcards } = await import("./ai-service")
+    const { generateQuestions, generateFlashcards, validateQuestionsWithSolver, validateFlashcardsWithSolver } = await import("./ai-service")
     
     const targetSections = sectionId 
       ? course.sections.filter(s => s.id === sectionId)
@@ -1482,8 +1482,11 @@ export async function generateMoreContentAction(courseSlug: string, contentType:
       for (const section of targetSections) {
         if (totalGenerated >= count) break
         const remaining = count - totalGenerated
-        const questions = await generateQuestions(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+        let questions = await generateQuestions(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
         
+        // SOLVER AI: Üretilen soruları test et
+        questions = await validateQuestionsWithSolver(section.rawContent, questions);
+
         for (const q of questions.slice(0, remaining)) {
           try {
             const textLower = q.text.trim().toLowerCase()
@@ -1504,8 +1507,11 @@ export async function generateMoreContentAction(courseSlug: string, contentType:
       for (const section of targetSections) {
         if (totalGenerated >= count) break
         const remaining = count - totalGenerated
-        const cards = await generateFlashcards(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
+        let cards = await generateFlashcards(section.rawContent, section.title, course.name, course.userLevel, aiMode, course.geminiFileUri || undefined, section.pageStart, section.pageEnd, section.importance || undefined)
         
+        // SOLVER AI: Üretilen kartları test et
+        cards = await validateFlashcardsWithSolver(section.rawContent, cards);
+
         for (const c of cards.slice(0, remaining)) {
           try {
             const textLower = c.front.trim().toLowerCase()

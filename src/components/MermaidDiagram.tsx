@@ -28,7 +28,7 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
             clusterBkg: "#0f172a",
             edgeLabelBackground: "#1e293b",
           },
-          flowchart: { curve: "basis", padding: 15, htmlLabels: false },
+          flowchart: { curve: "basis", padding: 15, htmlLabels: true },
           securityLevel: "loose",
           suppressErrorRendering: false,
         })
