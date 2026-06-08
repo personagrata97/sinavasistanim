@@ -218,29 +218,22 @@ export async function POST(req: NextRequest) {
 
           // >>> AHMET/MEHMET/SAYFA KAYMASI KESİN ÇÖZÜMÜ <<<
           // Yapay zeka ve Global Zırh tamamen devre dışı! Sayfalar %100 fiziksel ve elle onaylanmış sayfalara sabitlendi.
-          let rawSections: any[] = [];
-          if (slug === "bd-bilgi-sistemleri-guvenligi") {
-            rawSections = [
-              { title: "Kısaltmalar", pageStart: 7, pageEnd: 10 },
-              { title: "1. Bilgi Güvenliği Yönetimi", pageStart: 11, pageEnd: 20 },
-              { title: "2. Varlık Yönetimi", pageStart: 21, pageEnd: 25 },
-              { title: "3. Fiziksel ve Çevresel Güvenlik", pageStart: 26, pageEnd: 35 },
-              { title: "4. Ağ Güvenliği", pageStart: 36, pageEnd: 48 },
-              { title: "5. Erişim Güvenliği", pageStart: 49, pageEnd: 68 },
-              { title: "6. Veri ve İz Kayıtlarının Güvenliği", pageStart: 69, pageEnd: 102 },
-              { title: "7. Üçüncü Taraflarla İletişim Güvenliği", pageStart: 103, pageEnd: 118 }
-            ];
-            sections = rawSections.map(rs => ({
+          const overrides = COURSE_PAGE_OVERRIDES[slug];
+          if (overrides) {
+            sections = overrides.map((rs: any) => ({
               title: rs.title,
               pageStart: rs.pageStart,
               pageEnd: rs.pageEnd,
               content: pageTexts.slice(Math.max(0, rs.pageStart - 1), rs.pageEnd).join("\n\n")
             }));
-            console.log("[PROCESS] 🛡️ YAPAY ZEKA VE GLOBAL ZIRH İPTAL EDİLDİ! SAYFALAR %100 SABİT (HARDCODED) OLARAK YÜKLENDİ.");
+            console.log(`[PROCESS] 🛡️ YAPAY ZEKA VE GLOBAL ZIRH İPTAL EDİLDİ! ${slug} İÇİNDEKİ SAYFALAR SABİT (OVERRIDE) OLARAK YÜKLENDİ.`);
           } else {
             // Standart İşleme
             for (let i = 0; i < sections.length; i++) {
               let cleanTitle = sections[i].title.replace(/^(Bölüm|Ünite|Kısım)?\s*\d+[\.\-\:]?\s*/i, "").trim()
+              if (!cleanTitle || cleanTitle.length < 3) {
+                cleanTitle = sections[i].title.trim()
+              }
               sections[i].title = cleanTitle
             }
 
@@ -375,10 +368,19 @@ export async function POST(req: NextRequest) {
   // ========== PHASE 3+4: AI Analysis + Schedule — ARKA PLANDA ==========
   // HTTP response'u hemen dön. AI analizi Node.js event loop'unda arka planda devam eder.
   // Bu sayede Next.js API route timeout (~60sn) sorunu çözülür.
-  processInBackground(slug, course).catch(err => {
-    console.error("[PROCESS_BG] ❌ Kritik Hata:", err)
-    require("fs").appendFileSync("/Users/selimkaya/.gemini/antigravity/scratch/spl-study-assistant/scratch/bg_error.log", `\n[${new Date().toISOString()}] FATAL BG ERR: ${err.stack}\n`);
-    prisma.course.update({ where: { slug }, data: { status: "error" } }).catch(() => { })
+  (async () => {
+    try {
+      await processInBackground(slug, course)
+    } catch (err: any) {
+      console.error("[BG] FATAL ERROR in background process:", err)
+      require("fs").appendFileSync("/Users/selimkaya/.gemini/antigravity/scratch/spl-study-assistant/scratch/bg_error.log", `\n[${new Date().toISOString()}] FATAL BG ERR: ${err.stack}\n`);
+      await prisma.course.update({
+        where: { id: course.id },
+        data: { status: "error" }
+      }).catch(() => { })
+    }
+  })().catch(error => {
+    console.error("[PROCESS_FATAL]", error);
   })
 
   return NextResponse.json({ success: true, message: "İşleme başlatıldı" })
@@ -907,51 +909,32 @@ async function processInBackground(slug: string, course: any) {
             // SIKI KALİTE KONTROLÜ: Not üretiminin tamamlanması için Kontrolör ve Müfettiş'ten tam 100 puan alınması zorunludur.
             // 5 denemenin sonunda 100 puan barajı aşılamazsa, sistem ÇÖKMEYECEK ancak not "paused" durumunda beklemeye alınacak.
             if (currentScore < 100) {
-              if (bestScore >= 85 && bestNotes && bestNotes.length > 500) {
-                console.warn(`[BG] ⚠️ 100 puana ulaşılamadı. En iyi skor: %${bestScore}. Bu skor yeterli görülerek devam ediliyor.`)
-                notes = bestNotes
-                currentScore = bestScore
-                notesAttemptSuccess = true
+              console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: Skor %${bestScore} — 100 puan zorunluluğu sağlanamadı. Bölüm paused.`);
+              if (bestNotes && bestNotes.length > 500) {
                 await prisma.section.update({
                   where: { id: section.id },
                   data: {
                     notes: bestNotes,
                     verificationScore: bestScore,
+                    processed: false,
                     verificationIssues: JSON.stringify({
-                      message: `85+ barajı ile kabul edildi. Skor: %${bestScore}`,
+                      message: `100 puan zorunluluğu sağlanamadı. En iyi skor: %${bestScore}`,
+                      lastScore: currentScore,
+                      bestScore: bestScore,
                       missingTopics: lastVerification?.missingTopics || [],
                       issues: lastVerification?.issues || []
                     })
                   }
-                })
-              } else {
-                console.error(`[BG] ❌ 🚨 KRİTİK İPTAL: Skor %${bestScore} — 85 barajı aşılamadı. Bölüm paused.`);
-                if (bestNotes && bestNotes.length > 500) {
-                  await prisma.section.update({
-                    where: { id: section.id },
-                    data: {
-                      notes: bestNotes,
-                      verificationScore: bestScore,
-                      processed: false,
-                      verificationIssues: JSON.stringify({
-                        message: `85 puan barajı aşılamadı. En iyi skor: %${bestScore}`,
-                        lastScore: currentScore,
-                        bestScore: bestScore,
-                        missingTopics: lastVerification?.missingTopics || [],
-                        issues: lastVerification?.issues || []
-                      })
-                    }
-                  });
-                }
-                
-                await prisma.course.update({
-                  where: { id: course.id },
-                  data: { status: "paused" }
                 });
-                
-                // Döngüden çık, rotayı kır
-                break;
               }
+              
+              await prisma.course.update({
+                where: { id: course.id },
+                data: { status: "paused" }
+              });
+              
+              // Döngüden çık, rotayı kır
+              break;
             }
           } // End of if (!notesAttemptSuccess)
 
@@ -963,7 +946,7 @@ async function processInBackground(slug: string, course: any) {
           let finalTitle = section.title
           let requiresQuestions = true
 
-          if (!notesAttemptSuccess || currentScore < 100) {
+          if (!notesAttemptSuccess) {
             console.warn(`[BG] ⚠️ [${section.title}] Bölüm %100 onaylanmadı! Soru ve flashcard üretimi KESİNLİKLE atlanıyor...`);
           } else {
             console.log(`[BG] Onaylanmış not (%100) üzerinden Flashcard ve Sorular üretiliyor...`)
@@ -971,8 +954,8 @@ async function processInBackground(slug: string, course: any) {
             const finalContent = notes || section.rawContent;
             try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
 
-            // Flashcard'ları üret (3 kere deneme şansı)
-            for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
+            // Flashcard'ları üret (tek deneme, tasarruf)
+            for (let fAttempt = 1; fAttempt <= 1; fAttempt++) {
               try {
                 flashcards = await generateFlashcards(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd)
                 
@@ -984,8 +967,8 @@ async function processInBackground(slug: string, course: any) {
                 console.log(`[BG] ✅ Flashcards: ${flashcards.length}`)
                 break
               } catch (e: any) {
-                console.error(`[BG] ⚠️ Flashcard üretimi ${fAttempt}. denemede başarısız:`, e.message)
-                if (fAttempt === 3) console.error(`[BG] ❌ Flashcard üretimi atlandı.`)
+                console.error(`[BG] ⚠️ Flashcard üretimi başarısız:`, e.message)
+                if (fAttempt === 1) console.error(`[BG] ❌ Flashcard üretimi atlandı.`)
                 else await new Promise(r => setTimeout(r, 10000))
               }
             }
@@ -1002,7 +985,7 @@ async function processInBackground(slug: string, course: any) {
               console.log(`[BG] 🧠 COGNITIVE ROUTING: Bu bölüm sadece terim/kısaltma içeriyor. Soru üretimi atlanıyor (requiresQuestions: false).`);
             } else {
               try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
-              for (let qAttempt = 1; qAttempt <= 3; qAttempt++) {
+              for (let qAttempt = 1; qAttempt <= 1; qAttempt++) {
                 try {
                   questions = await generateQuestions(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
                   
@@ -1043,8 +1026,8 @@ async function processInBackground(slug: string, course: any) {
 
                   break
                 } catch (e: any) {
-                  console.error(`[BG] ⚠️ Soru üretimi ${qAttempt}. denemede başarısız:`, e.message)
-                  if (qAttempt === 3) console.error(`[BG] ❌ Soru üretimi atlandı.`)
+                  console.error(`[BG] ⚠️ Soru üretimi başarısız:`, e.message)
+                  if (qAttempt === 1) console.error(`[BG] ❌ Soru üretimi atlandı.`)
                   else await new Promise(r => setTimeout(r, 10000))
                 }
               }
@@ -1119,7 +1102,9 @@ async function processInBackground(slug: string, course: any) {
               // Olası formatlar: 
               // * **ABBR:** Definition
               // **ABBR:** Definition
-              const match = cleanLine.match(/^(?:\*\s+)?\*\*([^:]+):\*\*\s*(.+)$/)
+              const match = cleanLine.match(/^(?:\*\s+)?\*\*([^:]+):\*\*\s*(.+)$/) ||
+                            cleanLine.match(/^####\s+([^\(]+)(?:\([^\)]*\))?\s*$/) ||
+                            cleanLine.match(/^-\s+\*\*([^*\-—]+)\*\*\s*[—\-:]\s*(.+)$/)
               if (match) {
                 dict[match[1].trim()] = match[2].trim()
               }
@@ -1264,315 +1249,6 @@ function detectSections(pageTexts: string[], totalPages: number): DetectedSectio
 
     // Check for section headers in first 500 chars of page
     const headerArea = text.substring(0, 500)
-    let foundHeader = false
-
-    for (const pattern of SECTION_PATTERNS) {
-      const match = headerArea.match(pattern)
-      if (match) {
-        // Close previous section
-        if (currentSection) {
-          currentSection.pageEnd = pageNum - 1
-          sections.push(currentSection)
-        }
-
-        // Start new section
-        const title = (match[3] || match[2] || match[0]).trim().substring(0, 200)
-        currentSection = {
-          title,
-          pageStart: pageNum,
-          pageEnd: pageNum,
-          content: text,
-        }
-        foundHeader = true
-        break
-      }
-    }
-
-    if (!foundHeader) {
-      if (currentSection) {
-        // Mevcut bölüme ekle
-        currentSection.content += "\n\n" + text
-      } else {
-        // ⚠️ KRİTİK: İlk header'dan ÖNCE gelen sayfalar - "Giriş" bölümü oluştur
-        // Bu sayede PDF'in ilk sayfaları ASLA atlanmaz!
-        currentSection = {
-          title: `Giriş ve Genel Bilgiler (Sayfa ${pageNum})`,
-          pageStart: pageNum,
-          pageEnd: pageNum,
-          content: text,
-        }
-      }
-    }
-  }
-
-  // Close last section
-  if (currentSection) {
-    currentSection.pageEnd = totalPages
-    sections.push(currentSection)
-  }
-
-  // ========== KARAKTER BAZLI BÖLME ==========
-  // Eğer bir bölüm MAX_CHUNK_CHARS'tan büyükse, alt bölümlere ayır
-  const finalSections: DetectedSection[] = []
-
-  for (const section of sections) {
-    if (section.content.length <= MAX_CHUNK_CHARS) {
-      // Başlık anlamsızsa (Giriş...), içerikten akıllı başlık çıkar
-      finalSections.push({
-        ...section,
-        title: extractSmartTitle(section.content, section.title, section.pageStart, section.pageEnd),
-      })
-    } else {
-      // Büyük bölümü alt-chunklara böl
-      const subChunks = splitByCharLimit(section.content, MAX_CHUNK_CHARS)
-
-      // Bu bölümün sayfalarının section.content içindeki konumlarını bulalım
-      const sectionPages = pageTexts.slice(section.pageStart - 1, section.pageEnd)
-      const pageOffsets: Array<{ pageNum: number; start: number; end: number }> = []
-      let offset = 0
-      for (let p = 0; p < sectionPages.length; p++) {
-        const len = sectionPages[p].length
-        pageOffsets.push({
-          pageNum: section.pageStart + p,
-          start: offset,
-          end: offset + len
-        })
-        offset += len + 2 // for "\n\n"
-      }
-
-      let searchStart = 0
-      for (let i = 0; i < subChunks.length; i++) {
-        const subChunkText = subChunks[i]
-        const chunkStart = section.content.indexOf(subChunkText, searchStart)
-        const chunkEnd = chunkStart + subChunkText.length
-        if (chunkStart >= 0) {
-          searchStart = chunkStart + 1
-        }
-
-        let startPage = 0
-        let endPage = 0
-        for (const po of pageOffsets) {
-          const isOverlapping = chunkStart <= po.end && po.start <= chunkEnd
-          if (isOverlapping) {
-            if (startPage === 0) startPage = po.pageNum
-            endPage = po.pageNum
-          }
-        }
-
-        if (startPage === 0) {
-          startPage = Math.min(section.pageEnd, Math.max(section.pageStart, section.pageStart + Math.floor((i / subChunks.length) * (section.pageEnd - section.pageStart + 1))))
-          endPage = startPage
-        }
-
-        const smartTitle = extractSmartTitle(subChunkText, section.title, startPage, endPage)
-        finalSections.push({
-          title: subChunks.length > 1
-            ? `${smartTitle} (Bölüm ${i + 1}/${subChunks.length})`
-            : smartTitle,
-          pageStart: startPage,
-          pageEnd: endPage,
-          content: subChunkText,
-        })
-      }
-    }
-  }
-
-  // If still no sections detected, create character-based chunks
-  if (finalSections.length === 0) {
-    const allText = pageTexts.join("\n\n")
-    const chunks = splitByCharLimit(allText, MAX_CHUNK_CHARS)
-
-    // Sayfaların allText içindeki yerlerini hesapla
-    const pageOffsets: Array<{ pageNum: number; start: number; end: number }> = []
-    let offset = 0
-    for (let p = 0; p < pageTexts.length; p++) {
-      const len = pageTexts[p].length
-      pageOffsets.push({
-        pageNum: p + 1,
-        start: offset,
-        end: offset + len
-      })
-      offset += len + 2 // for "\n\n"
-    }
-
-    let searchStart = 0
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks[i]
-      const chunkStart = allText.indexOf(chunkText, searchStart)
-      const chunkEnd = chunkStart + chunkText.length
-      if (chunkStart >= 0) {
-        searchStart = chunkStart + 1
-      }
-
-      let startPage = 0
-      let endPage = 0
-
-      for (const po of pageOffsets) {
-        const isOverlapping = chunkStart <= po.end && po.start <= chunkEnd
-        if (isOverlapping) {
-          if (startPage === 0) startPage = po.pageNum
-          endPage = po.pageNum
-        }
-      }
-
-      if (startPage === 0) {
-        startPage = Math.min(totalPages, Math.max(1, Math.ceil((i / chunks.length) * totalPages)))
-        endPage = startPage
-      }
-
-      finalSections.push({
-        title: `Bölüm ${i + 1} (Sayfa ${startPage}-${endPage})`,
-        pageStart: startPage,
-        pageEnd: endPage,
-        content: chunkText,
-      })
-    }
-  }
-
-  // ==================== INGESTION GATEKEEPER / VERIFICATION FILTER ====================
-  // Clean up any meaningless / tiny / question-titled sections permanently!
-  const cleanedSections: DetectedSection[] = []
-
-  for (let i = 0; i < finalSections.length; i++) {
-    const sec = finalSections[i]
-
-    // Check if title looks like a multiple choice question option or question header
-    // e.g. "D) SHA - 256" or starts with "A) ", "Soru 1: " etc.
-    const isTrapTitle = /^[A-E]\)\s+/i.test(sec.title) ||
-      /^[0-9]+\.\s*Soru/i.test(sec.title) ||
-      /^[0-9]+\s*\)/.test(sec.title) ||
-      sec.title.toLowerCase().includes("cevap:") ||
-      sec.title.trim().length <= 3
-
-    // Check if the section is too short (< 3 pages) and could be a visual transition gap
-    const pageCount = sec.pageEnd - sec.pageStart + 1
-    const isTinySection = pageCount < 3
-
-    // If it's a trap title OR it's a tiny section containing mostly test keywords, merge it!
-    const isTestTransition = isTrapTitle || (isTinySection && (
-      sec.content.toLowerCase().includes("cevap:") ||
-      sec.content.toLowerCase().includes("soru 1") ||
-      sec.content.toLowerCase().includes("aşağıdakilerden hangisi")
-    ))
-
-    if (isTestTransition && cleanedSections.length > 0) {
-      // Merge into the previous section!
-      const prev = cleanedSections[cleanedSections.length - 1]
-      console.log(`[GATEKEEPER] Merging meaningless transition section "${sec.title}" (Pages ${sec.pageStart}-${sec.pageEnd}) into previous section "${prev.title}"`)
-      prev.pageEnd = Math.max(prev.pageEnd, sec.pageEnd)
-      prev.content += `\n\n--- ÜNİTE DEĞERLENDİRME SORULARI (Ek) ---\n${sec.content}`
-    } else {
-      cleanedSections.push(sec)
-    }
-  }
-
-  return cleanedSections
-}
-
-// Metni KONU SINIRLARINDA karakter limitine göre böl
-// Öncelik: 1. Başlık sınırları 2. Paragraf sınırları 3. Asla konu ortasından kesmez
-function splitByCharLimit(text: string, limit: number): string[] {
-  const chunks: string[] = []
-
-  // Metni başlık sınırlarında bölmeye çalış
-  // Başlık pattern'leri: BÜYÜK HARFLI satırlar, numaralı başlıklar, alt başlıklar
-  const headerPattern = /\n(?=(?:[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜ\s0-9.()-]{8,80}\n)|\d+\.\s+[A-ZÇĞİÖŞÜ])/g
-  const topicSegments: string[] = []
-  let lastIdx = 0
-  let match
-
-  while ((match = headerPattern.exec(text)) !== null) {
-    if (match.index > lastIdx) {
-      topicSegments.push(text.substring(lastIdx, match.index))
-    }
-    lastIdx = match.index + 1 // +1 to skip the \n
-  }
-  if (lastIdx < text.length) {
-    topicSegments.push(text.substring(lastIdx))
-  }
-
-  // Segmentleri birleştirirken limiti aşmamaya dikkat et
-  let current = ""
-  for (const segment of topicSegments) {
-    if (current.length + segment.length > limit && current.length > 0) {
-      chunks.push(current.trim())
-      current = segment
-    } else {
-      current += (current ? "\n" : "") + segment
-    }
-  }
-  if (current.trim()) {
-    chunks.push(current.trim())
-  }
-
-  // Eğer başlık bazlı bölme başarısız olduysa, paragraf sınırlarında kes
-  if (chunks.length <= 1 && text.length > limit) {
-    chunks.length = 0
-    const paragraphs = text.split(/\n\n+/)
-    current = ""
-    for (const para of paragraphs) {
-      if (current.length + para.length + 2 > limit && current.length > 0) {
-        chunks.push(current.trim())
-        current = para
-      } else {
-        current += (current ? "\n\n" : "") + para
-      }
-    }
-    if (current.trim()) {
-      chunks.push(current.trim())
-    }
-  }
-
-  // Son çare: hiç bölünemediyse zorla böl (ama bu duruma asla düşmemeli)
-  if (chunks.length === 0 && text.length > 0) {
-    for (let i = 0; i < text.length; i += limit) {
-      chunks.push(text.substring(i, i + limit))
-    }
-  }
-
-  return chunks
-}
-
-// Boşluklu harfleri düzelt (yalnızca çok bariz olanlar için)
-function fixSpacedText(str: string) {
-  let fixed = str.replace(/(?:^|\s)([A-ZÇĞİÖŞÜ])(?:\s+([A-ZÇĞİÖŞÜ])){2,}(?=\s|$)/g, (match) => {
-    return match.replace(/\s+/g, '');
-  });
-  return fixed.trim();
-}
-
-// İçerikten akıllı başlık çıkar
-function extractSmartTitle(content: string, fallbackTitle: string, pageStart: number, pageEnd: number): string {
-  // İlk birkaç satırı kontrol et
-  const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-  if (lines.length === 0) return fallbackTitle;
-
-  // İlk 10 satırda başlık arayalım
-  for (let i = 0; i < Math.min(10, lines.length); i++) {
-    const line = lines[i];
-
-    // Klasik "1. BÖLÜM: BAŞLIK" formları
-    const match = line.match(/^(?:BÖLÜM|KISIM|ÜNİTE)\s*\d+\s*[:.-]?\s*(.+)/i) ||
-      line.match(/^\d+\.\s*BÖLÜM\s*[:.-]?\s*(.+)/i) ||
-      line.match(/^\d+\.\s*([A-ZÇĞİÖŞÜ][A-Za-zÇĞİÖŞÜçğıöşü\s]{5,60})$/);
-
-    if (match && match[1] && match[1].length > 3) {
-      return fixSpacedText(match[1]);
-    }
-
-    // Tamamen büyük harfli, 10-60 karakter arası anlamlı satırları başlık kabul et
-    if (/^[A-ZÇĞİÖŞÜ\s0-9.()-]+$/.test(line) && line.length > 8 && line.length < 80) {
-      // İçinde en az 2 kelime varsa
-      if (line.split(/\s+/).length >= 2) {
-        return fixSpacedText(line);
-      }
-    }
-  }
-
-  // Eğer `fallbackTitle` (regex'ten gelen) düzgünse onu kullan
-  if (fallbackTitle && fallbackTitle.length > 3 && fallbackTitle.length < 100 && !fallbackTitle.startsWith("Giriş")) {
-    return fixSpacedText(fallbackTitle);
   }
 
   return `Bölüm İçeriği (Sayfa ${pageStart}-${pageEnd})`;

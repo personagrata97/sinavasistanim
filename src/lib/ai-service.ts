@@ -258,8 +258,8 @@ function extractCleanJson(raw: string): any {
 }
 
 // Üç modlu AI çağrısı:
-// - "generation" modu (default): gemini-3.5-flash — hızlı, yaratıcı, ucuz
-// - "verification" modu: gemini-2.5-flash — analitik, dikkatli
+// - "generation" modu (default): gemini-2.5-flash — hızlı, yaratıcı, ucuz
+// - "verification" modu: gemini-2.5-flash — bağımsız denetim modeli
 async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "generation" | "verification" = "generation", priority: "high" | "normal" = "normal"): Promise<string> {
   const isPdfMode = !!fileUri || Object.keys(activeFileUrisMap).length > 0
 
@@ -279,11 +279,11 @@ async function callAI(prompt: string, retries = 2, fileUri?: string, mode: "gene
     }
 
     // MODEL MİMARİSİ: Şelale (Cascade) Yöntemi
-    const MODEL_GENERATION = "gemini-3.5-flash"
+    const MODEL_GENERATION = "gemini-2.5-flash"
     const MODEL_VERIFICATION = "gemini-2.5-flash"
 
-    // ⚠️ priority="high" (not üretimi): gemini-3.5-flash | 65K token
-    // ⚠️ priority="normal" (flashcard/soru): gemini-3.5-flash | 32K token
+    // ⚠️ priority="high" (not üretimi): gemini-2.5-flash | 65K token
+    // ⚠️ priority="normal" (flashcard/soru): gemini-2.5-flash | 32K token
     // verification (Maker-Checker): Yalnızca gemini-2.5-flash ile denetim yapılır.
     const modelChain = mode === "verification"
       ? [

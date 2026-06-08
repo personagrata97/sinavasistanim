@@ -4,216 +4,97 @@ import { useEffect, useRef, useState } from "react"
 
 export default function MermaidDiagram({ chart }: { chart: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [svg, setSvg] = useState<string>("")
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    async function renderMermaid() {
+    let isMounted = true;
+
+    async function renderDiagram() {
+      if (!chart || !containerRef.current) return;
+      
       try {
         const mermaid = (await import("mermaid")).default
         mermaid.initialize({
           startOnLoad: false,
           theme: "dark",
           themeVariables: {
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: "14px",
             primaryColor: "#1e3a5f",
             primaryTextColor: "#e2e8f0",
             primaryBorderColor: "#38bdf8",
             lineColor: "#64748b",
             secondaryColor: "#1e293b",
             tertiaryColor: "#0f172a",
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "13px",
-            nodeBorder: "#38bdf8",
-            mainBkg: "#1e3a5f",
-            clusterBkg: "#0f172a",
-            edgeLabelBackground: "#1e293b",
           },
-          flowchart: { curve: "basis", padding: 15, htmlLabels: true },
           securityLevel: "loose",
-          suppressErrorRendering: false,
+          flowchart: { htmlLabels: true, curve: "basis" },
         })
 
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`
+        // Fix PDF-breaking vertical charts
+        let cleanChart = chart.replace(/graph\s+(TD|TB)/gi, 'graph LR')
+                              .replace(/flowchart\s+(TD|TB)/gi, 'flowchart LR');
         
-        function wrapLongText(str: string, maxLineLength = 15): string {
-          if (str.includes('<br>') || str.includes('<br/>') || str.toLowerCase().includes('<br') || str.includes('\n')) return str;
-          if (str.length <= maxLineLength || !str.includes(' ')) return str;
-          const words = str.split(' ');
-          const lines: string[] = [];
-          let currentLine = '';
-          words.forEach(word => {
-            if ((currentLine + ' ' + word).trim().length <= maxLineLength) {
-              currentLine = (currentLine + ' ' + word).trim();
-            } else {
-              if (currentLine) lines.push(currentLine);
-              currentLine = word;
-            }
-          });
-          if (currentLine) lines.push(currentLine);
-          // Mermaid v10 handles <br/> natively even with htmlLabels: false
-          return lines.join('<br/>');
+        // Remove stray 'end' if there is no 'subgraph'
+        if (!cleanChart.toLowerCase().includes('subgraph')) {
+          cleanChart = cleanChart.replace(/\bend\b/gi, '');
         }
-
-        let cleanedChart = chart
-          .replace(/^\s*style\s+[^\n]+/gm, '')
-          .replace(/^\s*classDef\s+[^\n]+/gm, '')
-          .replace(/^\s*class\s+[^\n]+/gm, '');
-
-        // Dikey şemaları yataya çevir (PDF'de sosis gibi uzamaması için)
-        cleanedChart = cleanedChart.replace(/graph\s+(TD|TB)/gi, 'graph LR');
-        cleanedChart = cleanedChart.replace(/flowchart\s+(TD|TB)/gi, 'flowchart LR');
-
-        // YZ sentaks hatalarını otomatik düzelt (Auto-Corrector)
-        // 1. subgraph yanındaki boşluklu isimleri tırnak içine al (subgraph Bölge 1 -> subgraph "Bölge 1")
-        cleanedChart = cleanedChart.replace(/subgraph\s+([^\n"\[\]]+)/gi, (m, p1) => {
-          if (p1.trim().includes(' ') && !p1.includes('[')) {
-            return `subgraph "${p1.trim()}"`;
-          }
-          return m;
-        });
-        // 2. Düğüm sonuna yapışan 'end' anahtar kelimesini alt satıra al (A["Test"]end -> A["Test"]\nend)
-        cleanedChart = cleanedChart.replace(/([\]\)\}])\s*end\b/gi, '$1\nend');
-        // 3. 'end' kelimesinden önce ve sonra boşluk/yeni satır garantile (genel)
-        cleanedChart = cleanedChart.replace(/([A-Za-z0-9"'])\s*end\b/gi, '$1\nend');
-
-        const processedChart = cleanedChart.replace(/([a-zA-Z0-9_-]+)({\s*"([^"]+)"\s*}|{\s*([^{}]+)\s*}|\[\s*"([^"]+)"\s*\]|\[\s*([^\[\]]+)\s*\]|\(\s*"([^"]+)"\s*\)|\(\s*([^\(\)]+)\s*\))/g, (m, nodeId, shapes, g1, g2, g3, g4, g5, g6) => {
-          const rawText = g1 || g2 || g3 || g4 || g5 || g6 || '';
-          const wrappedText = wrapLongText(rawText.trim(), 15);
-          if (shapes.startsWith('{')) return `${nodeId}{"${wrappedText}"}`;
-          if (shapes.startsWith('[')) return `${nodeId}["${wrappedText}"]`;
-          if (shapes.startsWith('(')) return `${nodeId}("${wrappedText}")`;
-          return m;
-        });
-
-        const { svg: renderedSvg } = await mermaid.render(id, processedChart.trim())
-        setSvg(renderedSvg)
-      } catch (e) {
-        console.warn("[Mermaid] Render failed:", e)
-        setError(true)
+        
+        // Reset container content and state before running mermaid
+        if (containerRef.current) {
+          containerRef.current.removeAttribute("data-processed");
+          containerRef.current.innerHTML = cleanChart;
+          
+          await mermaid.run({
+            nodes: [containerRef.current],
+            suppressErrors: false,
+          });
+          
+          if (isMounted) setError(false);
+        }
+      } catch (err) {
+        console.error("Mermaid error:", err);
+        if (isMounted) setError(true);
       }
     }
 
-    renderMermaid()
-  }, [chart])
+    renderDiagram();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chart]);
 
   if (error) {
-    // Fallback: show warning + collapsible raw code
     return (
-      <div className="my-4 p-4 bg-amber-950/30 rounded-xl border border-amber-700/40 overflow-x-auto">
-        <div className="flex items-center gap-2 text-amber-400 text-xs mb-2">
-          <span>⚠️</span>
-          <span className="font-medium">Bu diyagram görüntülenemiyor</span>
-        </div>
-        <p className="text-[11px] text-slate-400 mb-3">Diyagram sözdiziminde bir sorun var. İçerik aşağıda ham kod olarak gösterilmektedir.</p>
-        <details className="group">
-          <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 transition-colors">
-            📊 Ham diyagram kodunu göster
-          </summary>
-          <pre className="mt-2 text-xs text-slate-400 font-mono whitespace-pre-wrap bg-slate-900/60 p-3 rounded-lg">{chart}</pre>
-        </details>
-      </div>
-    )
-  }
-
-  if (!svg) {
-    return (
-      <div className="my-4 p-6 bg-slate-900/50 rounded-xl border border-slate-700/30 flex items-center justify-center">
-        <div className="animate-pulse text-xs text-slate-500">Diyagram yükleniyor...</div>
+      <div className="my-4 p-4 bg-amber-950/30 rounded-xl border border-amber-700/40">
+        <div className="text-amber-400 text-xs mb-2">⚠️ Diyagram Görüntülenemiyor</div>
+        <pre className="text-[10px] text-slate-400 font-mono whitespace-pre-wrap bg-slate-900/60 p-3 rounded-lg">{chart}</pre>
       </div>
     )
   }
 
   return (
-    <div className="mermaid-diagram-wrapper my-4 p-4 bg-slate-900/60 rounded-xl border border-sky-500/10 overflow-x-auto relative">
+    <div className="my-4 p-4 bg-slate-900/60 rounded-xl border border-sky-500/10 overflow-hidden relative group">
       <style>{`
-        /* Olası kaçak Mermaid hata SVG'lerini gizle */
-        body > svg[id^="mermaid-"] { 
-          visibility: hidden !important; 
-          position: absolute !important; 
-          top: -9999px !important; 
-          z-index: -1 !important;
-        }
-        .mermaid-diagram-wrapper svg {
-          max-width: 100% !important;
+        .mermaid-container svg {
+          width: 100% !important;
+          max-width: 900px !important;
           height: auto !important;
           display: block;
           margin: 0 auto;
         }
-        @media print {
-          .mermaid-diagram-wrapper {
-            display: block !important;
-            width: 100% !important;
-            margin: 15px auto !important;
-            page-break-inside: avoid !important;
-            background: transparent !important;
-            border: none !important;
-            padding: 0 !important;
-          }
-          .mermaid-diagram-wrapper > div:last-child {
-            display: block !important;
-            width: 100% !important;
-            margin: 0 auto !important;
-            border: none !important;
-            background: transparent !important;
-            padding: 0 !important;
-            border-radius: 0 !important;
-          }
-          .mermaid-diagram-wrapper svg {
-            display: block !important;
-            margin: 0 auto !important;
-            max-width: 100% !important;
-            max-height: 400px !important;
-            height: auto !important;
-          }
-          .mermaid-diagram-wrapper svg rect,
-          .mermaid-diagram-wrapper svg polygon,
-          .mermaid-diagram-wrapper svg circle,
-          .mermaid-diagram-wrapper svg ellipse,
-          .mermaid-diagram-wrapper svg path.node {
-            fill: #f8fafc !important;
-            stroke: #1e3a5f !important;
-            stroke-width: 1.5px !important;
-          }
-          .mermaid-diagram-wrapper svg .label,
-          .mermaid-diagram-wrapper svg text,
-          .mermaid-diagram-wrapper svg span {
-            fill: #0f172a !important;
-            color: #0f172a !important;
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 500 !important;
-          }
-          .mermaid-diagram-wrapper svg .edgePath .path,
-          .mermaid-diagram-wrapper svg .edgePath path,
-          .mermaid-diagram-wrapper svg path.link,
-          .mermaid-diagram-wrapper svg path.connection {
-            stroke: #475569 !important;
-            stroke-width: 1.5px !important;
-          }
-          .mermaid-diagram-wrapper svg .markerPath,
-          .mermaid-diagram-wrapper svg marker path,
-          .mermaid-diagram-wrapper svg .arrowheadPath {
-            fill: #475569 !important;
-            stroke: #475569 !important;
-          }
-          .mermaid-diagram-wrapper svg .edgeLabel rect {
-            fill: #ffffff !important;
-            opacity: 0.95 !important;
-          }
-          .mermaid-diagram-wrapper svg .edgeLabel text {
-            fill: #334155 !important;
-            font-size: 11px !important;
-            font-weight: 600 !important;
-          }
-        }
       `}</style>
       <div className="text-[10px] text-sky-400/60 uppercase tracking-wider mb-2 font-medium flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Akış Şeması
       </div>
-      <div 
-        dangerouslySetInnerHTML={{ __html: svg }} 
-        className="w-full flex justify-center py-2"
-      />
+      
+      <div className="w-full flex justify-center py-2 overflow-auto mermaid-container">
+        <div ref={containerRef} className="mermaid transition-opacity duration-300">
+          {chart}
+        </div>
+      </div>
     </div>
   )
 }
