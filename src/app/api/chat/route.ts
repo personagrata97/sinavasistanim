@@ -93,7 +93,7 @@ Eğer sorunun cevabı notlarda yoksa "Bu konu şu anki ders notlarında yer alm�
 ${truncatedContext}`
 
     // 3. Gemini Streaming (Self-healing Chain)
-    const chatModels = ["gemini-2.5-flash", "gemini-2.5-flash-8b"]
+    const chatModels = ["gemini-3.1-flash-lite", "gemini-2.5-flash-8b"]
     for (const modelId of chatModels) {
       try {
         const genAI = new GoogleGenerativeAI(geminiKey)

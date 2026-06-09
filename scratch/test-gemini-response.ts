@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -13,7 +14,7 @@ async function run() {
   };
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
       body,
       { headers, timeout: 10000 }
     );

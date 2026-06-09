@@ -1,12 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { prisma } from './src/lib/prisma'
 
 async function main() {
   const course = await prisma.course.findFirst({
     where: { slug: 'bd-bilgi-sistemleri-guvenligi' },
-    include: {
+    select: {
+      status: true,
+      processedPages: true,
+      totalPages: true,
       sections: {
-        select: { id: true, title: true, status: true, qualityScore: true }
+        select: { id: true, title: true, processed: true, verificationScore: true }
       }
     }
   })
@@ -17,9 +19,10 @@ async function main() {
   }
   
   console.log(`Course Status: ${course.status}`);
+  console.log(`Progress: ${course.processedPages} / ${course.totalPages}`);
   console.log("Sections:");
   course.sections.forEach((s, i) => {
-    console.log(`${i+1}. ${s.title}: ${s.status} (Score: ${s.qualityScore})`);
+    console.log(`${i+1}. ${s.title}: Processed=${s.processed} (Score: ${s.verificationScore})`);
   })
 }
 

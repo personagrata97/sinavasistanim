@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     // kalan bölümlerin updatedAt süresini şimdiki zamana çekiyoruz.
     await prisma.section.updateMany({
       where: { courseId: course.id, processed: false },
-      data: { updatedAt: new Date() }
+      data: { createdAt: new Date() }
     })
 
     // Read PDF buffer
@@ -955,7 +955,7 @@ async function processInBackground(slug: string, course: any) {
             try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Flashcard Kartları (Bilgi Kartları) Oluşturuluyor...` }) } }) } catch { }
 
             // Flashcard'ları üret (tek deneme, tasarruf)
-            for (let fAttempt = 1; fAttempt <= 1; fAttempt++) {
+            for (let fAttempt = 1; fAttempt <= 3; fAttempt++) {
               try {
                 flashcards = await generateFlashcards(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd)
                 
@@ -968,7 +968,7 @@ async function processInBackground(slug: string, course: any) {
                 break
               } catch (e: any) {
                 console.error(`[BG] ⚠️ Flashcard üretimi başarısız:`, e.message)
-                if (fAttempt === 1) console.error(`[BG] ❌ Flashcard üretimi atlandı.`)
+                if (fAttempt === 3) console.error(`[BG] ❌ Flashcard üretimi atlandı.`)
                 else await new Promise(r => setTimeout(r, 10000))
               }
             }
@@ -985,7 +985,7 @@ async function processInBackground(slug: string, course: any) {
               console.log(`[BG] 🧠 COGNITIVE ROUTING: Bu bölüm sadece terim/kısaltma içeriyor. Soru üretimi atlanıyor (requiresQuestions: false).`);
             } else {
               try { await prisma.section.update({ where: { id: section.id }, data: { verificationIssues: JSON.stringify({ currentMicroPhase: `${sIdx + 1 + alreadyDone}/${totalSections}. Bölüm Soru Havuzu Oluşturuluyor...` }) } }) } catch { }
-              for (let qAttempt = 1; qAttempt <= 1; qAttempt++) {
+              for (let qAttempt = 1; qAttempt <= 3; qAttempt++) {
                 try {
                   questions = await generateQuestions(finalContent, section.title, course.name, course.userLevel, aiMode, undefined, section.pageStart, section.pageEnd, section.importance || undefined)
                   
@@ -1027,7 +1027,7 @@ async function processInBackground(slug: string, course: any) {
                   break
                 } catch (e: any) {
                   console.error(`[BG] ⚠️ Soru üretimi başarısız:`, e.message)
-                  if (qAttempt === 1) console.error(`[BG] ❌ Soru üretimi atlandı.`)
+                  if (qAttempt === 3) console.error(`[BG] ❌ Soru üretimi atlandı.`)
                   else await new Promise(r => setTimeout(r, 10000))
                 }
               }
